@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "../actions/ThemeToggle";
 
 interface MobileHeaderProps {
   /** Right-side slot, e.g. a search icon button. Kept sparse by design. */
@@ -21,7 +22,10 @@ export function MobileHeader({ action, contextLabel }: MobileHeaderProps) {
             </span>
           )}
         </Link>
-        {action}
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          {action}
+        </div>
       </div>
     </header>
   );

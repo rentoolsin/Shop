@@ -10,6 +10,7 @@ import { Button } from "../components/ui/Button";
 import { SearchBar } from "../components/ui/SearchBar";
 import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
+import { FloatingWhatsApp } from "../components/actions/FloatingWhatsApp";
 import { useCategories } from "../hooks/useCategories";
 import { useFeaturedProducts } from "../hooks/useProducts";
 import { useHomepageContent } from "../hooks/useHomepageContent";
@@ -234,6 +235,8 @@ export function Home() {
           </div>
         </section>
       )}
+
+      <FloatingWhatsApp phone={whatsapp} />
     </div>
   );
 }

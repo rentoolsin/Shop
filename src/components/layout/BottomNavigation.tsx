@@ -53,7 +53,7 @@ export function BottomNavigation() {
   return (
     <nav
       aria-label="Primary"
-      className="sticky bottom-0 z-30 border-t border-graphite-200 bg-graphite-50/95 pb-safe-b backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95"
+      className="border-t border-graphite-200 bg-graphite-50/95 pb-safe-b backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95"
     >
       <ul className="flex h-16 items-stretch justify-around">
         {items.map((item) => (

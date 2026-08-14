@@ -91,7 +91,7 @@ const AdminLayout = lazy(() =>
 function CustomerApp() {
   return (
     <div className="app-shell">
-      <div className="flex-1">
+      <div className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
@@ -107,8 +107,10 @@ function CustomerApp() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-      <InstallAppBanner />
-      <BottomNavigation />
+      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
+        <InstallAppBanner />
+        <BottomNavigation />
+      </div>
     </div>
   );
 }
