@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 
 export function Login() {
   const { status, signInWithPassword } = useAuth();
@@ -30,7 +31,7 @@ export function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-graphite-50 px-4 dark:bg-graphite-950">
-      <div className="w-full max-w-sm rounded-lg border border-graphite-200 bg-white p-6 dark:border-graphite-800 dark:bg-graphite-900">
+      <Card className="w-full max-w-sm p-6">
         <h1 className="font-display text-[18px] font-bold text-ink dark:text-ink-inverted">
           RenTools Admin
         </h1>
@@ -68,7 +69,7 @@ export function Login() {
             {submitting ? "Signing in…" : "Sign in"}
           </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

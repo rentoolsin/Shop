@@ -10,6 +10,7 @@ import { STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL } from "../../../utils/purcha
 import type { PurchaseRequestStatus } from "../../../types/database";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Select } from "../../../components/ui/Select";
+import { Card } from "../../../components/ui/Card";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { useToast } from "../../../components/ui/Toast";
@@ -101,7 +102,7 @@ export function PurchaseRequestDetail() {
         <StatusBadge label={STATUS_LABEL[r.status]} tone={STATUS_TONE[r.status]} />
       </div>
 
-      <div className="space-y-3 rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+      <Card className="space-y-3 p-4">
         {r.customerName && <Detail label="Customer" value={r.customerName} />}
         {!r.customerName && r.requesterName && <Detail label="Name" value={r.requesterName} />}
         {r.mobile && <Detail label="Mobile" value={r.mobile} />}
@@ -109,7 +110,7 @@ export function PurchaseRequestDetail() {
         <Detail label="Priority" value={PRIORITY_LABEL[r.priority]} />
         {r.notes && <Detail label="Notes" value={r.notes} />}
         <Detail label="Logged" value={new Date(r.createdAt).toLocaleString()} />
-      </div>
+      </Card>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div>

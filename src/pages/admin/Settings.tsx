@@ -6,6 +6,7 @@ import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { useToast } from "../../components/ui/Toast";
@@ -32,9 +33,7 @@ function SettingsSection({
       {description && (
         <p className="mt-1 font-body text-[13px] text-graphite-500">{description}</p>
       )}
-      <div className="mt-3 space-y-3 rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
-        {children}
-      </div>
+      <Card className="mt-3 space-y-3 p-4">{children}</Card>
     </section>
   );
 }
@@ -125,7 +124,7 @@ function ContactSettingsForm() {
         hint="Shown on the Location page and used for the Maps link."
       />
       <Button type="submit" disabled={submitting} fullWidth>
-        {submitting ? "Saving…" : "Save contact info"}
+        {submitting ? "Saving…" : "Save changes"}
       </Button>
     </form>
   );

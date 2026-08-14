@@ -8,6 +8,7 @@ import {
 } from "../../../services/admin-customers.service";
 import { Input } from "../../../components/ui/Input";
 import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
 import { LoadingState } from "../../../components/ui/LoadingState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { useToast } from "../../../components/ui/Toast";
@@ -89,6 +90,7 @@ export function CustomerForm() {
         {isEdit ? "Edit customer" : "New customer"}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <Card className="space-y-4 p-4 sm:p-6">
         <Input
           label="Name"
           value={values.name}
@@ -109,6 +111,7 @@ export function CustomerForm() {
           onChange={(e) => setField("address", e.target.value)}
           hint="Optional."
         />
+        </Card>
         <div className="flex gap-2 pt-2">
           <Button variant="secondary" fullWidth type="button" onClick={() => navigate("/admin/customers")}>
             Cancel

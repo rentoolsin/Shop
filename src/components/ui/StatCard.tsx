@@ -36,7 +36,7 @@ export function StatCard({ label, value, to, tone = "neutral" }: StatCardProps) 
   );
 
   const className =
-    "block rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900";
+    "block rounded-lg border border-graphite-200 bg-white p-4 shadow-card dark:border-graphite-800 dark:bg-graphite-900";
 
   if (to) {
     return (

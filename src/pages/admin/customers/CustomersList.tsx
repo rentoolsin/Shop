@@ -4,6 +4,7 @@ import { useAdminCustomers } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
 import { deleteCustomer } from "../../../services/admin-customers.service";
 import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
@@ -12,6 +13,15 @@ import { Pagination } from "../../../components/ui/Pagination";
 import { useToast } from "../../../components/ui/Toast";
 
 const DEBOUNCE_MS = 300;
+
+function CustomerIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+      <circle cx="10" cy="7" r="2.75" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4 16c0-2.9 2.7-5 6-5s6 2.1 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export function CustomersList() {
   const [input, setInput] = useState("");
@@ -60,7 +70,7 @@ export function CustomersList() {
         </Link>
       </div>
 
-      <div className="mb-4 flex items-center gap-2 rounded border border-graphite-200 bg-white px-3 dark:border-graphite-800 dark:bg-graphite-900">
+      <div className="mb-4 flex h-11 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
         <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
           <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
           <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
@@ -72,7 +82,7 @@ export function CustomersList() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Search by name or mobile number"
           aria-label="Search by name or mobile number"
-          className="h-11 flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
+          className="h-full flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
         />
         {input && (
           <button onClick={() => setInput("")} aria-label="Clear search" className="text-graphite-400">
@@ -95,6 +105,7 @@ export function CustomersList() {
 
       {customers.status === "success" && customers.data.length === 0 && (
         <EmptyState
+          icon={<CustomerIcon />}
           title={debounced ? "No customers matched" : "No customers yet"}
           description={
             debounced
@@ -112,9 +123,9 @@ export function CustomersList() {
       )}
 
       {customers.status === "success" && customers.data.length > 0 && (
-        <div className="divide-y divide-graphite-200 rounded-lg border border-graphite-200 bg-white dark:divide-graphite-800 dark:border-graphite-800 dark:bg-graphite-900">
+        <div className="space-y-2">
           {pageItems.map((customer) => (
-            <div key={customer.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <Card key={customer.id} className="flex items-center justify-between gap-3 p-4">
               <div>
                 <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
                   {customer.name}
@@ -133,7 +144,7 @@ export function CustomersList() {
                   Delete
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

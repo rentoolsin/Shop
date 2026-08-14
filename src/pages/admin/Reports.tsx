@@ -13,6 +13,15 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ErrorState } from "../../components/ui/ErrorState";
 import { StatCard } from "../../components/ui/StatCard";
+import { Card } from "../../components/ui/Card";
+
+function ChartIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+      <path d="M4 16.5V9M10 16.5V3.5M16 16.5v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 interface ProductBreakdownRow {
   productName: string;
@@ -114,6 +123,7 @@ export function Reports() {
 
       {!rangeValid && (
         <EmptyState
+          icon={<ChartIcon />}
           title="Invalid date range"
           description="The start date must not be after the end date."
         />
@@ -165,11 +175,12 @@ export function Reports() {
 
           {byProduct.length === 0 ? (
             <EmptyState
+              icon={<ChartIcon />}
               title="No rentals in range"
               description="Try widening the date range above."
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-graphite-200 dark:border-graphite-800">
+            <Card className="overflow-x-auto p-0">
               <table className="w-full min-w-[720px] text-left">
                 <thead>
                   <tr className="border-b border-graphite-200 bg-graphite-50 dark:border-graphite-800 dark:bg-graphite-900">
@@ -230,7 +241,7 @@ export function Reports() {
                   })}
                 </tbody>
               </table>
-            </div>
+            </Card>
           )}
         </>
       )}

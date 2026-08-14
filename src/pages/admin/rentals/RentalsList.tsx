@@ -18,6 +18,7 @@ import {
 } from "../../../utils/rental-calculations";
 import { formatCurrency } from "../../../utils/currency";
 import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
@@ -44,6 +45,15 @@ const STATUS_TONE: Record<RentalDisplayStatus, "neutral" | "success" | "warning"
   returned: "success",
   cancelled: "neutral",
 };
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+      <rect x="3.5" y="5" width="13" height="11" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 3v3M13.5 3v3M3.5 8.5h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 type Row = AdminRentalListItem & { displayStatus: RentalDisplayStatus };
 
@@ -191,7 +201,7 @@ export function RentalsList() {
       </div>
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <div className="flex flex-1 items-center gap-2 rounded border border-graphite-200 bg-white px-3 dark:border-graphite-800 dark:bg-graphite-900">
+        <div className="flex h-11 flex-1 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
           <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
             <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
             <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
@@ -203,7 +213,7 @@ export function RentalsList() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by customer name or mobile"
             aria-label="Search by customer name or mobile"
-            className="h-11 flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
+            className="h-full flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
           />
         </div>
         <Select
@@ -232,6 +242,7 @@ export function RentalsList() {
 
       {rentals.status === "success" && rows.length === 0 && (
         <EmptyState
+          icon={<CalendarIcon />}
           title={data.length === 0 ? "No rentals yet" : "No rentals matched"}
           description={
             data.length === 0
@@ -253,10 +264,7 @@ export function RentalsList() {
           {pageItems.map((rental) => {
             const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
             return (
-              <div
-                key={rental.id}
-                className="rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900"
-              >
+              <Card key={rental.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
@@ -303,7 +311,7 @@ export function RentalsList() {
                     </Button>
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>

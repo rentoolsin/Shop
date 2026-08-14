@@ -3,12 +3,24 @@ import { Link } from "react-router-dom";
 import { useAdminCategories } from "../../../hooks/useAdminData";
 import { deleteCategory } from "../../../services/admin-categories.service";
 import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
+
+function CategoryIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+      <rect x="3.5" y="3.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="11" y="3.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="3.5" y="11" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="11" y="11" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
 
 export function CategoriesList() {
   const categories = useAdminCategories();
@@ -59,6 +71,7 @@ export function CategoriesList() {
 
       {categories.status === "success" && categories.data.length === 0 && (
         <EmptyState
+          icon={<CategoryIcon />}
           title="No categories yet"
           description="Create your first category to start organizing products."
           action={
@@ -70,9 +83,9 @@ export function CategoriesList() {
       )}
 
       {categories.status === "success" && categories.data.length > 0 && (
-        <div className="divide-y divide-graphite-200 rounded-lg border border-graphite-200 bg-white dark:divide-graphite-800 dark:border-graphite-800 dark:bg-graphite-900">
+        <div className="space-y-2">
           {categories.data.map((category) => (
-            <div key={category.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <Card key={category.id} className="flex items-center justify-between gap-3 p-4">
               <div>
                 <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
                   {category.name}
@@ -95,7 +108,7 @@ export function CategoriesList() {
                   Delete
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

@@ -8,6 +8,7 @@ import type {
 } from "../../../services/admin-purchase-requests.service";
 import type { PurchaseRequestStatus } from "../../../types/database";
 import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Select } from "../../../components/ui/Select";
 import { Skeleton } from "../../../components/ui/Skeleton";
@@ -23,6 +24,15 @@ const PRIORITY_TONE: Record<PurchaseRequestPriority, "neutral" | "warning" | "da
   normal: "neutral",
   high: "danger",
 };
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+      <rect x="3.5" y="5" width="13" height="11" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 3v3M13.5 3v3M3.5 8.5h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export function PurchaseRequestsList() {
   const [input, setInput] = useState("");
@@ -63,7 +73,7 @@ export function PurchaseRequestsList() {
       </div>
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <div className="flex flex-1 items-center gap-2 rounded border border-graphite-200 bg-white px-3 dark:border-graphite-800 dark:bg-graphite-900">
+        <div className="flex h-11 flex-1 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
           <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
             <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
             <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
@@ -75,7 +85,7 @@ export function PurchaseRequestsList() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search by product, customer or mobile"
             aria-label="Search by product, customer or mobile"
-            className="h-11 flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
+            className="h-full flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
           />
           {input && (
             <button onClick={() => setInput("")} aria-label="Clear search" className="text-graphite-400">
@@ -109,6 +119,7 @@ export function PurchaseRequestsList() {
 
       {requests.status === "success" && rows.length === 0 && (
         <EmptyState
+          icon={<CalendarIcon />}
           title={
             rows.length === 0 && !query && statusFilter === "all"
               ? "No purchase requests yet"
@@ -132,35 +143,33 @@ export function PurchaseRequestsList() {
       {requests.status === "success" && rows.length > 0 && (
         <div className="space-y-2">
           {pageItems.map((request) => (
-            <Link
-              key={request.id}
-              to={`/admin/purchase-requests/${request.id}`}
-              className="block rounded-lg border border-graphite-200 bg-white p-4 hover:border-graphite-300 dark:border-graphite-800 dark:bg-graphite-900 dark:hover:border-graphite-700"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                    {request.productRequested}
-                  </p>
-                  <p className="font-mono text-[12px] text-graphite-400">
-                    {request.customerName ?? request.requesterName ?? request.mobile ?? "No contact on file"}
-                  </p>
+            <Link key={request.id} to={`/admin/purchase-requests/${request.id}`}>
+              <Card interactive className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                      {request.productRequested}
+                    </p>
+                    <p className="font-mono text-[12px] text-graphite-400">
+                      {request.customerName ?? request.requesterName ?? request.mobile ?? "No contact on file"}
+                    </p>
+                  </div>
+                  <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                    <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
+                    {request.priority !== "normal" && (
+                      <StatusBadge
+                        label={PRIORITY_LABEL[request.priority]}
+                        tone={PRIORITY_TONE[request.priority]}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-shrink-0 flex-col items-end gap-1">
-                  <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
-                  {request.priority !== "normal" && (
-                    <StatusBadge
-                      label={PRIORITY_LABEL[request.priority]}
-                      tone={PRIORITY_TONE[request.priority]}
-                    />
-                  )}
-                </div>
-              </div>
-              {request.quantity && (
-                <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                  Qty {request.quantity}
-                </p>
-              )}
+                {request.quantity && (
+                  <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
+                    Qty {request.quantity}
+                  </p>
+                )}
+              </Card>
             </Link>
           ))}
         </div>

@@ -1,9 +1,20 @@
 import { Link } from "react-router-dom";
 import { useAdminHomepageSections } from "../../../hooks/useAdminData";
 import { HOMEPAGE_SECTION_LABEL } from "../../../utils/homepage-content";
+import { Card } from "../../../components/ui/Card";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
+
+function HomepageIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+      <path d="M3 9.5 10 4l7 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 8.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export function HomepageSectionsList() {
   const sections = useAdminHomepageSections();
@@ -30,34 +41,41 @@ export function HomepageSectionsList() {
         <ErrorState description="Couldn't load homepage sections." onRetry={sections.refetch} />
       )}
 
-      {sections.status === "success" && (
+      {sections.status === "success" && sections.data.length === 0 && (
+        <EmptyState
+          icon={<HomepageIcon />}
+          title="No sections found"
+          description="Homepage sections will appear here once configured."
+        />
+      )}
+
+      {sections.status === "success" && sections.data.length > 0 && (
         <ul className="space-y-2">
           {sections.data.map((section) => (
             <li key={section.sectionKey}>
-              <Link
-                to={`/admin/homepage/${section.sectionKey}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900"
-              >
-                <div>
-                  <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                    {HOMEPAGE_SECTION_LABEL[section.sectionKey]}
-                  </p>
-                  <p className="mt-0.5 font-body text-[12px] text-graphite-500">
-                    {section.isUnconfigured
-                      ? "Using default content"
-                      : section.updatedAt
-                        ? `Updated ${new Date(section.updatedAt).toLocaleDateString()}`
-                        : "Not yet edited"}
-                  </p>
-                </div>
-                <div className="flex flex-shrink-0 gap-1.5">
-                  {!section.isEnabled && <StatusBadge label="Hidden" tone="neutral" />}
-                  {section.isPublished ? (
-                    <StatusBadge label="Published" tone="success" />
-                  ) : (
-                    <StatusBadge label="Draft" tone="warning" />
-                  )}
-                </div>
+              <Link to={`/admin/homepage/${section.sectionKey}`}>
+                <Card interactive className="flex items-center justify-between gap-3 p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
+                  <div>
+                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                      {HOMEPAGE_SECTION_LABEL[section.sectionKey]}
+                    </p>
+                    <p className="mt-0.5 font-body text-[12px] text-graphite-500">
+                      {section.isUnconfigured
+                        ? "Using default content"
+                        : section.updatedAt
+                          ? `Updated ${new Date(section.updatedAt).toLocaleDateString()}`
+                          : "Not yet edited"}
+                    </p>
+                  </div>
+                  <div className="flex flex-shrink-0 gap-1.5">
+                    {!section.isEnabled && <StatusBadge label="Hidden" tone="neutral" />}
+                    {section.isPublished ? (
+                      <StatusBadge label="Published" tone="success" />
+                    ) : (
+                      <StatusBadge label="Draft" tone="warning" />
+                    )}
+                  </div>
+                </Card>
               </Link>
             </li>
           ))}
