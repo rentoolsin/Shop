@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
+import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { LoadingState } from "./components/ui/LoadingState";
 import { Home } from "./pages/Home";
@@ -104,6 +105,7 @@ function CustomerApp() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
+      <InstallAppBanner />
       <BottomNavigation />
     </div>
   );

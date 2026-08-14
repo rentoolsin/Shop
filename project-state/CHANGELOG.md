@@ -1,5 +1,46 @@
 # Changelog
 
+## Session 17 — PWA support + install banner
+- Added `vite-plugin-pwa` (generateSW/Workbox, `registerType: "autoUpdate"`):
+  auto-injects `<link rel="manifest">` and a SW-registration script into
+  `index.html` at build time — no manual registration code needed in
+  `main.tsx`. Public catalog routes are precached/served offline-first;
+  `navigateFallbackDenylist` excludes `/admin/*` so a stale cached shell
+  is never served over live admin data.
+- Generated app icons matching the existing design system (graphite-950
+  bg, signal-500 accent, bordered "spec-tag" motif, "R" monogram — no
+  business logo existed to use, so this is a placeholder brand mark, not
+  invented business content): `pwa-192x192.png`, `pwa-512x512.png`,
+  `pwa-maskable-512x512.png`, `apple-touch-icon.png`, `favicon.ico`, all
+  in `public/`.
+- `index.html`: added favicon link, apple-touch-icon link, and the
+  iOS-only `apple-mobile-web-app-*` meta tags (iOS has no
+  `beforeinstallprompt`/manifest-driven install flow — these are the only
+  levers Safari respects for "Add to Home Screen").
+- New `src/hooks/useInstallPrompt.ts`: captures `beforeinstallprompt`,
+  exposes `canInstall`/`installed`/`promptInstall`/`dismiss`. Dismissal
+  persists in `localStorage` with a 14-day cooldown (re-offers later
+  rather than nagging every visit or never asking again).
+- New `src/components/layout/InstallAppBanner.tsx`: slim dismissible
+  banner reusing the existing `Button` component and design tokens,
+  rendered above `BottomNavigation` in the public `CustomerApp` shell
+  only (not admin — admin has its own layout and isn't the install
+  surface). Renders nothing until the browser actually offers install,
+  and nothing once installed/dismissed.
+- `.gitignore`: added `dev-dist` (vite-plugin-pwa's dev-mode SW output).
+- Verified `npm install` / `npm run typecheck` / `npm run lint` /
+  `npm run build` all pass. `npm run build` output confirms
+  `manifest.webmanifest`, `sw.js`, `registerSW.js` generated correctly
+  and the manifest JSON / injected `index.html` tags are correct.
+- Not verified: actual install-banner behavior on a real Android/desktop
+  Chrome device, and "Add to Home Screen" on real iOS Safari — same
+  category of environment limitation as the rest of this project (no
+  real browser/device here). `devOptions.enabled: false` means the SW
+  only activates in a production build/preview, not `npm run dev` — this
+  is intentional (avoids caching issues during development) but means
+  testing the actual install flow requires `npm run build && npm run preview`
+  over HTTPS or localhost, not the dev server.
+
 ## Session 16
 - Fixed a broken build left mid-session by the previous account: a
   shared `usePagination` hook + `Pagination` control (wired into all

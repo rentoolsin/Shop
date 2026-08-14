@@ -1,6 +1,34 @@
 # In Progress
 
-Nothing left mid-implementation at the end of Session 16.
+Nothing left mid-implementation at the end of Session 17.
+
+## Session 17 — PWA + install banner
+
+`vite-plugin-pwa` wired up (manifest + Workbox service worker,
+auto-update, admin routes excluded from the navigate fallback). Icons
+generated to match the existing design system since no real business
+logo exists yet — swap `public/pwa-*.png`/`apple-touch-icon.png`/
+`favicon.ico` for real brand assets whenever the user provides one; nothing
+else needs to change (icon paths are only referenced from
+`vite.config.ts`'s manifest block and `index.html`).
+
+New `useInstallPrompt` hook + `InstallAppBanner` component (public app
+only, dismissible, 14-day re-offer cooldown via localStorage).
+
+`npm install` / `npm run typecheck` / `npm run lint` / `npm run build`
+all pass; build output confirms the manifest/service worker generate
+correctly.
+
+**Not verified** (same recurring environment limit): the SW only runs in
+a production build (`devOptions.enabled: false`, intentional — avoids
+dev-mode caching headaches), so testing the actual install banner and
+"Add to Home Screen" behavior needs `npm run build && npm run preview`
+on a real Android/desktop Chrome and real iOS Safari — no real
+browser/device available in this sandbox.
+
+---
+
+Session 16 recap (previous):
 
 ## Session 16 — Client-side pagination for admin lists (TODO item 13, pagination piece)
 

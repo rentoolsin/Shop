@@ -1,6 +1,7 @@
-﻿node_modules
+node_modules
 dist
 dist-ssr
+dev-dist
 *.local
 .env
 .env.*
@@ -10,5 +11,3 @@ dist-ssr
 npm-debug.log*
 .vscode/*
 !.vscode/extensions.json
-tsconfig.tsbuildinfo
-tsconfig.node.tsbuildinfo
