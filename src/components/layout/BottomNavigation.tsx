@@ -1,3 +1,4 @@
+import { Home as HomeIconLucide, MoreHorizontal, Search as SearchIconLucide, Wrench } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
 
@@ -8,38 +9,12 @@ interface NavItem {
   end?: boolean;
 }
 
-// Minimal line icons drawn inline (no icon font / emoji per design direction).
+// Premium line-icon set (Lucide) — one shared visual language across the app.
 const icons = {
-  home: (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-5 w-5">
-      <path d="M4 11.5 12 5l8 6.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M6 10v9h12v-9" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  tools: (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-5 w-5">
-      <path
-        d="M14.7 6.3a3 3 0 0 0 4 4L14 15l-3 3-4-4 3-3 4.7-4.7Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M4 20l3-3" stroke="currentColor" strokeLinecap="round" />
-    </svg>
-  ),
-  search: (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-5 w-5">
-      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
-      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
-    </svg>
-  ),
-  more: (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-5 w-5">
-      <circle cx="5" cy="12" r="1.4" fill="currentColor" />
-      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
-      <circle cx="19" cy="12" r="1.4" fill="currentColor" />
-    </svg>
-  ),
+  home: <HomeIconLucide className="h-5 w-5" strokeWidth={1.6} />,
+  tools: <Wrench className="h-5 w-5" strokeWidth={1.6} />,
+  search: <SearchIconLucide className="h-5 w-5" strokeWidth={1.6} />,
+  more: <MoreHorizontal className="h-5 w-5" strokeWidth={1.6} />,
 };
 
 const items: NavItem[] = [

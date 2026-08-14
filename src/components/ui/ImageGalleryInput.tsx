@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "./Button";
 import { useToast } from "./Toast";
@@ -115,9 +116,7 @@ export function ImageGalleryInput({
                 aria-label="Remove photo"
                 className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-graphite-900 text-graphite-25 shadow-card dark:bg-white dark:text-graphite-950"
               >
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="h-3 w-3">
-                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeLinecap="round" />
-                </svg>
+                <X className="h-3 w-3" strokeWidth={2} />
               </button>
             </div>
           ))}

@@ -1,3 +1,4 @@
+import { MessageSquareText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminEnquiries } from "../../../hooks/useAdminData";
@@ -18,16 +19,7 @@ import { STATUS_LABEL, STATUS_TONE } from "../../../utils/enquiry-status";
 const DEBOUNCE_MS = 300;
 
 function EnquiryIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <path
-        d="M3.5 5.5A1.5 1.5 0 0 1 5 4h10a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 15 14H8l-3.5 2.5V14H5A1.5 1.5 0 0 1 3.5 12.5v-7Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <MessageSquareText className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 export function EnquiriesList() {

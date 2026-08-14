@@ -1,3 +1,4 @@
+import { Calendar, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminRentals } from "../../../hooks/useAdminData";
@@ -48,43 +49,25 @@ const STATUS_TONE: Record<RentalDisplayStatus, "neutral" | "success" | "warning"
 };
 
 function CalendarIcon({ className = "h-6 w-6" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className={className}>
-      <rect x="3.5" y="5" width="13" height="11" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M6.5 3v3M13.5 3v3M3.5 8.5h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+  return <Calendar className={className} strokeWidth={1.5} />;
 }
 
 function PlusIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
-      <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+  return <Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />;
 }
 
 function RefreshIcon({ spinning }: { spinning?: boolean }) {
   return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
+    <RefreshCw
+      className={["h-4 w-4", spinning ? "animate-spin" : ""].join(" ")}
       strokeWidth={1.6}
       aria-hidden="true"
-      className={["h-4 w-4", spinning ? "animate-spin" : ""].join(" ")}
-    >
-      <path d="M15.8 6.5A6 6 0 1 0 16.5 10" stroke="currentColor" strokeLinecap="round" />
-      <path d="M15.5 3.5v3.5H12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    />
   );
 }
 
 function ChevronRightIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 flex-shrink-0 text-graphite-300" aria-hidden="true">
-      <path d="M7.5 4.5 13 10l-5.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <ChevronRight className="h-4 w-4 flex-shrink-0 text-graphite-300" strokeWidth={1.6} aria-hidden="true" />;
 }
 
 /** Friendly display reference for a rental — derived from the real record id, never invented. */

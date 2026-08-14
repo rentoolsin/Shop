@@ -1,3 +1,4 @@
+import { MoreVertical, Pencil, Plus, Wrench } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminProducts, useAdminCategories } from "../../../hooks/useAdminData";
@@ -16,35 +17,15 @@ import { Pagination } from "../../../components/ui/Pagination";
 import { useToast } from "../../../components/ui/Toast";
 
 function BoxIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <path d="M10 3 3.5 6.5 10 10l6.5-3.5L10 3Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M3.5 6.5V13L10 16.5M16.5 6.5V13L10 16.5M10 10v6.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
+  return <Wrench className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 function PencilIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-      <path
-        d="M12.9 3.9a1.6 1.6 0 0 1 2.26 2.26L6.4 14.9l-3.05.76.76-3.05 8.79-8.72Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <Pencil className="h-4 w-4" strokeWidth={1.5} />;
 }
 
 function MoreIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-      <circle cx="10" cy="4.5" r="1.4" />
-      <circle cx="10" cy="10" r="1.4" />
-      <circle cx="10" cy="15.5" r="1.4" />
-    </svg>
-  );
+  return <MoreVertical className="h-4 w-4" strokeWidth={1.8} />;
 }
 
 export function ProductsList() {
@@ -108,7 +89,7 @@ export function ProductsList() {
           Products
         </h1>
         <Link to="/admin/products/new">
-          <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New product</Button>
+          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New product</Button>
         </Link>
       </div>
 
@@ -159,7 +140,7 @@ export function ProductsList() {
           description="Add your first product to start renting it out."
           action={
             <Link to="/admin/products/new">
-              <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New product</Button>
+              <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New product</Button>
             </Link>
           }
         />

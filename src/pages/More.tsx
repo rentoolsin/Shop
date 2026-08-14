@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 
@@ -19,9 +20,7 @@ export function More() {
               className="flex items-center justify-between px-4 py-4 font-body text-[15px] text-ink dark:text-ink-inverted"
             >
               {link.label}
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-4 w-4 text-graphite-400">
-                <path d="M9 6l6 6-6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ChevronRight className="h-4 w-4 text-graphite-400" strokeWidth={1.6} />
             </Link>
           </li>
         ))}

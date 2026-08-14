@@ -1,3 +1,4 @@
+import { MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/Button";
 
@@ -7,19 +8,6 @@ interface EnquiryButtonProps {
   fullWidth?: boolean;
   label?: string;
   className?: string;
-}
-
-function ChatIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} className="h-4 w-4">
-      <path
-        d="M4 20l1.4-4.2A8 8 0 1 1 9 18.6L4 20Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 export function EnquiryButton({
@@ -41,7 +29,7 @@ export function EnquiryButton({
       }
     >
       <span className="inline-flex items-center gap-2">
-        <ChatIcon />
+        <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
         {label}
       </span>
     </Button>

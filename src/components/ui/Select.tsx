@@ -1,3 +1,4 @@
+import { Check, ChevronDown } from "lucide-react";
 import {
   Children,
   isValidElement,
@@ -49,23 +50,16 @@ function extractOptions(children: ReactNode): OptionData[] {
 
 function ChevronIcon({ open }: { open: boolean }) {
   return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
+    <ChevronDown
       aria-hidden="true"
+      strokeWidth={1.6}
       className={["h-4 w-4 flex-shrink-0 text-graphite-400 transition-transform", open ? "rotate-180" : ""].join(" ")}
-    >
-      <path d="M5.5 8l4.5 4.5L14.5 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    />
   );
 }
 
 function CheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-ink dark:text-ink-inverted">
-      <path d="M4.5 10.5l3.2 3.2L15.5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <Check aria-hidden="true" strokeWidth={1.8} className="h-4 w-4 flex-shrink-0 text-ink dark:text-ink-inverted" />;
 }
 
 /**

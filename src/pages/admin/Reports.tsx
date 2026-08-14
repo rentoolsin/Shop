@@ -1,3 +1,4 @@
+import { BarChart3 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAdminRentals, useAdminProductInventory } from "../../hooks/useAdminData";
 import { formatCurrency } from "../../utils/currency";
@@ -16,11 +17,7 @@ import { StatCard } from "../../components/ui/StatCard";
 import { Card } from "../../components/ui/Card";
 
 function ChartIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <path d="M4 16.5V9M10 16.5V3.5M16 16.5v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+  return <BarChart3 className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 interface ProductBreakdownRow {

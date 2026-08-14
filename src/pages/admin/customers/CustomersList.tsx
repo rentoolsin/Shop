@@ -1,3 +1,4 @@
+import { Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminCustomers } from "../../../hooks/useAdminData";
@@ -16,12 +17,7 @@ import { useToast } from "../../../components/ui/Toast";
 const DEBOUNCE_MS = 300;
 
 function CustomerIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <circle cx="10" cy="7" r="2.75" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4 16c0-2.9 2.7-5 6-5s6 2.1 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+  return <Users className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 export function CustomersList() {
@@ -67,7 +63,7 @@ export function CustomersList() {
           Customers
         </h1>
         <Link to="/admin/customers/new">
-          <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New customer</Button>
+          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New customer</Button>
         </Link>
       </div>
 
@@ -104,7 +100,7 @@ export function CustomersList() {
           action={
             !debounced ? (
               <Link to="/admin/customers/new">
-                <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New customer</Button>
+                <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New customer</Button>
               </Link>
             ) : undefined
           }

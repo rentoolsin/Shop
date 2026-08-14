@@ -1,3 +1,4 @@
+import { LayoutGrid, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminCategories } from "../../../hooks/useAdminData";
@@ -12,14 +13,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
 
 function CategoryIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <rect x="3.5" y="3.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="11" y="3.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="3.5" y="11" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="11" y="11" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
+  return <LayoutGrid className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 export function CategoriesList() {
@@ -53,7 +47,7 @@ export function CategoriesList() {
           Categories
         </h1>
         <Link to="/admin/categories/new">
-          <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New category</Button>
+          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New category</Button>
         </Link>
       </div>
 
@@ -76,7 +70,7 @@ export function CategoriesList() {
           description="Create your first category to start organizing products."
           action={
             <Link to="/admin/categories/new">
-              <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New category</Button>
+              <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New category</Button>
             </Link>
           }
         />

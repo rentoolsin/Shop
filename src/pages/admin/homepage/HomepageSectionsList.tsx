@@ -1,3 +1,4 @@
+import { LayoutTemplate } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminHomepageSections } from "../../../hooks/useAdminData";
 import { HOMEPAGE_SECTION_LABEL } from "../../../utils/homepage-content";
@@ -8,12 +9,7 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 
 function HomepageIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <path d="M3 9.5 10 4l7 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 8.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <LayoutTemplate className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 export function HomepageSectionsList() {

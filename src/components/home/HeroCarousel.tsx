@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { HeroSlide } from "../../utils/homepage-content";
@@ -6,16 +7,10 @@ const AUTOPLAY_MS = 4500;
 const RESUME_AFTER_INTERACTION_MS = 6000;
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" width={18} height={18}>
-      <path
-        d={direction === "left" ? "M12.5 4.5 6.5 10l6 5.5" : "M7.5 4.5 13.5 10l-6 5.5"}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+  return direction === "left" ? (
+    <ChevronLeft width={18} height={18} strokeWidth={1.8} />
+  ) : (
+    <ChevronRight width={18} height={18} strokeWidth={1.8} />
   );
 }
 

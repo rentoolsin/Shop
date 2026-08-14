@@ -1,3 +1,4 @@
+import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -19,9 +20,7 @@ export function PageHeader({ title, action, showBack = true }: PageHeaderProps) 
             aria-label="Go back"
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
           >
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} className="h-5 w-5">
-              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
           </button>
         )}
         <h1 className="truncate font-display text-[16px] font-semibold text-ink dark:text-ink-inverted">

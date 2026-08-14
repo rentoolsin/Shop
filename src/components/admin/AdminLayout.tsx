@@ -1,3 +1,4 @@
+import { ChevronLeft, ClipboardList, HelpCircle, LayoutTemplate, LogOut, Settings as SettingsIcon, BarChart3 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
@@ -20,12 +21,7 @@ const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[]
   {
     to: "/admin/purchase-requests",
     label: "Purchase Requests",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <path d="M4 3.5h9l3 3V16a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M7 9h6M7 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <ClipboardList className="h-[18px] w-[18px]" strokeWidth={1.6} />,
   },
   {
     to: "/admin/rentals",
@@ -50,55 +46,31 @@ const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[]
   {
     to: "/admin/reports",
     label: "Reports",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <path d="M4 16.5V9M10 16.5V3.5M16 16.5v-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <BarChart3 className="h-[18px] w-[18px]" strokeWidth={1.6} />,
   },
   {
     to: "/admin/homepage",
     label: "Homepage",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <path d="M3 9.5 10 4l7 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M5 8.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    icon: <LayoutTemplate className="h-[18px] w-[18px]" strokeWidth={1.6} />,
   },
   {
     to: "/admin/settings",
     label: "Settings",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.6" />
-        <path
-          d="M10 3.5v1.6M10 14.9v1.6M16.5 10h-1.6M5.1 10H3.5M14.6 5.4l-1.13 1.13M6.53 13.47 5.4 14.6M14.6 14.6l-1.13-1.13M6.53 6.53 5.4 5.4"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <SettingsIcon className="h-[18px] w-[18px]" strokeWidth={1.6} />,
   },
 ];
 
 function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className={["h-4 w-4 transition-transform duration-150 ease-app", collapsed ? "rotate-180" : ""].join(" ")}>
-      <path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <ChevronLeft
+      className={["h-4 w-4 transition-transform duration-150 ease-app", collapsed ? "rotate-180" : ""].join(" ")}
+      strokeWidth={1.7}
+    />
   );
 }
 
 function HelpIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M7.8 8a2.2 2.2 0 1 1 3.15 1.98c-.65.32-1.15.72-1.15 1.52v.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="10" cy="14.1" r="0.15" fill="currentColor" stroke="currentColor" strokeWidth="0.9" />
-    </svg>
-  );
+  return <HelpCircle className="h-[18px] w-[18px]" strokeWidth={1.6} />;
 }
 
 export function AdminLayout() {
@@ -228,9 +200,7 @@ export function AdminLayout() {
               onClick={handleSignOut}
               className="mx-auto mt-2 flex h-9 w-9 items-center justify-center rounded-lg text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
             >
-              <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-                <path d="M8 3.5H5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h3M13.5 13.5 17 10l-3.5-3.5M17 10H7.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <LogOut className="h-[18px] w-[18px]" strokeWidth={1.6} />
             </button>
           )}
         </div>

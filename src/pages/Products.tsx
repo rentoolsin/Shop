@@ -1,3 +1,4 @@
+import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -39,9 +40,7 @@ export function Products() {
             onClick={() => setFilterOpen(true)}
             className="mr-1 flex h-10 items-center gap-1.5 rounded px-3 font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
           >
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-4 w-4">
-              <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeLinecap="round" />
-            </svg>
+            <SlidersHorizontal className="h-4 w-4" strokeWidth={1.6} />
             Filter
           </button>
         }

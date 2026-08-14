@@ -1,3 +1,4 @@
+import { Check, Heart } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -16,35 +17,14 @@ import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 import { parseProductDescription } from "../utils/product-features";
 
 function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill={filled ? "currentColor" : "none"}
-      strokeWidth={1.8}
-      className="h-5 w-5"
-    >
-      <path
-        d="M12 20.2c-.2 0-.4-.1-.6-.2C7.9 17.6 3 14 3 9.6 3 6.8 5.2 4.6 8 4.6c1.6 0 3 .7 4 1.9 1-1.2 2.4-1.9 4-1.9 2.8 0 5 2.2 5 5 0 4.4-4.9 8-8.4 10.4-.2.1-.4.2-.6.2Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <Heart fill={filled ? "currentColor" : "none"} strokeWidth={1.8} className="h-5 w-5" />;
 }
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 flex-shrink-0">
-      <circle cx="12" cy="12" r="10" fill="currentColor" className="text-accent-500" />
-      <path
-        d="M8 12.5l2.5 2.5L16 9.5"
-        stroke="white"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-accent-500">
+      <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+    </span>
   );
 }
 

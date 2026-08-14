@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useInstallPrompt, type InstallAppId } from "../../hooks/useInstallPrompt";
 import { Button } from "../ui/Button";
 
@@ -58,9 +59,7 @@ export function InstallAppBanner({
           aria-label="Dismiss install prompt"
           className="-mr-1 -mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-graphite-400 transition-colors duration-150 ease-app hover:bg-graphite-100 hover:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
         >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} className="h-4 w-4">
-            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeLinecap="round" />
-          </svg>
+          <X className="h-4 w-4" strokeWidth={1.8} />
         </button>
       </div>
       <div className="mt-3 flex items-center gap-2 pl-[56px]">

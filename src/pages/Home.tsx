@@ -1,3 +1,4 @@
+import { ArrowRight, ChevronRight } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MobileHeader } from "../components/layout/MobileHeader";
@@ -39,9 +40,7 @@ function SectionHeading({
           className="inline-flex items-center gap-0.5 font-body text-[12.5px] font-medium text-graphite-500 hover:text-ink dark:hover:text-ink-inverted"
         >
           View all
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="h-3.5 w-3.5">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
         </Link>
       )}
     </div>
@@ -117,14 +116,7 @@ export function Home() {
               >
                 <span className="inline-flex items-center gap-1.5">
                   Enquire now
-                  <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="h-4 w-4">
-                    <path
-                      d="M5 12h14M13 6l6 6-6 6"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <ArrowRight className="h-4 w-4" strokeWidth={2} />
                 </span>
               </Button>
               <CallButton phone={phone} label="Call" className="rounded-full" />

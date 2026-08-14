@@ -1,3 +1,4 @@
+import { ClipboardList, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminPurchaseRequests } from "../../../hooks/useAdminData";
@@ -27,12 +28,7 @@ const PRIORITY_TONE: Record<PurchaseRequestPriority, "neutral" | "warning" | "da
 };
 
 function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
-      <rect x="3.5" y="5" width="13" height="11" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M6.5 3v3M13.5 3v3M3.5 8.5h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+  return <ClipboardList className="h-6 w-6" strokeWidth={1.5} />;
 }
 
 export function PurchaseRequestsList() {
@@ -69,7 +65,7 @@ export function PurchaseRequestsList() {
           Purchase Requests
         </h1>
         <Link to="/admin/purchase-requests/new">
-          <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New request</Button>
+          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New request</Button>
         </Link>
       </div>
 
@@ -120,7 +116,7 @@ export function PurchaseRequestsList() {
           action={
             !query && statusFilter === "all" ? (
               <Link to="/admin/purchase-requests/new">
-                <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New request</Button>
+                <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New request</Button>
               </Link>
             ) : undefined
           }

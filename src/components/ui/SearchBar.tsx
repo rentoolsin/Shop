@@ -1,3 +1,4 @@
+import { Search, X } from "lucide-react";
 import type { InputHTMLAttributes } from "react";
 
 interface SearchBarProps
@@ -10,12 +11,7 @@ interface SearchBarProps
 }
 
 function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
-      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
-      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
-    </svg>
-  );
+  return <Search strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400" />;
 }
 
 /**
@@ -63,7 +59,7 @@ export function SearchBar({
           aria-label="Clear search"
           className="text-graphite-400"
         >
-          ✕
+          <X className="h-3.5 w-3.5" strokeWidth={1.8} />
         </button>
       )}
     </div>
