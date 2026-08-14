@@ -39,8 +39,16 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToIndex = useCallback((index: number) => {
+    const track = trackRef.current;
     const el = slideRefs.current[index];
-    el?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    if (!track || !el) return;
+    // Scroll only the carousel's own track, not any ancestor. `Element.scrollIntoView`
+    // (even with `block: "nearest"`) can walk up the DOM and adjust *any* scrollable
+    // ancestor — including the page/window — to bring the target into view. On the
+    // home page that meant every autoplay tick (or arrow/dot tap) could yank the whole
+    // page's vertical scroll position back to the hero, moving everything below it.
+    // Scrolling the track directly via its own scroll container avoids that entirely.
+    track.scrollTo({ left: el.offsetLeft, behavior: "smooth" });
   }, []);
 
   // Track which slide is centered using IntersectionObserver — robust to

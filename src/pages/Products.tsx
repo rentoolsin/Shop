@@ -60,15 +60,16 @@ export function Products() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 p-4">
-        {products.status === "loading" &&
-          Array.from({ length: 6 }).map((_, i) => (
+      {products.status === "loading" && (
+        <div className="grid grid-cols-2 gap-3 p-4">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
               <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
               <Skeleton className="mt-1 h-4 w-full" />
             </div>
           ))}
-      </div>
+        </div>
+      )}
 
       {products.status === "error" && (
         <ErrorState title="Couldn't load tools" onRetry={products.refetch} />

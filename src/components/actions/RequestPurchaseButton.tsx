@@ -5,12 +5,14 @@ interface RequestPurchaseButtonProps {
   productName?: string;
   fullWidth?: boolean;
   label?: string;
+  className?: string;
 }
 
 export function RequestPurchaseButton({
   productName,
   fullWidth,
   label = "Request when in stock",
+  className = "",
 }: RequestPurchaseButtonProps) {
   const navigate = useNavigate();
 
@@ -18,6 +20,7 @@ export function RequestPurchaseButton({
     <Button
       variant="primary"
       fullWidth={fullWidth}
+      className={className}
       onClick={() => navigate("/request-purchase", { state: { productName } })}
     >
       {label}
