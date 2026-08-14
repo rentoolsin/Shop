@@ -14,7 +14,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const base = pill
       ? baseFieldClass(!!error)
           .replace("h-11", "h-12")
-          .replace("rounded ", "rounded-full ")
+          .replace("rounded-lg", "rounded-full")
           .replace("px-3", "px-4")
       : baseFieldClass(!!error);
     return (

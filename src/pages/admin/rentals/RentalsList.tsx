@@ -19,6 +19,7 @@ import {
 import { formatCurrency } from "../../../utils/currency";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
+import { SearchBar } from "../../../components/ui/SearchBar";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
@@ -59,23 +60,6 @@ function PlusIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
       <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
-      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
-      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function FilterIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 text-graphite-500">
-      <path d="M3.5 5h13M6 10h8M8.5 15h3" stroke="currentColor" strokeLinecap="round" />
     </svg>
   );
 }
@@ -244,7 +228,7 @@ export function RentalsList() {
           Rentals
         </h1>
         <Link to="/admin/rentals/new">
-          <Button size="md" className="rounded-full px-4">
+          <Button size="md">
             <PlusIcon />
             New rental
           </Button>
@@ -268,33 +252,17 @@ export function RentalsList() {
         </button>
       </div>
 
-      <div className="mb-3 flex items-center gap-2">
-        <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-graphite-200 bg-white px-4 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
-          <SearchIcon />
-          <input
-            type="search"
-            inputMode="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by customer or mobile"
-            aria-label="Search by customer name or mobile"
-            className="h-full min-w-0 flex-1 overflow-hidden text-ellipsis bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
-          />
-        </div>
-        <button
-          type="button"
-          aria-label="Filter rentals"
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-graphite-200 bg-white shadow-card dark:border-graphite-800 dark:bg-graphite-900"
-        >
-          <FilterIcon />
-        </button>
-      </div>
-
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by customer or mobile"
+          aria-label="Search by customer name or mobile"
+        />
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as "all" | RentalDisplayStatus)}
-          pill
+          className="sm:w-44"
         >
           <option value="all">All statuses</option>
           {(Object.keys(STATUS_LABEL) as RentalDisplayStatus[]).map((s) => (
@@ -318,7 +286,7 @@ export function RentalsList() {
       {rentals.status === "success" && rows.length === 0 && (
         <EmptyState
           size="lg"
-          className="rounded-[20px] py-16 shadow-card"
+          className="shadow-card"
           icon={<CalendarIcon className="h-9 w-9" />}
           title={data.length === 0 ? "No rentals yet" : "No rentals matched"}
           description={
@@ -329,7 +297,7 @@ export function RentalsList() {
           action={
             data.length === 0 ? (
               <Link to="/admin/rentals/new">
-                <Button size="md" className="rounded-full px-5">
+                <Button size="md">
                   <PlusIcon />
                   New rental
                 </Button>
@@ -354,9 +322,9 @@ export function RentalsList() {
             {pageItems.map((rental) => {
               const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
               return (
-                <Card key={rental.id} className="overflow-hidden rounded-[18px] p-3">
+                <Card key={rental.id} className="overflow-hidden p-3">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-graphite-100 dark:bg-graphite-800">
+                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-graphite-100 dark:bg-graphite-800">
                       {rental.productImageUrl ? (
                         <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -397,16 +365,16 @@ export function RentalsList() {
 
                   {actionable && (
                     <div className="mt-3 flex flex-wrap gap-2 border-t border-graphite-100 pt-3 dark:border-graphite-800">
-                      <Button variant="secondary" size="sm" className="rounded-full" onClick={() => startExtend(rental)}>
+                      <Button variant="secondary" size="sm" onClick={() => startExtend(rental)}>
                         Extend
                       </Button>
-                      <Button variant="secondary" size="sm" className="rounded-full" onClick={() => setReturning(rental)}>
+                      <Button variant="secondary" size="sm" onClick={() => setReturning(rental)}>
                         Mark returned
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="rounded-full text-state-danger"
+                        className="text-state-danger"
                         onClick={() => setCancelling(rental)}
                       >
                         Cancel

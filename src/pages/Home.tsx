@@ -7,6 +7,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { Button } from "../components/ui/Button";
+import { SearchBar } from "../components/ui/SearchBar";
 import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
 import { useCategories } from "../hooks/useCategories";
@@ -69,21 +70,12 @@ export function Home() {
             <label htmlFor="home-search" className="sr-only">
               Search tools
             </label>
-            <div className="flex items-center gap-2 rounded border border-graphite-200 bg-white px-3 dark:border-graphite-800 dark:bg-graphite-900">
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} className="h-4 w-4 flex-shrink-0 text-graphite-400">
-                <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
-                <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
-              </svg>
-              <input
-                id="home-search"
-                type="search"
-                inputMode="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search ladders, cutters, motors…"
-                className="h-11 flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
-              />
-            </div>
+            <SearchBar
+              id="home-search"
+              value={query}
+              onChange={setQuery}
+              placeholder="Search ladders, cutters, motors…"
+            />
           </form>
 
           <div className="mt-4 flex gap-2">

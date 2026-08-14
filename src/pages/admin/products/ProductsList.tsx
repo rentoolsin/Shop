@@ -7,6 +7,7 @@ import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Select } from "../../../components/ui/Select";
+import { SearchBar } from "../../../components/ui/SearchBar";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
@@ -112,26 +113,12 @@ export function ProductsList() {
       </div>
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
-            <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
-            <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
-          </svg>
-          <input
-            type="search"
-            inputMode="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or category"
-            aria-label="Search by name or category"
-            className="h-full min-w-0 flex-1 overflow-hidden text-ellipsis bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
-          />
-          {search && (
-            <button onClick={() => setSearch("")} aria-label="Clear search" className="text-graphite-400">
-              ✕
-            </button>
-          )}
-        </div>
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by name or category"
+          aria-label="Search by name or category"
+        />
         <Select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}

@@ -1,0 +1,71 @@
+import type { InputHTMLAttributes } from "react";
+
+interface SearchBarProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className" | "onChange" | "value"> {
+  value: string;
+  onChange: (value: string) => void;
+  onClear?: () => void;
+  /** Extra classes for the outer field wrapper — e.g. layout hints from the parent row. */
+  containerClassName?: string;
+}
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
+      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
+      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/**
+ * Canonical search field used across every list page (Rentals, Products, Enquiries,
+ * Purchase Requests, Customers) and the customer-facing Home/Search pages.
+ *
+ * `w-full` + `sm:flex-1` (rather than a bare `flex-1`) keeps this correctly sized at
+ * h-11 whether it sits alone, or beside a filter `Select` in a `flex-col sm:flex-row`
+ * row — a bare `flex-1` collapses the field's height when the parent is `flex-col`
+ * (mobile), because flex-grow along a column's main axis fights the fixed height.
+ */
+export function SearchBar({
+  value,
+  onChange,
+  onClear,
+  placeholder,
+  containerClassName = "",
+  id,
+  ...rest
+}: SearchBarProps) {
+  return (
+    <div
+      className={[
+        "flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card",
+        "dark:border-graphite-800 dark:bg-graphite-900",
+        "sm:w-auto sm:flex-1",
+        containerClassName,
+      ].join(" ")}
+    >
+      <SearchIcon />
+      <input
+        id={id}
+        type="search"
+        inputMode="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-full min-w-0 flex-1 overflow-hidden text-ellipsis bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
+        {...rest}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => (onClear ? onClear() : onChange(""))}
+          aria-label="Clear search"
+          className="text-graphite-400"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}

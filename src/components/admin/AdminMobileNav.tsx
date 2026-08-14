@@ -38,7 +38,7 @@ export function AdminMobileNav() {
                 <>
                   <span
                     className={[
-                      "flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-150 ease-app",
+                      "flex h-8 w-12 items-center justify-center rounded-lg transition-colors duration-150 ease-app",
                       isActive ? "bg-graphite-900 text-white dark:bg-white dark:text-graphite-900" : "",
                     ].join(" ")}
                   >
