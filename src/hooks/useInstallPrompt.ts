@@ -35,6 +35,45 @@ function wasRecentlyDismissed(appId: InstallAppId): boolean {
   return Date.now() - dismissedAt < DISMISS_COOLDOWN_MS;
 }
 
+// --- Module-scope capture -------------------------------------------------
+// `beforeinstallprompt` fires exactly once and is easy to miss: it can arrive
+// before React has mounted anything, and on admin it can arrive while the
+// user is on `/admin/login` — a route that renders outside `AdminLayout` and
+// so never mounts `AdminMobileNav`/`InstallAppBanner` at all. Attaching the
+// listener inside a component's `useEffect` only works if that exact
+// component happens to be mounted at the moment the browser decides to fire.
+//
+// Instead we register the listener here, at the top of the module, which
+// runs the instant this file is evaluated — i.e. during initial script
+// execution, before `createRoot().render()` ever runs (this module is
+// statically imported from `App.tsx`, which `main.tsx` imports directly, so
+// it's part of the very first synchronous import chain, not a lazy chunk).
+// Every `useInstallPrompt()` call anywhere in the tree reads the same shared
+// state, so it doesn't matter which route/component mounts first or last —
+// nothing gets missed.
+const singleton: { deferredPrompt: BeforeInstallPromptEvent | null; installed: boolean } = {
+  deferredPrompt: null,
+  installed: isStandalone(),
+};
+const subscribers = new Set<() => void>();
+function emit() {
+  subscribers.forEach((notify) => notify());
+}
+
+if (typeof window !== "undefined" && !singleton.installed) {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    singleton.deferredPrompt = e as BeforeInstallPromptEvent;
+    emit();
+  });
+  window.addEventListener("appinstalled", () => {
+    singleton.installed = true;
+    singleton.deferredPrompt = null;
+    emit();
+  });
+}
+// ---------------------------------------------------------------------------
+
 /**
  * Wraps the browser's `beforeinstallprompt` flow. Chromium-based browsers
  * fire this once the PWA install criteria (manifest + service worker +
@@ -44,37 +83,29 @@ function wasRecentlyDismissed(appId: InstallAppId): boolean {
  * show an install affordance on iOS beyond documentation/instructions.
  */
 export function useInstallPrompt(appId: InstallAppId = "public") {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(isStandalone());
+  // Cheap re-render trigger: the actual event state lives on `singleton`
+  // (see above) so every hook instance reflects the same captured prompt,
+  // no matter when it mounted relative to the event firing.
+  const [, setTick] = useState(0);
   const [dismissed, setDismissed] = useState(() => wasRecentlyDismissed(appId));
 
   useEffect(() => {
-    if (isStandalone()) return;
-
-    const onBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-    const onInstalled = () => {
-      setInstalled(true);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-    window.addEventListener("appinstalled", onInstalled);
+    const notify = () => setTick((t) => t + 1);
+    subscribers.add(notify);
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
+      subscribers.delete(notify);
     };
   }, []);
 
   const promptInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!singleton.deferredPrompt) return;
+    const { deferredPrompt } = singleton;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     // Whether accepted or dismissed, the captured event is one-shot — the
     // browser won't let it be re-prompted, so clear it either way.
-    setDeferredPrompt(null);
+    singleton.deferredPrompt = null;
+    emit();
     if (outcome === "dismissed") {
       window.localStorage.setItem(dismissedKey(appId), String(Date.now()));
       setDismissed(true);
@@ -87,8 +118,8 @@ export function useInstallPrompt(appId: InstallAppId = "public") {
   };
 
   return {
-    canInstall: !!deferredPrompt && !installed && !dismissed,
-    installed,
+    canInstall: !!singleton.deferredPrompt && !singleton.installed && !dismissed,
+    installed: singleton.installed,
     promptInstall,
     dismiss,
   };

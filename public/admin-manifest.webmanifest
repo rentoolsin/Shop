@@ -2,7 +2,7 @@
   "name": "RenTools Admin",
   "short_name": "RTA",
   "description": "Manage rentals, products, customers, and requests for RenTools.",
-  "start_url": "/admin",
+  "start_url": "/admin/",
   "scope": "/admin/",
   "display": "standalone",
   "background_color": "#F7F7F5",
