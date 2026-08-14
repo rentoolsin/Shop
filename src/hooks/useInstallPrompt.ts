@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 
-const DISMISSED_KEY = "rentools-install-dismissed-at";
+// "public" keeps the original, un-namespaced key so anyone who already
+// dismissed the customer-app banner before the admin app existed keeps that
+// cooldown rather than getting re-prompted right away.
+function dismissedKey(appId: InstallAppId): string {
+  return appId === "public" ? "rentools-install-dismissed-at" : `rentools-install-dismissed-at-${appId}`;
+}
 // Re-offer the banner after a cooldown rather than never again — someone who
 // dismissed it once may still want to install later, but re-prompting every
 // visit is the kind of nagging this design system explicitly avoids.
 const DISMISS_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+export type InstallAppId = "public" | "admin";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -20,8 +27,8 @@ function isStandalone(): boolean {
   );
 }
 
-function wasRecentlyDismissed(): boolean {
-  const raw = window.localStorage.getItem(DISMISSED_KEY);
+function wasRecentlyDismissed(appId: InstallAppId): boolean {
+  const raw = window.localStorage.getItem(dismissedKey(appId));
   if (!raw) return false;
   const dismissedAt = Number(raw);
   if (Number.isNaN(dismissedAt)) return false;
@@ -36,10 +43,10 @@ function wasRecentlyDismissed(): boolean {
  * action), so `canInstall` simply stays false there and callers should not
  * show an install affordance on iOS beyond documentation/instructions.
  */
-export function useInstallPrompt() {
+export function useInstallPrompt(appId: InstallAppId = "public") {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(isStandalone());
-  const [dismissed, setDismissed] = useState(wasRecentlyDismissed);
+  const [dismissed, setDismissed] = useState(() => wasRecentlyDismissed(appId));
 
   useEffect(() => {
     if (isStandalone()) return;
@@ -69,13 +76,13 @@ export function useInstallPrompt() {
     // browser won't let it be re-prompted, so clear it either way.
     setDeferredPrompt(null);
     if (outcome === "dismissed") {
-      window.localStorage.setItem(DISMISSED_KEY, String(Date.now()));
+      window.localStorage.setItem(dismissedKey(appId), String(Date.now()));
       setDismissed(true);
     }
   };
 
   const dismiss = () => {
-    window.localStorage.setItem(DISMISSED_KEY, String(Date.now()));
+    window.localStorage.setItem(dismissedKey(appId), String(Date.now()));
     setDismissed(true);
   };
 

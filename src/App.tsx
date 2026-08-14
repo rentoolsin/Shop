@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
+import { useManifestForRoute } from "./hooks/useManifestForRoute";
 import { LoadingState } from "./components/ui/LoadingState";
 import { Home } from "./pages/Home";
 import { Products } from "./pages/Products";
@@ -114,6 +115,7 @@ function CustomerApp() {
 
 export function App() {
   useScrollRestoration();
+  useManifestForRoute();
 
   return (
     <Suspense fallback={<LoadingState label="Loading…" />}>
