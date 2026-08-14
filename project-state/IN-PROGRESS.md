@@ -1,0 +1,81 @@
+# In Progress
+
+Nothing left mid-implementation at the end of Session 16.
+
+## Session 16 — Client-side pagination for admin lists (TODO item 13, pagination piece)
+
+Picked up mid-session work left by the previous account: a shared
+`usePagination` hook and `Pagination` control had been built and wired
+into all five admin list pages (Products, Customers, Enquiries, Purchase
+Requests, Rentals), but `usePagination.ts` and `Pagination.tsx` had been
+created in the wrong directories
+(`src/pages/admin/purchase-requests/usePagination.ts` and
+`src/pages/admin/Pagination.tsx`) while every list imported them from
+`src/hooks/usePagination` and `src/components/ui/Pagination` — those
+paths didn't exist, so the app didn't build. `RentalsList.tsx` was also
+left mid-edit: it called `usePagination` but still rendered the
+unpaginated `rows.map(...)` and never rendered the `<Pagination>`
+control.
+
+Fixed:
+- Moved the two files to their correct reusable locations
+  (`src/hooks/usePagination.ts`, `src/components/ui/Pagination.tsx`).
+- `RentalsList.tsx`: switched the render to `pageItems.map(...)` and
+  added the `<Pagination>` control after the list, matching the pattern
+  already correct in the other four list pages.
+- Removed a now-unnecessary `eslint-disable-next-line` in
+  `usePagination.ts` that lint flagged as unused after the move.
+
+`usePagination` slices an already-fetched, already-filtered array
+client-side (pageSize 20, `resetKey` resets to page 1 on filter/search
+change, defensively clamps if the result set shrinks) — this project's
+established fetch-all-then-derive pattern is unchanged; pagination only
+bounds what's rendered, not what's fetched. Real server-side pagination
+was ruled out for Rentals specifically since `displayStatus` (due_today/
+overdue) is derived client-side via `deriveDisplayStatus()`, not a plain
+filterable DB column.
+
+Verified `npm install` / `npm run typecheck` / `npm run lint` /
+`npm run build` all pass.
+
+Not verified: actual scroll/visual behavior of the pager on a real
+device, and whether 20-per-page is the right size against real data
+volume (no live Supabase project or real device in this environment,
+same limitation as everything else — see "Known limitations").
+
+Still open from TODO item 13: visual dark-mode QA and a full
+screen-reader pass on a real device/browser — confirmed still genuinely
+blocked (attempted a headless-browser install; network egress here only
+reaches package registries, not browser-download CDNs).
+
+---
+
+Session 15 recap (previous):
+
+Session 15 re-confirmed (per the recovery process) that this session's
+five flagged items — Enquiries, Enquiry→Rental conversion, Purchase
+Requests, Admin Dashboard, Reports — and Homepage CMS were all already
+genuinely complete, then built the Settings screen per explicit user
+direction after confirming scope (business contact info, appearance,
+admin account):
+
+- New `site_settings` singleton table (`0008_site_settings.sql`),
+  seeded with the real values previously hard-coded across
+  `src/utils/contact.ts` (now deleted), `Contact.tsx`, and
+  `Location.tsx`.
+- `/admin/settings`: contact-info form (phone/WhatsApp/email/address),
+  appearance toggle (light/dark/system, built on the existing
+  `useTheme`), admin-account form (change email/password via Supabase
+  Auth).
+- `Home.tsx`, `ProductDetail.tsx`, `Contact.tsx`, `Location.tsx` switched
+  from hard-coded constants to `useSiteSettings()`, with the same
+  defaults used as a loading/error fallback so none of these pages
+  regressed.
+
+`npm install` / `npm run typecheck` / `npm run lint` / `npm run build`
+all pass end-to-end.
+
+There is no further purely-code-level TODO item open right now — see
+CURRENT-STATE.md "Next TODO" for what's next (needs either new
+direction from the user, a real Supabase project, or a real
+device/browser for the still-blocked parts of TODO item 13).

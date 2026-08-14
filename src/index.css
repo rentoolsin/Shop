@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-graphite-50 text-ink font-body antialiased;
+    @apply dark:bg-graphite-950 dark:text-ink-inverted;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  /* Visible keyboard focus everywhere — never rely on color alone. */
+  :focus-visible {
+    outline: 2px solid theme("colors.signal.500");
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* App shell: mobile canvas centered on wide viewports, full-bleed below. */
+  .app-shell {
+    @apply mx-auto w-full max-w-app min-h-screen bg-graphite-50 dark:bg-graphite-950;
+    @apply relative flex flex-col;
+  }
+
+  /* Signature element: the equipment "spec tag" — used for price/status,
+     echoes the physical rental tags tied to real tool-yard equipment. */
+  .spec-tag {
+    @apply inline-flex items-center gap-1 rounded-sm border border-graphite-200
+      bg-graphite-25 px-2 py-1 font-mono text-[13px] font-medium leading-none
+      text-graphite-700 dark:border-graphite-700 dark:bg-graphite-900 dark:text-graphite-300;
+  }
+
+  .spec-tag--accent {
+    @apply border-signal-500/40 bg-signal-50 text-signal-700
+      dark:border-signal-500/40 dark:bg-signal-500/10 dark:text-signal-300;
+  }
+}

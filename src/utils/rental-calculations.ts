@@ -1,0 +1,113 @@
+/**
+ * Authoritative rental math. Every screen that shows or edits a rental total
+ * must call these functions — do not re-derive the formula elsewhere.
+ * Mirrored (not duplicated) by the DB check constraints / RPC in
+ * supabase/migrations/0001_init_schema.sql, which is the enforcement layer.
+ */
+
+export interface RentalInput {
+  startDate: string; // ISO date, e.g. "2026-08-13"
+  returnDate: string; // ISO date
+  dailyRate: number;
+  quantity: number;
+  advance: number;
+}
+
+export interface RentalTotals {
+  rentalDays: number;
+  totalRental: number;
+  balance: number;
+}
+
+export type RentalValidationError =
+  | "RETURN_BEFORE_START"
+  | "QUANTITY_NOT_POSITIVE"
+  | "RATE_NEGATIVE"
+  | "ADVANCE_NEGATIVE"
+  | "ADVANCE_EXCEEDS_TOTAL";
+
+const VALIDATION_MESSAGES: Record<RentalValidationError, string> = {
+  RETURN_BEFORE_START:
+    "Return date cannot be earlier than the rental start date.",
+  QUANTITY_NOT_POSITIVE: "Quantity must be greater than zero.",
+  RATE_NEGATIVE: "Daily rental price cannot be negative.",
+  ADVANCE_NEGATIVE: "Advance cannot be negative.",
+  ADVANCE_EXCEEDS_TOTAL: "Advance cannot exceed the total rental amount.",
+};
+
+export function describeRentalError(code: RentalValidationError): string {
+  return VALIDATION_MESSAGES[code];
+}
+
+/** Inclusive day count: 13 Aug -> 15 Aug = 3 days. */
+export function calculateRentalDays(startDate: string, returnDate: string): number {
+  const start = new Date(startDate + "T00:00:00");
+  const end = new Date(returnDate + "T00:00:00");
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const diff = Math.round((end.getTime() - start.getTime()) / msPerDay);
+  return diff + 1;
+}
+
+export function validateRentalInput(
+  input: RentalInput,
+  options: { allowAdvanceOverTotal?: boolean } = {},
+): RentalValidationError[] {
+  const errors: RentalValidationError[] = [];
+
+  if (new Date(input.returnDate) < new Date(input.startDate)) {
+    errors.push("RETURN_BEFORE_START");
+  }
+  if (input.quantity <= 0) {
+    errors.push("QUANTITY_NOT_POSITIVE");
+  }
+  if (input.dailyRate < 0) {
+    errors.push("RATE_NEGATIVE");
+  }
+  if (input.advance < 0) {
+    errors.push("ADVANCE_NEGATIVE");
+  }
+
+  if (!errors.includes("RETURN_BEFORE_START") && !options.allowAdvanceOverTotal) {
+    const { totalRental } = calculateRentalTotals(input);
+    if (input.advance > totalRental) {
+      errors.push("ADVANCE_EXCEEDS_TOTAL");
+    }
+  }
+
+  return errors;
+}
+
+export function calculateRentalTotals(input: RentalInput): RentalTotals {
+  const rentalDays = calculateRentalDays(input.startDate, input.returnDate);
+  const totalRental = rentalDays * input.dailyRate * input.quantity;
+  const balance = totalRental - input.advance;
+  return { rentalDays, totalRental, balance };
+}
+
+export type RentalDisplayStatus =
+  | "active"
+  | "due_today"
+  | "overdue"
+  | "returned"
+  | "cancelled";
+
+/**
+ * Derives the status a rental should visually show right now, WITHOUT
+ * writing anything back to the DB. `due_today` / `overdue` are also written
+ * back by `sync_rental_open_statuses()` (0006_due_today_overdue_status_
+ * automation.sql), scheduled via pg_cron plus an on-demand admin "Sync
+ * statuses" action — but that only runs periodically, so this stays as a
+ * same-day, read-only UI approximation from `return_date` for the gap
+ * between a return date changing and the next sync.
+ */
+export function deriveDisplayStatus(
+  status: RentalDisplayStatus,
+  returnDate: string,
+  today: Date = new Date(),
+): RentalDisplayStatus {
+  if (status !== "active") return status;
+  const todayStr = today.toISOString().slice(0, 10);
+  if (returnDate < todayStr) return "overdue";
+  if (returnDate === todayStr) return "due_today";
+  return "active";
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)" />
+    <title>RenTools — Construction Tool &amp; Equipment Rental, Coimbatore</title>
+    <meta
+      name="description"
+      content="Rent construction tools and equipment in Coimbatore. Browse tools, check daily rates, and enquire by call or WhatsApp."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Prevent theme flash: resolve light/dark/system before paint.
+      (function () {
+        try {
+          var stored = localStorage.getItem("rentools-theme");
+          var mode =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.classList.toggle("dark", mode === "dark");
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-graphite-50 dark:bg-graphite-950">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

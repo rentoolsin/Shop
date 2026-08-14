@@ -1,0 +1,14 @@
+-- 0002_admin_seed_notes.sql
+-- No schema changes — admin_users was already created in 0001_init_schema.sql.
+-- This file documents the one manual step needed to create the first admin,
+-- since it can't be automated from a migration (it depends on an auth.users
+-- row that's created via Supabase Auth, not SQL).
+
+-- After creating a user via Supabase Dashboard → Authentication → Users
+-- (or via sign-up), grant them admin access by running:
+--
+--   insert into admin_users (user_id)
+--   values ('<the user's UUID from auth.users>');
+--
+-- There is no self-service admin sign-up in the app by design — admin
+-- accounts are provisioned manually to keep the admin surface closed.

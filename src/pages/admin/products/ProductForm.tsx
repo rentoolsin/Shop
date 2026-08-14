@@ -1,0 +1,258 @@
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAdminProduct, useAdminCategories } from "../../../hooks/useAdminData";
+import {
+  createProduct,
+  updateProduct,
+  deleteVariant,
+  type ProductFormValues,
+  type AdminVariant,
+} from "../../../services/admin-products.service";
+import { slugify } from "../../../utils/slugify";
+import { Input } from "../../../components/ui/Input";
+import { Textarea } from "../../../components/ui/Textarea";
+import { Select } from "../../../components/ui/Select";
+import { Switch } from "../../../components/ui/Switch";
+import { Button } from "../../../components/ui/Button";
+import { LoadingState } from "../../../components/ui/LoadingState";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { useToast } from "../../../components/ui/Toast";
+
+const EMPTY: ProductFormValues = {
+  name: "",
+  slug: "",
+  description: "",
+  imageUrl: "",
+  categoryId: "",
+  isFeatured: false,
+  isActive: true,
+  sortOrder: 0,
+  variants: [],
+};
+
+function emptyVariant(): AdminVariant {
+  return { id: null, label: "", dailyRate: 0, quantityTotal: 1, isActive: true };
+}
+
+export function ProductForm() {
+  const { id } = useParams<{ id: string }>();
+  const isEdit = !!id;
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const existing = useAdminProduct(id);
+  const categories = useAdminCategories();
+
+  const [values, setValues] = useState<ProductFormValues>(EMPTY);
+  const [removedVariantIds, setRemovedVariantIds] = useState<string[]>([]);
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (existing.status === "success" && existing.data) {
+      const { id: _id, ...rest } = existing.data;
+      setValues(rest);
+      setSlugTouched(true);
+    }
+  }, [existing.status, existing.data]);
+
+  if (isEdit && existing.status === "loading") return <LoadingState label="Loading product…" />;
+  if (isEdit && existing.status === "error") {
+    return <ErrorState title="Couldn't load this product" onRetry={existing.refetch} />;
+  }
+
+  const setField = <K extends keyof ProductFormValues>(field: K, value: ProductFormValues[K]) => {
+    setValues((v) => ({ ...v, [field]: value }));
+  };
+
+  const handleNameChange = (name: string) => {
+    setField("name", name);
+    if (!slugTouched) setField("slug", slugify(name));
+  };
+
+  const updateVariant = (index: number, patch: Partial<AdminVariant>) => {
+    setValues((v) => ({
+      ...v,
+      variants: v.variants.map((variant, i) => (i === index ? { ...variant, ...patch } : variant)),
+    }));
+  };
+
+  const addVariant = () => {
+    setValues((v) => ({ ...v, variants: [...v.variants, emptyVariant()] }));
+  };
+
+  const removeVariant = (index: number) => {
+    const variant = values.variants[index];
+    if (variant.id) setRemovedVariantIds((ids) => [...ids, variant.id!]);
+    setValues((v) => ({ ...v, variants: v.variants.filter((_, i) => i !== index) }));
+  };
+
+  const validate = (): boolean => {
+    const next: Record<string, string> = {};
+    if (!values.name.trim()) next.name = "Enter a product name.";
+    if (!values.slug.trim()) next.slug = "Enter a URL slug.";
+    if (!values.categoryId) next.categoryId = "Choose a category.";
+    values.variants.forEach((variant, i) => {
+      if (!variant.label.trim()) next[`variant-${i}-label`] = "Enter a size/label.";
+      if (variant.dailyRate < 0) next[`variant-${i}-rate`] = "Rate cannot be negative.";
+      if (variant.quantityTotal <= 0) next[`variant-${i}-qty`] = "Quantity must be greater than zero.";
+    });
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (submitting || !validate()) return;
+    setSubmitting(true);
+    try {
+      for (const variantId of removedVariantIds) {
+        await deleteVariant(variantId);
+      }
+      if (isEdit) {
+        await updateProduct(id!, values);
+        showToast("Product updated.", "success");
+      } else {
+        await createProduct(values);
+        showToast("Product created.", "success");
+      }
+      navigate("/admin/products");
+    } catch {
+      showToast(
+        "Couldn't save this product. Some variants may have rental history and can't be removed.",
+        "danger",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-lg">
+      <h1 className="mb-4 font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
+        {isEdit ? "Edit product" : "New product"}
+      </h1>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <Input label="Name" value={values.name} onChange={(e) => handleNameChange(e.target.value)} error={errors.name} />
+        <Input
+          label="Slug"
+          value={values.slug}
+          onChange={(e) => {
+            setSlugTouched(true);
+            setField("slug", slugify(e.target.value));
+          }}
+          error={errors.slug}
+        />
+        <Select
+          label="Category"
+          value={values.categoryId}
+          onChange={(e) => setField("categoryId", e.target.value)}
+          error={errors.categoryId}
+        >
+          <option value="">Choose a category…</option>
+          {categories.status === "success" &&
+            categories.data.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+        </Select>
+        <Textarea
+          label="Description"
+          value={values.description}
+          onChange={(e) => setField("description", e.target.value)}
+        />
+        <Input
+          label="Image URL"
+          value={values.imageUrl}
+          onChange={(e) => setField("imageUrl", e.target.value)}
+          hint="Optional — leave blank to show a placeholder."
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Sort order"
+            type="number"
+            value={values.sortOrder}
+            onChange={(e) => setField("sortOrder", Number(e.target.value))}
+          />
+        </div>
+        <Switch label="Featured on homepage" checked={values.isFeatured} onChange={(v) => setField("isFeatured", v)} />
+        <Switch label="Active (visible to customers)" checked={values.isActive} onChange={(v) => setField("isActive", v)} />
+
+        <div className="border-t border-graphite-200 pt-4 dark:border-graphite-800">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-body text-[14px] font-semibold text-ink dark:text-ink-inverted">
+              Variants
+            </h2>
+            <Button type="button" variant="secondary" size="sm" onClick={addVariant}>
+              Add variant
+            </Button>
+          </div>
+
+          {values.variants.length === 0 && (
+            <p className="font-body text-[13px] text-graphite-500">
+              No variants yet — customers will see "Rate on enquiry" until you add at least one.
+            </p>
+          )}
+
+          <div className="space-y-3">
+            {values.variants.map((variant, index) => (
+              <div
+                key={variant.id ?? `new-${index}`}
+                className="rounded border border-graphite-200 p-3 dark:border-graphite-800"
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label="Size / label"
+                    value={variant.label}
+                    onChange={(e) => updateVariant(index, { label: e.target.value })}
+                    error={errors[`variant-${index}-label`]}
+                  />
+                  <Input
+                    label="Daily rate (₹)"
+                    type="number"
+                    min={0}
+                    value={variant.dailyRate}
+                    onChange={(e) => updateVariant(index, { dailyRate: Number(e.target.value) })}
+                    error={errors[`variant-${index}-rate`]}
+                  />
+                  <Input
+                    label="Quantity"
+                    type="number"
+                    min={1}
+                    value={variant.quantityTotal}
+                    onChange={(e) => updateVariant(index, { quantityTotal: Number(e.target.value) })}
+                    error={errors[`variant-${index}-qty`]}
+                  />
+                  <div className="flex items-end">
+                    <Switch
+                      label="Active"
+                      checked={variant.isActive}
+                      onChange={(v) => updateVariant(index, { isActive: v })}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 text-state-danger"
+                  onClick={() => removeVariant(index)}
+                >
+                  Remove variant
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <Button variant="secondary" fullWidth type="button" onClick={() => navigate("/admin/products")}>
+            Cancel
+          </Button>
+          <Button fullWidth type="submit" disabled={submitting}>
+            {submitting ? "Saving…" : "Save"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
