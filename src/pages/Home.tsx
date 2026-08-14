@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MobileHeader } from "../components/layout/MobileHeader";
 import { CategoryCard } from "../components/products/CategoryCard";
 import { ProductCard } from "../components/products/ProductCard";
@@ -9,6 +9,7 @@ import { ErrorState } from "../components/ui/ErrorState";
 import { Button } from "../components/ui/Button";
 import { SearchBar } from "../components/ui/SearchBar";
 import { HeroCarousel } from "../components/home/HeroCarousel";
+import { TrustBar } from "../components/home/TrustBar";
 import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
 import { FloatingWhatsApp } from "../components/actions/FloatingWhatsApp";
@@ -19,11 +20,31 @@ import { HOMEPAGE_SECTION_DEFAULTS } from "../utils/homepage-content";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 
-function SectionHeading({ title }: { title: string }) {
+function SectionHeading({
+  title,
+  viewAllTo,
+}: {
+  title: string;
+  /** Optional in-app path — renders a "View all ›" link on the right when set. */
+  viewAllTo?: string;
+}) {
   return (
-    <h2 className="px-4 font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">
-      {title}
-    </h2>
+    <div className="flex items-center justify-between px-4">
+      <h2 className="font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">
+        {title}
+      </h2>
+      {viewAllTo && (
+        <Link
+          to={viewAllTo}
+          className="inline-flex items-center gap-0.5 font-body text-[12.5px] font-medium text-graphite-500 hover:text-ink dark:hover:text-ink-inverted"
+        >
+          View all
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="h-3.5 w-3.5">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -84,14 +105,29 @@ export function Home() {
                 value={query}
                 onChange={setQuery}
                 placeholder="Search ladders, cutters, motors…"
+                containerClassName="h-12 rounded-full"
               />
             </form>
 
-            <div className="mt-4 flex gap-2">
-              <Button onClick={() => navigate("/enquire")} className="flex-1">
-                Enquire now
+            <div className="mt-3 flex gap-2">
+              <Button
+                variant="accent"
+                onClick={() => navigate("/enquire")}
+                className="flex-1 rounded-full"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  Enquire now
+                  <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="h-4 w-4">
+                    <path
+                      d="M5 12h14M13 6l6 6-6 6"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
               </Button>
-              <CallButton phone={phone} label="Call" />
+              <CallButton phone={phone} label="Call" className="rounded-full" />
             </div>
           </div>
         </section>
@@ -99,7 +135,7 @@ export function Home() {
 
       {/* Categories */}
       <section className="mb-7">
-        <SectionHeading title="Categories" />
+        <SectionHeading title="Categories" viewAllTo="/products" />
         <div className="mt-3">
           {categories.status === "loading" && (
             <HorizontalScroller>
@@ -139,7 +175,7 @@ export function Home() {
 
       {/* Featured tools */}
       <section className="mb-7">
-        <SectionHeading title="Popular tools" />
+        <SectionHeading title="Popular tools" viewAllTo="/products" />
         <div className="mt-3">
           {featured.status === "loading" && (
             <HorizontalScroller>
@@ -174,21 +210,10 @@ export function Home() {
         </div>
       </section>
 
-      {/* Why RenTools */}
+      {/* Why RenTools — shown as a compact trust/feature bar */}
       {!hiddenSections.has("why_rentools") && (
         <section className="mb-7 px-4">
-          <SectionHeading title="Why RenTools" />
-          <ul className="mt-3 space-y-2">
-            {cms.why_rentools.points.map((point) => (
-              <li
-                key={point}
-                className="flex items-start gap-2 font-body text-[14px] text-graphite-600 dark:text-graphite-300"
-              >
-                <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ink dark:bg-ink-inverted" />
-                {point}
-              </li>
-            ))}
-          </ul>
+          <TrustBar />
         </section>
       )}
 

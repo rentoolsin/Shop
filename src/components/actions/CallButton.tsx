@@ -4,13 +4,15 @@ interface CallButtonProps {
   phone: string; // E.164 or local, e.g. "+91XXXXXXXXXX"
   label?: string;
   fullWidth?: boolean;
+  className?: string;
 }
 
-export function CallButton({ phone, label = "Call", fullWidth }: CallButtonProps) {
+export function CallButton({ phone, label = "Call", fullWidth, className = "" }: CallButtonProps) {
   return (
     <Button
-      variant="secondary"
+      variant="outline"
       fullWidth={fullWidth}
+      className={className}
       onClick={() => {
         window.location.href = `tel:${phone}`;
       }}

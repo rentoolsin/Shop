@@ -103,8 +103,8 @@ export const HOMEPAGE_SECTION_LABEL: Record<HomepageSectionKey, string> = {
 /** What the page shows when a section has no published CMS override. */
 export const HOMEPAGE_SECTION_DEFAULTS: HomepageSectionContentMap = {
   hero: {
-    heading: "Construction tools, ready when your site needs them.",
-    subheading: "Browse RenTools' rental inventory in Coimbatore and enquire in a minute.",
+    heading: "Hello, Builder! 👋",
+    subheading: "What are you building today?",
     slides: [],
   },
   why_rentools: {

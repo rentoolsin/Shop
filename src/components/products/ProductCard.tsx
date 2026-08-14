@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
 import { formatCurrency } from "../../utils/currency";
 
 type Variant = "featured" | "compact" | "horizontal";
@@ -22,12 +23,45 @@ export function ProductCard({
   available,
   variant = "featured",
 }: ProductCardProps) {
+  const navigate = useNavigate();
+
   const priceTag = (
     <span className={`spec-tag ${available ? "spec-tag--accent" : ""}`}>
       {fromDailyRate != null
         ? `${formatCurrency(fromDailyRate)}/day`
         : "Rate on enquiry"}
     </span>
+  );
+
+  const priceLine = (
+    <span className="font-body text-[13px] text-graphite-500">
+      {fromDailyRate != null ? (
+        <>
+          <span className="font-semibold text-ink dark:text-ink-inverted">
+            {formatCurrency(fromDailyRate)}
+          </span>{" "}
+          / day
+        </>
+      ) : (
+        "Rate on enquiry"
+      )}
+    </span>
+  );
+
+  const enquireButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      fullWidth
+      className="!h-8 border-accent-400 text-[13px] text-accent-600 hover:bg-accent-50 dark:border-accent-500 dark:text-accent-400 dark:hover:bg-graphite-800"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(`/enquire?productId=${id}`);
+      }}
+    >
+      <span className="text-accent-500">E</span>nquire
+    </Button>
   );
 
   const image = (
@@ -79,16 +113,17 @@ export function ProductCard({
   // featured (default)
   return (
     <Link to={`/products/${id}`} className="w-40 flex-shrink-0">
-      <Card interactive className="flex flex-col overflow-hidden">
+      <Card interactive className="flex flex-col overflow-hidden rounded-xl">
         <span className="aspect-[4/3] w-full">{image}</span>
-        <div className="flex flex-col gap-1.5 p-3">
+        <div className="flex flex-col gap-2 p-3">
           <span className="truncate font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
             {name}
           </span>
           <div className="flex items-center justify-between">
-            {priceTag}
+            {priceLine}
             {!available && <span className="font-body text-[11px] text-graphite-400">Unavailable</span>}
           </div>
+          {enquireButton}
         </div>
       </Card>
     </Link>

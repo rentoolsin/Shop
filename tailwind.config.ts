@@ -1,8 +1,9 @@
 import type { Config } from "tailwindcss";
 
 // RenTools design tokens.
-// Palette is grounded in the tool-yard: graphite steel neutrals only —
-// a restrained black/white monochrome system, no amber/orange accent.
+// Palette is grounded in the tool-yard: graphite steel neutrals as the base
+// system, with a single warm amber "accent" scale reserved for primary CTAs
+// (Enquire now, price highlights) per the updated homepage direction.
 // No purple/blue AI-gradient defaults.
 export default {
   darkMode: "class",
@@ -42,6 +43,16 @@ export default {
           warning: "#B9862C",
           danger: "#B4432F",
           info: "#4C6B8A",
+        },
+        accent: {
+          50: "#FFF8E6",
+          100: "#FFEEC2",
+          200: "#FFDD85",
+          300: "#FDC847",
+          400: "#F7B928",
+          500: "#F0A81B", // primary CTA — "Enquire now", price highlights
+          600: "#D68F0F",
+          700: "#AD710C",
         },
       },
       fontFamily: {

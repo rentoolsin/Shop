@@ -10,9 +10,13 @@ export function CategoryCard({ id, name, imageUrl }: CategoryCardProps) {
   return (
     <Link
       to={`/categories/${id}`}
-      className="flex w-24 flex-shrink-0 flex-col items-center gap-2 text-center"
+      className={[
+        "flex w-[104px] flex-shrink-0 flex-col items-center gap-2 rounded-xl border border-graphite-200",
+        "bg-white px-2 py-3 text-center shadow-card transition-transform duration-150 ease-app active:scale-[0.98]",
+        "dark:border-graphite-800 dark:bg-graphite-900",
+      ].join(" ")}
     >
-      <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-graphite-200 bg-white dark:border-graphite-800 dark:bg-graphite-900">
+      <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-accent-50 dark:bg-graphite-800">
         {imageUrl ? (
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -21,7 +25,7 @@ export function CategoryCard({ id, name, imageUrl }: CategoryCardProps) {
           </span>
         )}
       </span>
-      <span className="line-clamp-2 font-body text-[12px] font-medium leading-tight text-ink dark:text-ink-inverted">
+      <span className="line-clamp-2 font-body text-[12px] font-semibold leading-tight text-ink dark:text-ink-inverted">
         {name}
       </span>
     </Link>
