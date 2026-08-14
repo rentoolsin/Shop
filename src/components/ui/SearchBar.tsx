@@ -57,7 +57,7 @@ export function SearchBar({
           type="button"
           onClick={() => (onClear ? onClear() : onChange(""))}
           aria-label="Clear search"
-          className="text-graphite-400"
+          className="-mr-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
         >
           <X className="h-3.5 w-3.5" strokeWidth={1.8} />
         </button>

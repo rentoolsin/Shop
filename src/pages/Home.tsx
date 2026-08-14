@@ -78,7 +78,7 @@ export function Home() {
 
   return (
     <div>
-      <MobileHeader contextLabel="Coimbatore" />
+      <MobileHeader />
 
       {/* Hero */}
       {!hiddenSections.has("hero") && (

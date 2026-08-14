@@ -92,7 +92,7 @@ const AdminLayout = lazy(() =>
 function CustomerApp() {
   return (
     <div className="app-shell">
-      <div className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         <PageTransition>
           {(location) => (
             <Routes location={location}>

@@ -11,7 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-graphite-900 text-graphite-25 hover:bg-graphite-800 active:bg-graphite-950 " +
+    "bg-graphite-900 text-graphite-25 shadow-[0_1px_2px_rgb(0_0_0_/_0.06)] hover:bg-graphite-800 active:bg-graphite-950 " +
     "dark:bg-white dark:text-graphite-950 dark:hover:bg-graphite-200",
   secondary:
     "bg-graphite-100 text-ink hover:bg-graphite-200 active:bg-graphite-300 " +
@@ -22,14 +22,14 @@ const variantClasses: Record<Variant, string> = {
   danger:
     "bg-state-danger text-white hover:brightness-110 active:brightness-95",
   accent:
-    "bg-accent-500 text-graphite-950 font-semibold hover:bg-accent-400 active:bg-accent-600",
+    "bg-accent-500 text-graphite-950 font-semibold shadow-[0_2px_8px_-2px_rgba(240,168,27,0.55)] hover:bg-accent-400 hover:shadow-[0_3px_10px_-2px_rgba(240,168,27,0.65)] active:bg-accent-600 active:shadow-none",
   outline:
     "bg-white text-ink border border-graphite-300 hover:bg-graphite-50 active:bg-graphite-100 " +
     "dark:bg-graphite-900 dark:border-graphite-700 dark:text-ink-inverted dark:hover:bg-graphite-800",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-9 px-3 text-[13px] gap-1.5",
+  sm: "h-10 px-3 text-[13px] gap-1.5",
   md: "h-11 px-4 text-[15px] gap-2",
   lg: "h-12 px-5 text-[16px] gap-2",
 };
@@ -45,8 +45,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         className={[
           "inline-flex items-center justify-center rounded font-body font-medium",
-          "transition-colors duration-150 ease-app select-none",
-          "disabled:opacity-40 disabled:pointer-events-none",
+          "transition-all duration-150 ease-app select-none active:scale-[0.97]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-graphite-50 dark:focus-visible:ring-offset-graphite-950",
+          "disabled:opacity-40 disabled:pointer-events-none disabled:active:scale-100",
           variantClasses[variant],
           sizeClasses[size],
           fullWidth ? "w-full" : "",

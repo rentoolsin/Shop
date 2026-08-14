@@ -17,7 +17,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-[4/3] w-full items-center justify-center bg-graphite-100 dark:bg-graphite-800">
+      <div className="flex aspect-square w-full items-center justify-center bg-graphite-100 dark:bg-graphite-800">
         <span className="font-display text-[24px] text-graphite-400">{alt.charAt(0)}</span>
       </div>
     );
@@ -35,7 +35,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="flex aspect-[4/3] w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex aspect-square w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {images.map((src, index) => (
           <div

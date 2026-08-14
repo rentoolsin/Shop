@@ -20,66 +20,89 @@ import {
 import type { HomepageSectionKey } from "../utils/homepage-content";
 import { fetchAdminSiteSettings } from "../services/admin-site-settings.service";
 
+// Product data spans three tables (a variant or image change doesn't touch
+// the product row itself), so anything reading products watches all three.
+const PRODUCT_TABLES = ["products", "product_variants", "product_images"];
+
 export function useAdminCategories() {
-  return useAsyncData(fetchAllCategories, []);
+  return useAsyncData(fetchAllCategories, [], { realtimeTables: ["categories"] });
 }
 
 export function useAdminCategory(id: string | undefined) {
-  return useAsyncData(() => (id ? fetchCategoryById(id) : Promise.resolve(null)), [id]);
+  return useAsyncData(() => (id ? fetchCategoryById(id) : Promise.resolve(null)), [id], {
+    realtimeTables: ["categories"],
+  });
 }
 
 export function useAdminProducts() {
-  return useAsyncData(fetchAllProducts, []);
+  return useAsyncData(fetchAllProducts, [], { realtimeTables: PRODUCT_TABLES });
 }
 
 export function useAdminProduct(id: string | undefined) {
-  return useAsyncData(() => (id ? fetchProductForEdit(id) : Promise.resolve(null)), [id]);
+  return useAsyncData(() => (id ? fetchProductForEdit(id) : Promise.resolve(null)), [id], {
+    realtimeTables: PRODUCT_TABLES,
+  });
 }
 
 export function useAdminProductInventory() {
-  return useAsyncData(fetchProductInventorySummary, []);
+  // Availability depends on active rentals too, not just variant stock.
+  return useAsyncData(fetchProductInventorySummary, [], {
+    realtimeTables: ["product_variants", "rentals"],
+  });
 }
 
 export function useAdminCustomers(query = "") {
-  return useAsyncData(() => fetchAllCustomers(query), [query]);
+  return useAsyncData(() => fetchAllCustomers(query), [query], { realtimeTables: ["customers"] });
 }
 
 export function useAdminCustomer(id: string | undefined) {
-  return useAsyncData(() => (id ? fetchCustomerById(id) : Promise.resolve(null)), [id]);
+  return useAsyncData(() => (id ? fetchCustomerById(id) : Promise.resolve(null)), [id], {
+    realtimeTables: ["customers"],
+  });
 }
 
 export function useAdminRentals() {
-  return useAsyncData(fetchAllRentals, []);
+  return useAsyncData(fetchAllRentals, [], { realtimeTables: ["rentals"] });
 }
 
 export function useAdminEnquiries(query = "") {
-  return useAsyncData(() => fetchAllEnquiries(query), [query]);
+  return useAsyncData(() => fetchAllEnquiries(query), [query], { realtimeTables: ["enquiries"] });
 }
 
 export function useAdminEnquiry(id: string | undefined) {
-  return useAsyncData(() => (id ? fetchEnquiryById(id) : Promise.resolve(null)), [id]);
+  return useAsyncData(() => (id ? fetchEnquiryById(id) : Promise.resolve(null)), [id], {
+    realtimeTables: ["enquiries"],
+  });
 }
 
 export function useAdminPurchaseRequests(query = "") {
-  return useAsyncData(() => fetchAllPurchaseRequests(query), [query]);
+  return useAsyncData(() => fetchAllPurchaseRequests(query), [query], {
+    realtimeTables: ["purchase_requests"],
+  });
 }
 
 export function useAdminPurchaseRequest(id: string | undefined) {
-  return useAsyncData(() => (id ? fetchPurchaseRequestById(id) : Promise.resolve(null)), [id]);
+  return useAsyncData(() => (id ? fetchPurchaseRequestById(id) : Promise.resolve(null)), [id], {
+    realtimeTables: ["purchase_requests"],
+  });
 }
 
 export function useAdminHomepageSections() {
-  return useAsyncData(fetchAllHomepageSections, []);
+  return useAsyncData(fetchAllHomepageSections, [], { realtimeTables: ["homepage_content"] });
 }
 
 export function useAdminHomepageSection(key: HomepageSectionKey) {
-  return useAsyncData(() => fetchHomepageSection(key), [key]);
+  return useAsyncData(() => fetchHomepageSection(key), [key], {
+    realtimeTables: ["homepage_content"],
+  });
 }
 
 export function useAdminHomepageRevisions(key: HomepageSectionKey) {
-  return useAsyncData(() => fetchHomepageRevisions(key), [key]);
+  return useAsyncData(() => fetchHomepageRevisions(key), [key], {
+    realtimeTables: ["homepage_content_revisions"],
+  });
 }
 
 export function useAdminSiteSettings() {
-  return useAsyncData(fetchAdminSiteSettings, []);
+  return useAsyncData(fetchAdminSiteSettings, [], { realtimeTables: ["site_settings"] });
 }

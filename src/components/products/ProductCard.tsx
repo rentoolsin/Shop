@@ -2,6 +2,7 @@ import { MessageCircle, Phone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { StatusBadge } from "../ui/StatusBadge";
 import { formatCurrency } from "../../utils/currency";
 import { useSiteSettings } from "../../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../../utils/site-settings";
@@ -58,7 +59,7 @@ export function ProductCard({
       variant="outline"
       size="sm"
       fullWidth
-      className="!h-8 border-accent-400 text-[13px] text-accent-600 hover:bg-accent-50 dark:border-accent-500 dark:text-accent-400 dark:hover:bg-graphite-800"
+      className="!h-10 border-accent-400 text-[13px] text-accent-600 hover:bg-accent-50 dark:border-accent-500 dark:text-accent-400 dark:hover:bg-graphite-800"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -84,8 +85,8 @@ export function ProductCard({
   if (variant === "horizontal") {
     return (
       <Link to={`/products/${id}`}>
-        <Card interactive className="flex items-center gap-3 overflow-hidden p-2">
-          <span className="h-16 w-16 flex-shrink-0 overflow-hidden rounded">
+        <Card interactive className="flex items-center gap-3 overflow-hidden rounded-xl p-2">
+          <span className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
             {image}
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -107,15 +108,22 @@ export function ProductCard({
     // misaligned/overlapping. Let the grid column control the width instead.
     return (
       <Link to={`/products/${id}`} className="block w-full">
-        <Card interactive className="flex flex-col overflow-hidden">
-          <span className="aspect-square w-full">{image}</span>
+        <Card interactive className="flex flex-col overflow-hidden rounded-xl">
+          <span className="relative aspect-square w-full">
+            {image}
+            {!available && (
+              <span className="absolute left-1.5 top-1.5">
+                <StatusBadge label="Unavailable" tone="danger" />
+              </span>
+            )}
+          </span>
           <div className="flex flex-col gap-1 p-2.5">
             <span className="line-clamp-2 font-body text-[13px] font-medium leading-snug text-ink dark:text-ink-inverted">
               {name}
             </span>
             {priceLine}
 
-            <div className="mt-1.5 flex overflow-hidden rounded-md border border-graphite-200 dark:border-graphite-700">
+            <div className="mt-1.5 flex overflow-hidden rounded-lg border border-graphite-200 dark:border-graphite-700">
               <button
                 type="button"
                 aria-label={`Enquire about ${name}`}
@@ -124,7 +132,7 @@ export function ProductCard({
                   e.stopPropagation();
                   navigate(`/enquire?productId=${id}`);
                 }}
-                className="flex h-9 flex-1 items-center justify-center border-r border-graphite-200 text-graphite-600 hover:bg-graphite-50 dark:border-graphite-700 dark:text-graphite-300 dark:hover:bg-graphite-800"
+                className="flex h-11 flex-1 items-center justify-center border-r border-graphite-200 text-graphite-600 transition-colors active:scale-95 active:bg-graphite-100 dark:border-graphite-700 dark:text-graphite-300 dark:hover:bg-graphite-800"
               >
                 <MessageCircle className="h-4 w-4" strokeWidth={1.6} />
               </button>
@@ -136,7 +144,7 @@ export function ProductCard({
                   e.stopPropagation();
                   window.location.href = `tel:${phone}`;
                 }}
-                className="flex h-9 flex-1 items-center justify-center text-graphite-600 hover:bg-graphite-50 dark:text-graphite-300 dark:hover:bg-graphite-800"
+                className="flex h-11 flex-1 items-center justify-center text-graphite-600 transition-colors active:scale-95 active:bg-graphite-100 dark:text-graphite-300 dark:hover:bg-graphite-800"
               >
                 <Phone className="h-4 w-4" strokeWidth={1.6} />
               </button>
@@ -151,15 +159,19 @@ export function ProductCard({
   return (
     <Link to={`/products/${id}`} className="w-40 flex-shrink-0">
       <Card interactive className="flex flex-col overflow-hidden rounded-xl">
-        <span className="aspect-[4/3] w-full">{image}</span>
+        <span className="relative aspect-square w-full">
+          {image}
+          {!available && (
+            <span className="absolute left-1.5 top-1.5">
+              <StatusBadge label="Unavailable" tone="danger" />
+            </span>
+          )}
+        </span>
         <div className="flex flex-col gap-2 p-3">
           <span className="truncate font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
             {name}
           </span>
-          <div className="flex items-center justify-between">
-            {priceLine}
-            {!available && <span className="font-body text-[11px] text-graphite-400">Unavailable</span>}
-          </div>
+          {priceLine}
           {enquireButton}
         </div>
       </Card>

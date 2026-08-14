@@ -40,7 +40,7 @@ export function ProductDetail() {
     return (
       <div>
         <PageHeader title="Tool" />
-        <Skeleton className="aspect-[4/3] w-full" />
+        <Skeleton className="aspect-square w-full" />
         <div className="space-y-2 p-4">
           <Skeleton className="h-5 w-2/3" />
           <Skeleton className="h-4 w-1/3" />
@@ -81,15 +81,16 @@ export function ProductDetail() {
   return (
     <div>
       <PageHeader
-        title=""
+        title={item.name}
         action={
           <button
             onClick={() => setSaved((v) => !v)}
             aria-label={saved ? "Remove from saved" : "Save this tool"}
             className={[
-              "flex h-10 w-10 items-center justify-center rounded",
-              saved ? "text-accent-500" : "text-ink hover:bg-graphite-100",
-              "dark:text-ink-inverted dark:hover:bg-graphite-800",
+              "mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-app active:scale-90",
+              saved
+                ? "text-accent-500 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
             ].join(" ")}
           >
             <HeartIcon filled={saved} />
@@ -118,8 +119,9 @@ export function ProductDetail() {
                 <button
                   key={variant.id}
                   onClick={() => setSelectedVariantId(variant.id)}
+                  aria-pressed={activeVariant?.id === variant.id}
                   className={[
-                    "spec-tag",
+                    "spec-tag min-h-[40px] px-3.5",
                     activeVariant?.id === variant.id ? "spec-tag--accent" : "",
                   ].join(" ")}
                 >
