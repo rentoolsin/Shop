@@ -4,6 +4,7 @@ import { useAdminCategory } from "../../../hooks/useAdminData";
 import { createCategory, updateCategory, type CategoryFormValues } from "../../../services/admin-categories.service";
 import { slugify } from "../../../utils/slugify";
 import { Input } from "../../../components/ui/Input";
+import { ImageInput } from "../../../components/ui/ImageInput";
 import { Switch } from "../../../components/ui/Switch";
 import { Button } from "../../../components/ui/Button";
 import { LoadingState } from "../../../components/ui/LoadingState";
@@ -107,11 +108,12 @@ export function CategoryForm() {
           error={errors.slug}
           hint="Used in the product URL — lowercase, hyphenated."
         />
-        <Input
-          label="Image URL"
+        <ImageInput
+          label="Image"
           value={values.imageUrl}
-          onChange={(e) => setField("imageUrl", e.target.value)}
-          hint="Optional — leave blank to show a placeholder."
+          onChange={(url) => setField("imageUrl", url)}
+          folder="categories"
+          hint="Upload a file or paste a URL — leave blank to show a placeholder."
         />
         <Input
           label="Sort order"

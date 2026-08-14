@@ -10,6 +10,7 @@ import {
 } from "../../../services/admin-products.service";
 import { slugify } from "../../../utils/slugify";
 import { Input } from "../../../components/ui/Input";
+import { ImageInput } from "../../../components/ui/ImageInput";
 import { Textarea } from "../../../components/ui/Textarea";
 import { Select } from "../../../components/ui/Select";
 import { Switch } from "../../../components/ui/Switch";
@@ -160,11 +161,12 @@ export function ProductForm() {
           value={values.description}
           onChange={(e) => setField("description", e.target.value)}
         />
-        <Input
-          label="Image URL"
+        <ImageInput
+          label="Image"
           value={values.imageUrl}
-          onChange={(e) => setField("imageUrl", e.target.value)}
-          hint="Optional — leave blank to show a placeholder."
+          onChange={(url) => setField("imageUrl", url)}
+          folder="products"
+          hint="Upload a file or paste a URL — leave blank to show a placeholder."
         />
         <div className="grid grid-cols-2 gap-3">
           <Input
