@@ -8,6 +8,7 @@ export interface AdminRentalListItem {
   customerName: string;
   customerMobile: string;
   productName: string;
+  productImageUrl: string | null;
   variantLabel: string;
   variantId: string;
   quantity: number;
@@ -49,7 +50,11 @@ interface RawRentalRow {
   status: RentalStatus;
   actual_return_date: string | null;
   customers: { id: string; name: string; mobile: string } | null;
-  product_variants: { id: string; label: string; products: { name: string } | null } | null;
+  product_variants: {
+    id: string;
+    label: string;
+    products: { name: string; image_url: string | null } | null;
+  } | null;
 }
 
 function toListItem(row: RawRentalRow): AdminRentalListItem {
@@ -67,6 +72,7 @@ function toListItem(row: RawRentalRow): AdminRentalListItem {
     customerName: row.customers?.name ?? "Unknown customer",
     customerMobile: row.customers?.mobile ?? "",
     productName: row.product_variants?.products?.name ?? "Unknown product",
+    productImageUrl: row.product_variants?.products?.image_url ?? null,
     variantLabel: row.product_variants?.label ?? "",
     variantId: row.product_variants?.id ?? "",
     quantity: row.quantity,
@@ -86,7 +92,7 @@ export async function fetchAllRentals(): Promise<AdminRentalListItem[]> {
     .from("rentals")
     .select(
       "id, quantity, start_date, return_date, daily_rate, advance, status, actual_return_date, " +
-        "customers(id, name, mobile), product_variants(id, label, products(name))",
+        "customers(id, name, mobile), product_variants(id, label, products(name, image_url))",
     )
     .order("created_at", { ascending: false });
   if (error) throw error;

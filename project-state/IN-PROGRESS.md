@@ -1,6 +1,38 @@
 # In Progress
 
-Nothing left mid-implementation at the end of Session 17.
+Nothing left mid-implementation at the end of Session 18.
+
+## Session 18 — Admin mobile UI pass (Rentals) + admin bottom nav
+
+Redesigned `/admin/rentals` to a mobile-app style per a user-supplied
+reference screenshot (pill controls, segmented Rentals/Sync-statuses row,
+illustrated empty state, restyled cards with real product thumbnails —
+`productImageUrl` added to `admin-rentals.service.ts`). Business logic
+(extend/return/cancel/sync/validation) untouched.
+
+Added an admin mobile bottom tab bar (`AdminMobileNav`: Home, Rentals,
+Requests, Products, Customers, More) alongside a new `/admin/more` page
+for the sections that don't fit six tabs. The existing sidebar
+(`AdminLayout`) is now desktop-only; shared nav icons factored into
+`components/admin/nav-icons.tsx` to avoid duplicating them between the
+sidebar and the new tab bar. `EmptyState` gained optional `size`/
+`className` props and `Select` gained a `pill` variant (both backward
+compatible) rather than one-off page-specific markup.
+
+`npm install` / `npx tsc --noEmit` / `npm run build` / `eslint` all pass.
+
+**Toolchain note:** this session's environment had working network
+access to npm registries (`npm install` succeeded), contradicting the
+"no network in this sandbox" assumption baked into several earlier
+sessions' notes. Worth re-checking rather than assuming either way at the
+start of future sessions.
+
+Not verified: anything requiring a live Supabase project, and no real
+browser/device for a visual pass on the new mobile nav/rentals styling.
+
+---
+
+Session 17 recap (previous):
 
 ## Session 17 — PWA + install banner
 

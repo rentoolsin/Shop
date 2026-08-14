@@ -82,6 +82,7 @@ const HomepageSectionForm = lazy(() =>
   })),
 );
 const Settings = lazy(() => import("./pages/admin/Settings").then((m) => ({ default: m.Settings })));
+const AdminMore = lazy(() => import("./pages/admin/AdminMore").then((m) => ({ default: m.AdminMore })));
 const AdminLayout = lazy(() =>
   import("./components/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })),
 );
@@ -144,6 +145,7 @@ export function App() {
             <Route path="homepage" element={<HomepageSectionsList />} />
             <Route path="homepage/:sectionKey" element={<HomepageSectionForm />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="more" element={<AdminMore />} />
           </Route>
         </Route>
         <Route path="/*" element={<CustomerApp />} />

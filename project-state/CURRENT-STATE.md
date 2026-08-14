@@ -796,3 +796,24 @@ purely-code-level TODO item left unaddressed. The Settings screen (item
 18) is now done too. The next real implementation work is whatever the
 user provides next (a new feature, a real Supabase project to test
 against, or a real browser/device to finish item 13's visual QA).
+
+## Session 18 addendum — admin mobile UI (Rentals) + toolchain note
+
+- `/admin/rentals` redesigned to a mobile-app style (pill controls,
+  segmented row, illustrated empty state, restyled cards with real
+  product thumbnails) per a user-supplied reference screenshot. Business
+  logic (extend/return/cancel/sync, validation) is untouched.
+- Admin now has a mobile bottom tab bar (`AdminMobileNav`, `/admin/more`)
+  in addition to the existing desktop sidebar; sidebar is `hidden md:flex`
+  now instead of always rendering a collapsed icon rail on small screens.
+- **Toolchain note (updates the "not verified" claims above and in
+  RECOVERY.md):** in this session's environment, `npm install` succeeded
+  (package registries are reachable), and `npx tsc --noEmit`, `npm run
+  build`, and `eslint` all passed cleanly against the changed files. This
+  contradicts earlier sessions' assumption of no network access — worth
+  re-checking at the start of future sessions rather than assuming either
+  way, since environment capabilities have evidently changed at least
+  once already.
+- Still not verified: anything requiring a live Supabase project (same
+  five items listed above), and no real browser/device for a visual pass
+  on the new mobile nav/rentals styling.

@@ -2,27 +2,20 @@ import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useToast } from "../ui/Toast";
+import { AdminMobileNav } from "./AdminMobileNav";
+import { HomeIcon, RequestsIcon, RentalsIcon, CustomersIcon, ProductsIcon, MoreIcon } from "./nav-icons";
 
 const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[] = [
   {
     to: "/admin",
     label: "Dashboard",
     end: true,
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <path d="M3 10.5 10 4l7 6.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M5 9v6.5a.5.5 0 0 0 .5.5H8a.5.5 0 0 0 .5-.5V12a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v3.5a.5.5 0 0 0 .5.5h2.5a.5.5 0 0 0 .5-.5V9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    icon: <HomeIcon />,
   },
   {
     to: "/admin/enquiries",
     label: "Enquiries",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <path d="M3.5 5.5A1.5 1.5 0 0 1 5 4h10a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 15 14H8l-3.5 2.5V14H5A1.5 1.5 0 0 1 3.5 12.5v-7Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    ),
+    icon: <RequestsIcon />,
   },
   {
     to: "/admin/purchase-requests",
@@ -37,44 +30,22 @@ const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[]
   {
     to: "/admin/rentals",
     label: "Rentals",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <rect x="3.5" y="5" width="13" height="11" rx="1.2" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M6.5 3v3M13.5 3v3M3.5 8.5h13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <RentalsIcon />,
   },
   {
     to: "/admin/customers",
     label: "Customers",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <circle cx="10" cy="7" r="2.75" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M4 16c0-2.9 2.7-5 6-5s6 2.1 6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <CustomersIcon />,
   },
   {
     to: "/admin/products",
     label: "Products",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <path d="M10 3 3.5 6.5 10 10l6.5-3.5L10 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M3.5 6.5V13L10 16.5M16.5 6.5V13L10 16.5M10 10v6.5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    ),
+    icon: <ProductsIcon />,
   },
   {
     to: "/admin/categories",
     label: "Categories",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]">
-        <rect x="3.5" y="3.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.6" />
-        <rect x="11" y="3.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.6" />
-        <rect x="3.5" y="11" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.6" />
-        <rect x="11" y="11" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.6" />
-      </svg>
-    ),
+    icon: <MoreIcon />,
   },
   {
     to: "/admin/reports",
@@ -151,7 +122,7 @@ export function AdminLayout() {
     <div className="flex min-h-screen bg-graphite-50 dark:bg-graphite-950">
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col border-r border-graphite-200 bg-white transition-[width] duration-200 ease-app dark:border-graphite-800 dark:bg-graphite-900",
+          "fixed inset-y-0 left-0 z-40 hidden shrink-0 flex-col border-r border-graphite-200 bg-white transition-[width] duration-200 ease-app dark:border-graphite-800 dark:bg-graphite-900 md:flex",
           collapsed ? "w-[76px]" : "w-64",
         ].join(" ")}
       >
@@ -266,14 +237,16 @@ export function AdminLayout() {
 
       <main
         className={[
-          "min-w-0 flex-1 overflow-x-hidden px-4 py-6 transition-[margin] duration-200 ease-app sm:px-6 lg:px-8",
-          collapsed ? "ml-[76px]" : "ml-64",
+          "min-w-0 flex-1 overflow-x-hidden px-4 pb-24 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8",
+          collapsed ? "md:ml-[76px]" : "md:ml-64",
         ].join(" ")}
       >
         <div className="mx-auto max-w-4xl">
           <Outlet />
         </div>
       </main>
+
+      <AdminMobileNav />
     </div>
   );
 }

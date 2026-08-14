@@ -4,11 +4,19 @@ import { baseFieldClass } from "./form-field";
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
+  /** Fully-rounded, taller presentation for app-like screens — replaces (not appends to) the default height/radius. */
+  pill?: boolean;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, className = "", id, children, ...rest }, ref) => {
+  ({ label, error, className = "", pill, id, children, ...rest }, ref) => {
     const fieldId = id ?? rest.name;
+    const base = pill
+      ? baseFieldClass(!!error)
+          .replace("h-11", "h-12")
+          .replace("rounded ", "rounded-full ")
+          .replace("px-3", "px-4")
+      : baseFieldClass(!!error);
     return (
       <label className="block" htmlFor={fieldId}>
         {label && (
@@ -19,7 +27,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           id={fieldId}
-          className={[baseFieldClass(!!error), "appearance-none", className].join(" ")}
+          className={[base, "appearance-none", className].join(" ")}
           aria-invalid={!!error}
           {...rest}
         >

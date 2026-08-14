@@ -1,5 +1,43 @@
 ﻿# Completed
 
+## Session 18 — Admin mobile UI pass (Rentals) + admin bottom nav
+
+Per the recovery process: the project-state docs pasted into this
+session's initial context described only 2 sessions of work (public app
++ admin auth/Products/Categories CRUD), but the actual repo is at Session
+17 (see `IN-PROGRESS.md`'s Session 17/16 recaps — PWA install banner,
+client-side pagination — and this file's own Session 15 entry below,
+which the recap sessions apparently hadn't been archived into yet).
+Treated the repo as source of truth per RECOVERY.md and inspected actual
+files before making changes — the pasted docs were stale, not the repo.
+Did not attempt to backfill the missing Session 16/17 entries into this
+file — out of scope for this session and risks misrepresenting work this
+session didn't do; a future session should reconcile that gap using
+`git log` if needed.
+
+- Redesigned `/admin/rentals` to match a supplied mobile-app mock: pill
+  header action, segmented "Rentals / Sync statuses" row, rounded search +
+  filter row, pill status filter, illustrated empty state, and restyled
+  rental cards (real product thumbnail, reference code derived from the
+  row id, status badge, pill action buttons). All existing extend/return/
+  cancel/sync logic and business rules are unchanged — presentation only.
+- `admin-rentals.service.ts` now selects and returns `productImageUrl`
+  (joined from `products.image_url`) so the new thumbnails show real
+  product photos instead of a placeholder.
+- New **admin mobile bottom tab bar** (`AdminMobileNav`, six tabs: Home,
+  Rentals, Requests, Products, Customers, More) — the existing sidebar
+  (`AdminLayout`) is now desktop-only (`hidden md:flex`); shared nav icons
+  factored into `components/admin/nav-icons.tsx` and reused by both the
+  sidebar and the new tab bar rather than duplicated.
+- New `/admin/more` page (`AdminMore.tsx`) listing the admin sections that
+  don't fit the six-tab bar (Categories, Purchase Requests, Reports,
+  Homepage, Settings) plus sign out.
+- `EmptyState` gained optional `size`/`className` props (backward
+  compatible) and `Select` gained a `pill` variant — both reusable
+  extensions rather than one-off page-specific markup.
+- Verified `npm install` / `npx tsc --noEmit` / `npm run build` / `eslint`
+  all pass in this environment.
+
 ## Session 15 — Settings screen (business contact info, appearance, admin account)
 
 Per the recovery process, re-verified this session's flagged items
@@ -197,7 +235,31 @@ needed there; proceeded to Reports/Analytics.
 - Dev seed data (names only).
 - Project memory docs (this folder + `docs/`).
 
-## Session 2 — Admin auth + Products/Categories CRUD
+## Session 3 — Admin mobile UI pass (Rentals) + admin bottom nav
+- Redesigned `/admin/rentals` to match the supplied mobile-app mock: pill
+  header action, segmented "Rentals / Sync statuses" row, rounded search +
+  filter row, pill status filter, illustrated empty state, and restyled
+  rental cards (real product thumbnail, reference code derived from the
+  row id, status badge, pill action buttons). All existing extend/return/
+  cancel/sync logic and business rules are unchanged — presentation only.
+- `admin-rentals.service.ts` now selects and returns `productImageUrl`
+  (joined from `products.image_url`) so the new thumbnails show real
+  product photos instead of a placeholder.
+- New **admin mobile bottom tab bar** (`AdminMobileNav`, six tabs: Home,
+  Rentals, Requests, Products, Customers, More) — the existing sidebar
+  (`AdminLayout`) is now desktop-only (`hidden md:flex`); shared nav icons
+  factored into `components/admin/nav-icons.tsx` and reused by both the
+  sidebar and the new tab bar rather than duplicated.
+- New `/admin/more` page (`AdminMore.tsx`) listing the admin sections that
+  don't fit the six-tab bar (Categories, Purchase Requests, Reports,
+  Homepage, Settings) plus sign out.
+- `EmptyState` gained optional `size`/`className` props (backward
+  compatible) and `Select` gained a `pill` variant — both reusable
+  extensions rather than one-off page-specific markup.
+- **Verified against a real toolchain for the first time**: `npm install`,
+  `npx tsc --noEmit`, `npm run build`, and `eslint` all ran clean in this
+  environment (see CURRENT-STATE.md — this sandbox does have network
+  access to the npm registry after all).
 
 - Reusable form primitives: Input, Textarea, Select, Switch, ConfirmDialog.
 - Auth layer (`src/lib/auth.tsx`) + `/admin/login` + `ProtectedRoute`.

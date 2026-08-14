@@ -46,13 +46,66 @@ const STATUS_TONE: Record<RentalDisplayStatus, "neutral" | "success" | "warning"
   cancelled: "neutral",
 };
 
-function CalendarIcon() {
+function CalendarIcon({ className = "h-6 w-6" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6">
+    <svg viewBox="0 0 20 20" fill="none" className={className}>
       <rect x="3.5" y="5" width="13" height="11" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
       <path d="M6.5 3v3M13.5 3v3M3.5 8.5h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
+}
+
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
+      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
+      <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FilterIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 text-graphite-500">
+      <path d="M3.5 5h13M6 10h8M8.5 15h3" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RefreshIcon({ spinning }: { spinning?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      strokeWidth={1.6}
+      aria-hidden="true"
+      className={["h-4 w-4", spinning ? "animate-spin" : ""].join(" ")}
+    >
+      <path d="M15.8 6.5A6 6 0 1 0 16.5 10" stroke="currentColor" strokeLinecap="round" />
+      <path d="M15.5 3.5v3.5H12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 flex-shrink-0 text-graphite-300" aria-hidden="true">
+      <path d="M7.5 4.5 13 10l-5.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Friendly display reference for a rental — derived from the real record id, never invented. */
+function rentalReference(id: string) {
+  return `RNT-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
 type Row = AdminRentalListItem & { displayStatus: RentalDisplayStatus };
@@ -186,26 +239,38 @@ export function RentalsList() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h1 className="font-display text-[26px] font-extrabold tracking-tight text-ink dark:text-ink-inverted">
           Rentals
         </h1>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={handleSyncStatuses} disabled={syncing}>
-            {syncing ? "Syncing…" : "Sync statuses"}
+        <Link to="/admin/rentals/new">
+          <Button size="md" className="rounded-full px-4">
+            <PlusIcon />
+            New rental
           </Button>
-          <Link to="/admin/rentals/new">
-            <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New rental</Button>
-          </Link>
-        </div>
+        </Link>
       </div>
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
-            <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
-            <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
-          </svg>
+      {/* Rentals / Sync statuses segmented row */}
+      <div className="mb-4 flex items-center gap-1 rounded-full bg-graphite-100 p-1 dark:bg-graphite-800">
+        <span className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white font-body text-[13.5px] font-semibold text-ink shadow-card dark:bg-graphite-900 dark:text-ink-inverted">
+          <CalendarIcon className="h-4 w-4" />
+          Rentals
+        </span>
+        <button
+          type="button"
+          onClick={handleSyncStatuses}
+          disabled={syncing}
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full font-body text-[13.5px] font-medium text-graphite-500 disabled:opacity-60 dark:text-graphite-400"
+        >
+          <RefreshIcon spinning={syncing} />
+          {syncing ? "Syncing…" : "Sync statuses"}
+        </button>
+      </div>
+
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-graphite-200 bg-white px-4 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
+          <SearchIcon />
           <input
             type="search"
             inputMode="search"
@@ -216,10 +281,20 @@ export function RentalsList() {
             className="h-full min-w-0 flex-1 overflow-hidden text-ellipsis bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
           />
         </div>
+        <button
+          type="button"
+          aria-label="Filter rentals"
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-graphite-200 bg-white shadow-card dark:border-graphite-800 dark:bg-graphite-900"
+        >
+          <FilterIcon />
+        </button>
+      </div>
+
+      <div className="mb-4">
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as "all" | RentalDisplayStatus)}
-          className="sm:w-44"
+          pill
         >
           <option value="all">All statuses</option>
           {(Object.keys(STATUS_LABEL) as RentalDisplayStatus[]).map((s) => (
@@ -242,7 +317,9 @@ export function RentalsList() {
 
       {rentals.status === "success" && rows.length === 0 && (
         <EmptyState
-          icon={<CalendarIcon />}
+          size="lg"
+          className="rounded-[20px] py-16 shadow-card"
+          icon={<CalendarIcon className="h-9 w-9" />}
           title={data.length === 0 ? "No rentals yet" : "No rentals matched"}
           description={
             data.length === 0
@@ -252,7 +329,10 @@ export function RentalsList() {
           action={
             data.length === 0 ? (
               <Link to="/admin/rentals/new">
-                <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New rental</Button>
+                <Button size="md" className="rounded-full px-5">
+                  <PlusIcon />
+                  New rental
+                </Button>
               </Link>
             ) : undefined
           }
@@ -260,61 +340,84 @@ export function RentalsList() {
       )}
 
       {rentals.status === "success" && rows.length > 0 && (
-        <div className="space-y-3">
-          {pageItems.map((rental) => {
-            const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
-            return (
-              <Card key={rental.id} className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                      {rental.customerName}
-                    </p>
-                    <p className="font-mono text-[12px] text-graphite-400">{rental.customerMobile}</p>
+        <>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">
+              {data.length === rows.length ? "Recent rentals" : "Matching rentals"}
+            </h2>
+            <span className="font-body text-[12px] text-graphite-400">
+              {totalCount} total
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {pageItems.map((rental) => {
+              const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
+              return (
+                <Card key={rental.id} className="overflow-hidden rounded-[18px] p-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-graphite-100 dark:bg-graphite-800">
+                      {rental.productImageUrl ? (
+                        <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="font-display text-[16px] text-graphite-400">
+                          {rental.productName.charAt(0)}
+                        </span>
+                      )}
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display text-[14.5px] font-bold uppercase tracking-tight text-ink dark:text-ink-inverted">
+                        {rental.productName}
+                      </p>
+                      <p className="font-mono text-[11.5px] text-graphite-400">{rentalReference(rental.id)}</p>
+                      <p className="mt-0.5 flex items-center gap-1 font-body text-[12px] text-graphite-500">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {rental.startDate} → {rental.returnDate}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+                      <StatusBadge
+                        label={STATUS_LABEL[rental.displayStatus]}
+                        tone={STATUS_TONE[rental.displayStatus]}
+                      />
+                      <ChevronRightIcon />
+                    </div>
                   </div>
-                  <StatusBadge
-                    label={STATUS_LABEL[rental.displayStatus]}
-                    tone={STATUS_TONE[rental.displayStatus]}
-                  />
-                </div>
 
-                <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                  {rental.productName} — {rental.variantLabel} · Qty {rental.quantity}
-                </p>
-                <p className="font-mono text-[12px] text-graphite-400">
-                  {rental.startDate} → {rental.returnDate}
-                  {rental.actualReturnDate ? ` (returned ${rental.actualReturnDate})` : ""}
-                </p>
-
-                <div className="mt-2 flex items-center justify-between font-mono text-[13px] text-ink dark:text-ink-inverted">
-                  <span>{formatCurrency(rental.totalRental)} total</span>
-                  <span className={rental.balance > 0 ? "font-semibold text-ink dark:text-ink-inverted" : ""}>
-                    {formatCurrency(rental.balance)} due
-                  </span>
-                </div>
-
-                {actionable && (
-                  <div className="mt-3 flex flex-wrap gap-2 border-t border-graphite-200 pt-3 dark:border-graphite-800">
-                    <Button variant="secondary" size="sm" onClick={() => startExtend(rental)}>
-                      Extend
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => setReturning(rental)}>
-                      Mark returned
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-state-danger"
-                      onClick={() => setCancelling(rental)}
-                    >
-                      Cancel
-                    </Button>
+                  <div className="mt-3 flex items-center justify-between border-t border-graphite-100 pt-3 font-mono text-[12.5px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
+                    <span className="truncate text-graphite-500">
+                      {rental.customerName} · {rental.customerMobile}
+                    </span>
+                    <span className={rental.balance > 0 ? "flex-shrink-0 font-semibold" : "flex-shrink-0 text-graphite-500"}>
+                      {formatCurrency(rental.balance)} due
+                    </span>
                   </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+
+                  {actionable && (
+                    <div className="mt-3 flex flex-wrap gap-2 border-t border-graphite-100 pt-3 dark:border-graphite-800">
+                      <Button variant="secondary" size="sm" className="rounded-full" onClick={() => startExtend(rental)}>
+                        Extend
+                      </Button>
+                      <Button variant="secondary" size="sm" className="rounded-full" onClick={() => setReturning(rental)}>
+                        Mark returned
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full text-state-danger"
+                        onClick={() => setCancelling(rental)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {rentals.status === "success" && rows.length > 0 && (
