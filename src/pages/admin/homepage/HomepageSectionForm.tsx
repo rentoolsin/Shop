@@ -11,7 +11,10 @@ import {
 import {
   HOMEPAGE_SECTION_LABEL,
   isHomepageSectionKey,
+  emptyHeroSlide,
+  withHeroDefaults,
   type HeroContent,
+  type HeroSlide,
   type WhyRentoolsContent,
   type HowItWorksContent,
   type ContactLocationContent,
@@ -21,11 +24,124 @@ import { Input } from "../../../components/ui/Input";
 import { Textarea } from "../../../components/ui/Textarea";
 import { Switch } from "../../../components/ui/Switch";
 import { Button } from "../../../components/ui/Button";
+import { ImageInput } from "../../../components/ui/ImageInput";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { LoadingState } from "../../../components/ui/LoadingState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
+
+/** Admin editor for the hero carousel slides — add/remove/reorder images, each with alt text, an optional on-slide caption, and an optional in-app link. */
+function HeroSlidesEditor({
+  slides,
+  onChange,
+}: {
+  slides: HeroSlide[];
+  onChange: (v: HeroSlide[]) => void;
+}) {
+  const updateSlide = (index: number, patch: Partial<HeroSlide>) => {
+    onChange(slides.map((slide, i) => (i === index ? { ...slide, ...patch } : slide)));
+  };
+  const removeSlide = (index: number) => {
+    onChange(slides.filter((_, i) => i !== index));
+  };
+  const moveSlide = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= slides.length) return;
+    const next = [...slides];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <span className="block font-body text-[13px] font-medium text-graphite-600 dark:text-graphite-300">
+          Carousel slides
+        </span>
+        <span className="mt-0.5 block font-body text-[12px] text-graphite-400">
+          Shown as a swipeable image carousel at the top of the homepage. Leave empty to show
+          plain heading/subheading text only, no carousel.
+        </span>
+      </div>
+
+      {slides.map((slide, i) => (
+        <div key={slide.id} className="space-y-3 rounded border border-graphite-200 p-3 dark:border-graphite-800">
+          <div className="flex items-center justify-between">
+            <span className="font-body text-[12.5px] font-medium text-graphite-500">
+              Slide {i + 1}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={i === 0}
+                onClick={() => moveSlide(i, -1)}
+                aria-label="Move slide up"
+              >
+                ↑
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={i === slides.length - 1}
+                onClick={() => moveSlide(i, 1)}
+                aria-label="Move slide down"
+              >
+                ↓
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => removeSlide(i)}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+
+          <ImageInput
+            label="Image"
+            value={slide.imageUrl}
+            onChange={(url) => updateSlide(i, { imageUrl: url })}
+            folder="homepage"
+            hint="Landscape images work best (roughly 16:10)."
+          />
+          <Input
+            label="Alt text"
+            value={slide.alt}
+            onChange={(e) => updateSlide(i, { alt: e.target.value })}
+            hint="Describes the image for screen readers — required for accessibility."
+          />
+          <Input
+            label="Caption (optional)"
+            value={slide.caption ?? ""}
+            onChange={(e) => updateSlide(i, { caption: e.target.value })}
+            hint="Short text overlaid on the image, e.g. a promo line."
+          />
+          <Input
+            label="Link to (optional)"
+            value={slide.linkTo ?? ""}
+            onChange={(e) => updateSlide(i, { linkTo: e.target.value })}
+            hint="In-app path the slide opens when tapped, e.g. /products."
+          />
+        </div>
+      ))}
+
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={() => onChange([...slides, emptyHeroSlide()])}
+      >
+        Add slide
+      </Button>
+    </div>
+  );
+}
 
 function HeroFields({
   value,
@@ -34,6 +150,7 @@ function HeroFields({
   value: HeroContent;
   onChange: (v: HeroContent) => void;
 }) {
+  const slides = value.slides ?? [];
   return (
     <>
       <Input
@@ -45,6 +162,10 @@ function HeroFields({
         label="Subheading"
         value={value.subheading}
         onChange={(e) => onChange({ ...value, subheading: e.target.value })}
+      />
+      <HeroSlidesEditor
+        slides={slides}
+        onChange={(next) => onChange({ ...value, slides: next })}
       />
     </>
   );
@@ -184,11 +305,18 @@ export function HomepageSectionForm() {
 
   useEffect(() => {
     if (section.status === "success" && section.data) {
-      setContent(section.data.content);
+      // Rows saved before the hero carousel existed have no `slides` key —
+      // default it to an empty array so the editor and public page both
+      // treat "missing" the same as "no slides yet" rather than crashing.
+      const nextContent =
+        sectionKey === "hero"
+          ? withHeroDefaults(section.data.content as unknown as Record<string, unknown>)
+          : section.data.content;
+      setContent(nextContent);
       setIsEnabled(section.data.isEnabled);
       setSortOrder(section.data.sortOrder);
     }
-  }, [section.status, section.data]);
+  }, [section.status, section.data, sectionKey]);
 
   if (!validKey) {
     return <Navigate to="/admin/homepage" replace />;
@@ -240,9 +368,11 @@ export function HomepageSectionForm() {
     }
     setRestoring(true);
     try {
-      setContent(revision.content);
+      const restoredContent =
+        sectionKey === "hero" ? withHeroDefaults(revision.content) : revision.content;
+      setContent(restoredContent);
       await saveHomepageSectionContent(sectionKey, {
-        content: revision.content as never,
+        content: restoredContent as never,
         isEnabled,
         sortOrder,
       });

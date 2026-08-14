@@ -2,6 +2,7 @@ import { supabase } from "../lib/supabase";
 import {
   HOMEPAGE_SECTION_DEFAULTS,
   isHomepageSectionKey,
+  withHeroDefaults,
   type HomepageSectionContentMap,
   type HomepageSectionKey,
 } from "../utils/homepage-content";
@@ -50,5 +51,8 @@ function applySectionContent<K extends HomepageSectionKey>(
   key: K,
   value: unknown,
 ): void {
-  content[key] = value as HomepageSectionContentMap[K];
+  // Hero rows saved before the carousel feature existed have no `slides`
+  // key — normalize so the public page can always assume it's an array.
+  const normalized = key === "hero" ? withHeroDefaults(value as Record<string, unknown>) : value;
+  content[key] = normalized as HomepageSectionContentMap[K];
 }

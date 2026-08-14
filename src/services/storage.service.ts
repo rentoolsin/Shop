@@ -10,7 +10,10 @@ const BUCKET = "product-images";
  * stays a plain string either way, same as when an admin pastes a URL
  * directly.
  */
-export async function uploadImage(file: File, folder: "products" | "categories"): Promise<string> {
+export async function uploadImage(
+  file: File,
+  folder: "products" | "categories" | "homepage",
+): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${folder}/${crypto.randomUUID()}.${ext}`;
 

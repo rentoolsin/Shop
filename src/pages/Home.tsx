@@ -8,6 +8,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { Button } from "../components/ui/Button";
 import { SearchBar } from "../components/ui/SearchBar";
+import { HeroCarousel } from "../components/home/HeroCarousel";
 import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
 import { FloatingWhatsApp } from "../components/actions/FloatingWhatsApp";
@@ -61,29 +62,37 @@ export function Home() {
 
       {/* Hero */}
       {!hiddenSections.has("hero") && (
-        <section className="px-4 pb-6 pt-5">
-          <h1 className="font-display text-[24px] font-extrabold leading-tight text-ink dark:text-ink-inverted">
-            {cms.hero.heading}
-          </h1>
-          <p className="mt-2 font-body text-[14px] text-graphite-500">{cms.hero.subheading}</p>
+        <section className="pb-6 pt-5">
+          {cms.hero.slides && cms.hero.slides.length > 0 && (
+            <div className="mb-4 px-4">
+              <HeroCarousel slides={cms.hero.slides} />
+            </div>
+          )}
 
-          <form onSubmit={handleSearchSubmit} className="mt-4">
-            <label htmlFor="home-search" className="sr-only">
-              Search tools
-            </label>
-            <SearchBar
-              id="home-search"
-              value={query}
-              onChange={setQuery}
-              placeholder="Search ladders, cutters, motors…"
-            />
-          </form>
+          <div className="px-4">
+            <h1 className="font-display text-[24px] font-extrabold leading-tight text-ink dark:text-ink-inverted">
+              {cms.hero.heading}
+            </h1>
+            <p className="mt-2 font-body text-[14px] text-graphite-500">{cms.hero.subheading}</p>
 
-          <div className="mt-4 flex gap-2">
-            <Button onClick={() => navigate("/enquire")} className="flex-1">
-              Enquire now
-            </Button>
-            <CallButton phone={phone} label="Call" />
+            <form onSubmit={handleSearchSubmit} className="mt-4">
+              <label htmlFor="home-search" className="sr-only">
+                Search tools
+              </label>
+              <SearchBar
+                id="home-search"
+                value={query}
+                onChange={setQuery}
+                placeholder="Search ladders, cutters, motors…"
+              />
+            </form>
+
+            <div className="mt-4 flex gap-2">
+              <Button onClick={() => navigate("/enquire")} className="flex-1">
+                Enquire now
+              </Button>
+              <CallButton phone={phone} label="Call" />
+            </div>
           </div>
         </section>
       )}

@@ -8,8 +8,8 @@ interface ImageInputProps {
   label?: string;
   value: string;
   onChange: (url: string) => void;
-  /** Which storage folder an uploaded file lands in — keeps product and category images separated in the bucket. */
-  folder: "products" | "categories";
+  /** Which storage folder an uploaded file lands in — keeps product, category, and homepage images separated in the bucket. */
+  folder: "products" | "categories" | "homepage";
   hint?: string;
   error?: string;
 }
