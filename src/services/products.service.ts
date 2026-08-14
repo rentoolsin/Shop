@@ -20,6 +20,8 @@ export interface ProductDetail {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  /** Extra gallery photos beyond the cover `imageUrl`, in display order. */
+  galleryImageUrls: string[];
   categoryId: string;
   variants: ProductVariantDetail[];
 }
@@ -100,12 +102,15 @@ export async function fetchProductById(id: string): Promise<ProductDetail | null
     product_variants:
       | { id: string; label: string; daily_rate: number; quantity_total: number; quantity_reserved: number; is_active: boolean }[]
       | null;
+    product_images: { image_url: string; sort_order: number }[] | null;
   }
 
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, name, description, image_url, category_id, product_variants(id, label, daily_rate, quantity_total, quantity_reserved, is_active)",
+      "id, name, description, image_url, category_id, " +
+        "product_variants(id, label, daily_rate, quantity_total, quantity_reserved, is_active), " +
+        "product_images(image_url, sort_order)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -123,11 +128,17 @@ export async function fetchProductById(id: string): Promise<ProductDetail | null
       availableQuantity: v.quantity_total - v.quantity_reserved,
     }));
 
+  const galleryImageUrls = (row.product_images ?? [])
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((img) => img.image_url);
+
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     imageUrl: row.image_url,
+    galleryImageUrls,
     categoryId: row.category_id,
     variants,
   };

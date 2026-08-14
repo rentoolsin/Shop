@@ -86,6 +86,21 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["product_variants"]["Row"]>;
         Relationships: [];
       };
+      product_images: {
+        Row: {
+          id: string;
+          product_id: string;
+          image_url: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["product_images"]["Row"]> & {
+          product_id: string;
+          image_url: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["product_images"]["Row"]>;
+        Relationships: [];
+      };
       customers: {
         Row: {
           id: string;
@@ -250,6 +265,11 @@ export interface Database {
             dailyRate: number;
             quantityTotal: number;
             isActive: boolean;
+          }>;
+          p_images?: Array<{
+            id: string | null;
+            imageUrl: string;
+            sortOrder: number;
           }>;
         };
         Returns: string;

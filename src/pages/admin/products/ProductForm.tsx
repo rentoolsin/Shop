@@ -5,12 +5,14 @@ import {
   createProduct,
   updateProduct,
   deleteVariant,
+  deleteProductImage,
   type ProductFormValues,
   type AdminVariant,
 } from "../../../services/admin-products.service";
 import { slugify } from "../../../utils/slugify";
 import { Input } from "../../../components/ui/Input";
 import { ImageInput } from "../../../components/ui/ImageInput";
+import { ImageGalleryInput } from "../../../components/ui/ImageGalleryInput";
 import { Textarea } from "../../../components/ui/Textarea";
 import { Select } from "../../../components/ui/Select";
 import { Switch } from "../../../components/ui/Switch";
@@ -29,6 +31,7 @@ const EMPTY: ProductFormValues = {
   isActive: true,
   sortOrder: 0,
   variants: [],
+  images: [],
 };
 
 function emptyVariant(): AdminVariant {
@@ -45,6 +48,7 @@ export function ProductForm() {
 
   const [values, setValues] = useState<ProductFormValues>(EMPTY);
   const [removedVariantIds, setRemovedVariantIds] = useState<string[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const [slugTouched, setSlugTouched] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -110,6 +114,9 @@ export function ProductForm() {
       for (const variantId of removedVariantIds) {
         await deleteVariant(variantId);
       }
+      for (const imageId of removedImageIds) {
+        await deleteProductImage(imageId);
+      }
       if (isEdit) {
         await updateProduct(id!, values);
         showToast("Product updated.", "success");
@@ -162,11 +169,19 @@ export function ProductForm() {
           onChange={(e) => setField("description", e.target.value)}
         />
         <ImageInput
-          label="Image"
+          label="Cover image"
           value={values.imageUrl}
           onChange={(url) => setField("imageUrl", url)}
           folder="products"
-          hint="Upload a file or paste a URL — leave blank to show a placeholder."
+          hint="Upload a file or paste a URL — leave blank to show a placeholder. Shown on product cards and first in the gallery."
+        />
+        <ImageGalleryInput
+          label="Gallery photos"
+          images={values.images}
+          onChange={(images) => setField("images", images)}
+          onRemoveExisting={(id) => setRemovedImageIds((ids) => [...ids, id])}
+          folder="products"
+          hint="Extra photos shown in the swipeable gallery on the tool's detail page, after the cover image."
         />
         <div className="grid grid-cols-2 gap-3">
           <Input

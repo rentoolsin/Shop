@@ -92,6 +92,11 @@ export function ProductDetail() {
     item.variants.find((v) => v.id === selectedVariantId) ?? item.variants[0];
   const outOfStock = !!activeVariant && activeVariant.availableQuantity <= 0;
   const { intro, highlights } = parseProductDescription(item.description ?? null);
+  // Cover photo first, then gallery photos — de-duped in case the same URL
+  // was also added to the gallery.
+  const galleryImages = [item.imageUrl, ...item.galleryImageUrls].filter(
+    (url, index, all): url is string => !!url && all.indexOf(url) === index,
+  );
 
   return (
     <div>
@@ -112,7 +117,7 @@ export function ProductDetail() {
         }
       />
 
-      <ImageCarousel images={item.imageUrl ? [item.imageUrl] : []} alt={item.name} />
+      <ImageCarousel images={galleryImages} alt={item.name} />
 
       <div className="p-4">
         <h1 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">

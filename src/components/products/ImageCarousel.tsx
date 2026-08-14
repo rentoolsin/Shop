@@ -6,10 +6,10 @@ interface ImageCarouselProps {
 }
 
 /**
- * Products currently store a single `image_url` (see products.service.ts),
- * so most callers pass a one-item array and this renders as a plain image
- * with no dots — same component will "just work" if/when the product
- * schema grows a gallery, without another rewrite of this screen.
+ * Renders the product's cover photo plus any gallery photos (see
+ * `product_images` / products.service.ts) as a swipeable, dot-indexed
+ * carousel. A product with no gallery photos still works fine here — it
+ * just renders as a single plain image with no dots.
  */
 export function ImageCarousel({ images, alt }: ImageCarouselProps) {
   const [active, setActive] = useState(0);

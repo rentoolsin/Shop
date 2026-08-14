@@ -29,6 +29,7 @@ interface RawProductEditRow {
   product_variants:
     | { id: string; label: string; daily_rate: number; quantity_total: number; is_active: boolean }[]
     | null;
+  product_images: { id: string; image_url: string; sort_order: number }[] | null;
 }
 
 export interface AdminProductListItem {
@@ -50,6 +51,12 @@ export interface AdminVariant {
   isActive: boolean;
 }
 
+export interface AdminProductImage {
+  id: string | null; // null = new, not yet saved
+  imageUrl: string;
+  sortOrder: number;
+}
+
 export interface AdminProductDetail {
   id: string;
   name: string;
@@ -61,6 +68,7 @@ export interface AdminProductDetail {
   isActive: boolean;
   sortOrder: number;
   variants: AdminVariant[];
+  images: AdminProductImage[];
 }
 
 export interface ProductFormValues {
@@ -73,6 +81,7 @@ export interface ProductFormValues {
   isActive: boolean;
   sortOrder: number;
   variants: AdminVariant[];
+  images: AdminProductImage[];
 }
 
 export async function fetchAllProducts(): Promise<AdminProductListItem[]> {
@@ -99,7 +108,8 @@ export async function fetchProductForEdit(id: string): Promise<AdminProductDetai
     .from("products")
     .select(
       "id, name, slug, description, image_url, category_id, is_featured, is_active, sort_order, " +
-        "product_variants(id, label, daily_rate, quantity_total, is_active)",
+        "product_variants(id, label, daily_rate, quantity_total, is_active), " +
+        "product_images(id, image_url, sort_order)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -124,6 +134,14 @@ export async function fetchProductForEdit(id: string): Promise<AdminProductDetai
       quantityTotal: v.quantity_total,
       isActive: v.is_active,
     })),
+    images: (row.product_images ?? [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((img) => ({
+        id: img.id,
+        imageUrl: img.image_url,
+        sortOrder: img.sort_order,
+      })),
   };
 }
 
@@ -156,6 +174,11 @@ export async function createProduct(values: ProductFormValues): Promise<string> 
       quantityTotal: v.quantityTotal,
       isActive: v.isActive,
     })),
+    p_images: values.images.map((img, index) => ({
+      id: img.id,
+      imageUrl: img.imageUrl,
+      sortOrder: index,
+    })),
   });
   if (error) throw error;
   return data as string;
@@ -184,6 +207,11 @@ export async function updateProduct(id: string, values: ProductFormValues): Prom
       dailyRate: v.dailyRate,
       quantityTotal: v.quantityTotal,
       isActive: v.isActive,
+    })),
+    p_images: values.images.map((img, index) => ({
+      id: img.id,
+      imageUrl: img.imageUrl,
+      sortOrder: index,
     })),
   });
   if (error) throw error;
@@ -236,6 +264,19 @@ export async function fetchProductInventorySummary(): Promise<Map<string, Produc
 
 export async function deleteVariant(variantId: string): Promise<void> {
   const { error } = await supabase.from("product_variants").delete().eq("id", variantId);
+  if (error) throw error;
+}
+
+/**
+ * Removes one gallery photo. Kept as an explicit call from the form (like
+ * deleteVariant above) rather than diffing inside admin_save_product_with_variants —
+ * same "what changed" stays visible in the component" rationale as DECISIONS.md.
+ * Storage bytes in the `product-images` bucket are intentionally not
+ * deleted here — same trade-off already made for the cover `image_url`
+ * field, which never garbage-collects replaced files either.
+ */
+export async function deleteProductImage(imageId: string): Promise<void> {
+  const { error } = await supabase.from("product_images").delete().eq("id", imageId);
   if (error) throw error;
 }
 
