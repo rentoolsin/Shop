@@ -7,6 +7,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  html,
+  body {
+    @apply overflow-x-hidden;
+  }
+
   body {
     @apply bg-graphite-50 text-ink font-body antialiased;
     @apply dark:bg-graphite-950 dark:text-ink-inverted;
@@ -21,7 +26,7 @@
 
   /* Visible keyboard focus everywhere — never rely on color alone. */
   :focus-visible {
-    outline: 2px solid theme("colors.signal.500");
+    outline: 2px solid theme("colors.graphite.500");
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -54,7 +59,7 @@
   }
 
   .spec-tag--accent {
-    @apply border-signal-500/40 bg-signal-50 text-signal-700
-      dark:border-signal-500/40 dark:bg-signal-500/10 dark:text-signal-300;
+    @apply border-graphite-300 bg-graphite-100 text-ink
+      dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted;
   }
 }

@@ -65,7 +65,7 @@ export function BottomNavigation() {
                 [
                   "flex h-full flex-col items-center justify-center gap-1 font-body text-[11px] font-medium",
                   isActive
-                    ? "text-signal-600 dark:text-signal-400"
+                    ? "text-ink dark:text-ink-inverted"
                     : "text-graphite-500",
                 ].join(" ")
               }

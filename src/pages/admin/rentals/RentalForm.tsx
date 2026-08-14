@@ -274,12 +274,12 @@ export function RentalForm({
           error={errors.advance}
         />
 
-        <div className="rounded border border-signal-500/40 bg-signal-50 p-3 dark:border-signal-500/40 dark:bg-signal-500/10">
-          <div className="flex items-center justify-between font-mono text-[13px] text-signal-700 dark:text-signal-300">
+        <div className="rounded border border-graphite-300 bg-graphite-100 p-3 dark:border-graphite-700 dark:bg-graphite-800">
+          <div className="flex items-center justify-between font-mono text-[13px] text-ink dark:text-ink-inverted">
             <span>{totals.rentalDays} day{totals.rentalDays === 1 ? "" : "s"}</span>
             <span>{formatCurrency(totals.totalRental)}</span>
           </div>
-          <div className="mt-1 flex items-center justify-between font-mono text-[13px] font-semibold text-signal-700 dark:text-signal-300">
+          <div className="mt-1 flex items-center justify-between font-mono text-[13px] font-semibold text-ink dark:text-ink-inverted">
             <span>Balance due</span>
             <span>{formatCurrency(totals.balance)}</span>
           </div>

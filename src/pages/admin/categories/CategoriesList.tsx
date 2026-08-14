@@ -53,7 +53,7 @@ export function CategoriesList() {
           Categories
         </h1>
         <Link to="/admin/categories/new">
-          <Button size="sm">New category</Button>
+          <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New category</Button>
         </Link>
       </div>
 
@@ -76,7 +76,7 @@ export function CategoriesList() {
           description="Create your first category to start organizing products."
           action={
             <Link to="/admin/categories/new">
-              <Button size="sm">New category</Button>
+              <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New category</Button>
             </Link>
           }
         />

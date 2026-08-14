@@ -195,7 +195,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
         <button
           type="button"
           onClick={startCreate}
-          className="mt-2 font-body text-[13px] font-medium text-signal-600 dark:text-signal-400"
+          className="mt-2 font-body text-[13px] font-medium text-graphite-700 hover:text-ink dark:text-graphite-300 dark:hover:text-ink-inverted"
         >
           + Add a new customer instead
         </button>

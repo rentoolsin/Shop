@@ -149,7 +149,7 @@ function AppearanceSettings() {
           className={[
             "flex-1 rounded px-3 py-2 font-body text-[13px] font-medium transition-colors duration-150 ease-app",
             preference === option.value
-              ? "bg-graphite-900 text-graphite-25 dark:bg-signal-500 dark:text-graphite-950"
+              ? "bg-graphite-900 text-graphite-25 dark:bg-white dark:text-graphite-950"
               : "bg-graphite-100 text-graphite-600 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-700",
           ].join(" ")}
         >

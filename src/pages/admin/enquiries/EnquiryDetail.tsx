@@ -97,7 +97,7 @@ export function EnquiryDetail() {
       <div>
         <button
           onClick={() => setConverting(false)}
-          className="mb-4 font-body text-[13px] font-medium text-signal-600 dark:text-signal-400"
+          className="mb-4 font-body text-[13px] font-medium text-graphite-700 hover:text-ink dark:text-graphite-300 dark:hover:text-ink-inverted"
         >
           ← Back to enquiry
         </button>
@@ -123,7 +123,7 @@ export function EnquiryDetail() {
 
   return (
     <div className="max-w-lg">
-      <Link to="/admin/enquiries" className="mb-4 block font-body text-[13px] font-medium text-signal-600 dark:text-signal-400">
+      <Link to="/admin/enquiries" className="mb-4 block font-body text-[13px] font-medium text-graphite-700 hover:text-ink dark:text-graphite-300 dark:hover:text-ink-inverted">
         ← All enquiries
       </Link>
 

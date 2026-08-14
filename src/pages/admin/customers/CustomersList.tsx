@@ -66,11 +66,11 @@ export function CustomersList() {
           Customers
         </h1>
         <Link to="/admin/customers/new">
-          <Button size="sm">New customer</Button>
+          <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New customer</Button>
         </Link>
       </div>
 
-      <div className="mb-4 flex h-11 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
+      <div className="mb-4 flex h-11 min-w-0 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
         <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
           <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
           <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
@@ -80,9 +80,9 @@ export function CustomersList() {
           inputMode="search"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Search by name or mobile number"
+          placeholder="Search by name or mobile"
           aria-label="Search by name or mobile number"
-          className="h-full flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
+          className="h-full min-w-0 flex-1 overflow-hidden text-ellipsis bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
         />
         {input && (
           <button onClick={() => setInput("")} aria-label="Clear search" className="text-graphite-400">
@@ -115,7 +115,7 @@ export function CustomersList() {
           action={
             !debounced ? (
               <Link to="/admin/customers/new">
-                <Button size="sm">New customer</Button>
+                <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New customer</Button>
               </Link>
             ) : undefined
           }

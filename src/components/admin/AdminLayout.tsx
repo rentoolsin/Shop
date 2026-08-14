@@ -151,11 +151,11 @@ export function AdminLayout() {
     <div className="flex min-h-screen bg-graphite-50 dark:bg-graphite-950">
       <aside
         className={[
-          "sticky top-0 flex h-screen shrink-0 flex-col border-r border-graphite-200 bg-white transition-[width] duration-200 ease-app dark:border-graphite-800 dark:bg-graphite-900",
+          "fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col border-r border-graphite-200 bg-white transition-[width] duration-200 ease-app dark:border-graphite-800 dark:bg-graphite-900",
           collapsed ? "w-[76px]" : "w-64",
         ].join(" ")}
       >
-        <div className="flex h-14 items-center justify-between border-b border-graphite-200 px-3 dark:border-graphite-800">
+        <div className="flex h-14 flex-shrink-0 items-center justify-between border-b border-graphite-200 px-3 pt-safe-t dark:border-graphite-800">
           {collapsed ? (
             <span className="mx-auto font-display text-[14px] font-extrabold tracking-tight text-ink dark:text-ink-inverted">
               RTA
@@ -170,8 +170,8 @@ export function AdminLayout() {
             aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
             onClick={() => setCollapsed((c) => !c)}
             className={[
-              "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800",
-              collapsed ? "hidden" : "",
+              "hidden h-8 w-8 flex-shrink-0 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800 md:flex",
+              collapsed ? "md:hidden" : "",
             ].join(" ")}
           >
             <CollapseIcon collapsed={collapsed} />
@@ -190,7 +190,7 @@ export function AdminLayout() {
                   "flex h-11 items-center gap-2.5 rounded-lg font-body text-[13.5px] font-medium transition-colors duration-150 ease-app",
                   collapsed ? "justify-center px-0" : "px-3",
                   isActive
-                    ? "bg-signal-500 text-graphite-950"
+                    ? "bg-graphite-900 text-white dark:bg-white dark:text-graphite-900"
                     : "text-graphite-600 hover:bg-graphite-100 dark:text-graphite-300 dark:hover:bg-graphite-800",
                 ].join(" ")
               }
@@ -202,7 +202,7 @@ export function AdminLayout() {
         </nav>
 
         {collapsed && (
-          <div className="flex justify-center border-t border-graphite-200 px-2.5 py-3 dark:border-graphite-800">
+          <div className="hidden justify-center border-t border-graphite-200 px-2.5 py-3 dark:border-graphite-800 md:flex">
             <button
               type="button"
               aria-label="Expand navigation"
@@ -214,13 +214,13 @@ export function AdminLayout() {
           </div>
         )}
 
-        <div className={["border-t border-graphite-200 dark:border-graphite-800", collapsed ? "px-2.5 py-3" : "px-3 py-3"].join(" ")}>
+        <div className={["flex-shrink-0 border-t border-graphite-200 pb-safe-b dark:border-graphite-800", collapsed ? "px-2.5 py-3" : "px-3 py-3"].join(" ")}>
           <button
             type="button"
             onClick={handleHelp}
             title="Need help?"
             className={[
-              "flex h-11 w-full items-center gap-2 rounded-lg bg-signal-50 font-body text-[13px] font-medium text-signal-700 hover:bg-signal-100 dark:bg-signal-500/10 dark:text-signal-300 dark:hover:bg-signal-500/20",
+              "flex h-11 w-full items-center gap-2 rounded-lg bg-graphite-100 font-body text-[13px] font-medium text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-700",
               collapsed ? "justify-center px-0" : "px-3",
             ].join(" ")}
           >
@@ -264,7 +264,12 @@ export function AdminLayout() {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      <main
+        className={[
+          "min-w-0 flex-1 overflow-x-hidden px-4 py-6 transition-[margin] duration-200 ease-app sm:px-6 lg:px-8",
+          collapsed ? "ml-[76px]" : "ml-64",
+        ].join(" ")}
+      >
         <div className="mx-auto max-w-4xl">
           <Outlet />
         </div>

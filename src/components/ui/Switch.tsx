@@ -18,13 +18,13 @@ export function Switch({ checked, onChange, label, id }: SwitchProps) {
         onClick={() => onChange(!checked)}
         className={[
           "relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-150 ease-app",
-          checked ? "bg-signal-500" : "bg-graphite-300 dark:bg-graphite-700",
+          checked ? "bg-graphite-900 dark:bg-white" : "bg-graphite-300 dark:bg-graphite-700",
         ].join(" ")}
       >
         <span
           className={[
-            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-card transition-transform duration-150 ease-app",
-            checked ? "translate-x-[22px]" : "translate-x-0.5",
+            "absolute top-0.5 h-5 w-5 rounded-full shadow-card transition-transform duration-150 ease-app",
+            checked ? "translate-x-[22px] bg-white dark:bg-graphite-950" : "translate-x-0.5 bg-white",
           ].join(" ")}
         />
       </button>

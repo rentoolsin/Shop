@@ -120,33 +120,31 @@ export function App() {
         <Route path="/admin/login" element={<Login />} />
         <Route
           path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
+          element={<AdminLayout />}
         >
-          <Route index element={<Dashboard />} />
-          <Route path="categories" element={<CategoriesList />} />
-          <Route path="categories/new" element={<CategoryForm />} />
-          <Route path="categories/:id/edit" element={<CategoryForm />} />
-          <Route path="products" element={<ProductsList />} />
-          <Route path="products/new" element={<ProductForm />} />
-          <Route path="products/:id/edit" element={<ProductForm />} />
-          <Route path="customers" element={<CustomersList />} />
-          <Route path="customers/new" element={<CustomerForm />} />
-          <Route path="customers/:id/edit" element={<CustomerForm />} />
-          <Route path="rentals" element={<RentalsList />} />
-          <Route path="rentals/new" element={<RentalForm />} />
-          <Route path="enquiries" element={<EnquiriesList />} />
-          <Route path="enquiries/:id" element={<EnquiryDetail />} />
-          <Route path="purchase-requests" element={<PurchaseRequestsList />} />
-          <Route path="purchase-requests/new" element={<PurchaseRequestForm />} />
-          <Route path="purchase-requests/:id" element={<PurchaseRequestDetail />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="homepage" element={<HomepageSectionsList />} />
-          <Route path="homepage/:sectionKey" element={<HomepageSectionForm />} />
-          <Route path="settings" element={<Settings />} />
+          <Route element={<ProtectedRoute />}>
+            <Route index element={<Dashboard />} />
+            <Route path="categories" element={<CategoriesList />} />
+            <Route path="categories/new" element={<CategoryForm />} />
+            <Route path="categories/:id/edit" element={<CategoryForm />} />
+            <Route path="products" element={<ProductsList />} />
+            <Route path="products/new" element={<ProductForm />} />
+            <Route path="products/:id/edit" element={<ProductForm />} />
+            <Route path="customers" element={<CustomersList />} />
+            <Route path="customers/new" element={<CustomerForm />} />
+            <Route path="customers/:id/edit" element={<CustomerForm />} />
+            <Route path="rentals" element={<RentalsList />} />
+            <Route path="rentals/new" element={<RentalForm />} />
+            <Route path="enquiries" element={<EnquiriesList />} />
+            <Route path="enquiries/:id" element={<EnquiryDetail />} />
+            <Route path="purchase-requests" element={<PurchaseRequestsList />} />
+            <Route path="purchase-requests/new" element={<PurchaseRequestForm />} />
+            <Route path="purchase-requests/:id" element={<PurchaseRequestDetail />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="homepage" element={<HomepageSectionsList />} />
+            <Route path="homepage/:sectionKey" element={<HomepageSectionForm />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
         </Route>
         <Route path="/*" element={<CustomerApp />} />
       </Routes>

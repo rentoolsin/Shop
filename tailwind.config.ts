@@ -1,9 +1,9 @@
 import type { Config } from "tailwindcss";
 
 // RenTools design tokens.
-// Palette is grounded in the tool-yard: graphite steel neutrals + a single
-// restrained "signal amber" accent (evokes hi-vis/equipment tags without
-// being a literal safety-vest yellow). No purple/blue AI-gradient defaults.
+// Palette is grounded in the tool-yard: graphite steel neutrals only —
+// a restrained black/white monochrome system, no amber/orange accent.
+// No purple/blue AI-gradient defaults.
 export default {
   darkMode: "class",
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
@@ -29,13 +29,13 @@ export default {
           inverted: "#F5F5F2", // dark-mode primary text
         },
         signal: {
-          50: "#FBF3E2",
-          100: "#F5E3B9",
-          300: "#E7BE71",
-          400: "#DFAE51",
-          500: "#D9A441", // primary accent — use sparingly
-          600: "#B9862C",
-          700: "#8F6721",
+          50: "#F2F2F1",
+          100: "#E4E4E1",
+          300: "#9E9E97",
+          400: "#52524C",
+          500: "#1C1C1E", // primary accent — near-black, use sparingly
+          600: "#101012",
+          700: "#000000",
         },
         state: {
           success: "#3B8156",

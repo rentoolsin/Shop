@@ -182,7 +182,7 @@ export function Home() {
                 key={point}
                 className="flex items-start gap-2 font-body text-[14px] text-graphite-600 dark:text-graphite-300"
               >
-                <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-signal-500" />
+                <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-ink dark:bg-ink-inverted" />
                 {point}
               </li>
             ))}

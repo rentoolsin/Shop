@@ -195,13 +195,13 @@ export function RentalsList() {
             {syncing ? "Syncing…" : "Sync statuses"}
           </Button>
           <Link to="/admin/rentals/new">
-            <Button size="sm">New rental</Button>
+            <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New rental</Button>
           </Link>
         </div>
       </div>
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-        <div className="flex h-11 flex-1 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
+        <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card dark:border-graphite-800 dark:bg-graphite-900">
           <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400">
             <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" />
             <path d="M20 20l-4.3-4.3" stroke="currentColor" strokeLinecap="round" />
@@ -211,9 +211,9 @@ export function RentalsList() {
             inputMode="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by customer name or mobile"
+            placeholder="Search by customer or mobile"
             aria-label="Search by customer name or mobile"
-            className="h-full flex-1 bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
+            className="h-full min-w-0 flex-1 overflow-hidden text-ellipsis bg-transparent font-body text-[14px] text-ink outline-none placeholder:text-graphite-400 dark:text-ink-inverted"
           />
         </div>
         <Select
@@ -252,7 +252,7 @@ export function RentalsList() {
           action={
             data.length === 0 ? (
               <Link to="/admin/rentals/new">
-                <Button size="sm">New rental</Button>
+                <Button size="sm"><svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>New rental</Button>
               </Link>
             ) : undefined
           }
@@ -288,7 +288,7 @@ export function RentalsList() {
 
                 <div className="mt-2 flex items-center justify-between font-mono text-[13px] text-ink dark:text-ink-inverted">
                   <span>{formatCurrency(rental.totalRental)} total</span>
-                  <span className={rental.balance > 0 ? "font-semibold text-signal-600 dark:text-signal-400" : ""}>
+                  <span className={rental.balance > 0 ? "font-semibold text-ink dark:text-ink-inverted" : ""}>
                     {formatCurrency(rental.balance)} due
                   </span>
                 </div>
@@ -348,7 +348,7 @@ export function RentalsList() {
               hint="Update this if the customer paid more advance at extension."
             />
             {extendTotals && (
-              <div className="rounded border border-signal-500/40 bg-signal-50 p-3 font-mono text-[13px] text-signal-700 dark:border-signal-500/40 dark:bg-signal-500/10 dark:text-signal-300">
+              <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
                   <span>{extendTotals.rentalDays} day{extendTotals.rentalDays === 1 ? "" : "s"}</span>
                   <span>{formatCurrency(extendTotals.totalRental)}</span>
