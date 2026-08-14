@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -37,16 +38,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const previousUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      previousUserIdRef.current = data.session?.user?.id ?? null;
       setInitializing(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      setIsAdmin(null); // re-check on any auth change
+      const newUserId = newSession?.user?.id ?? null;
+      // Supabase re-fires this listener (e.g. TOKEN_REFRESHED) whenever the
+      // tab regains focus, even though the signed-in user hasn't changed.
+      // Only reset isAdmin — which flips status back to "loading" and pops
+      // the "Checking sign-in..." screen — when the user actually changed.
+      if (newUserId !== previousUserIdRef.current) {
+        setIsAdmin(null);
+      }
+      previousUserIdRef.current = newUserId;
     });
 
     return () => listener.subscription.unsubscribe();

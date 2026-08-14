@@ -236,8 +236,8 @@ export function RentalsList() {
       </div>
 
       {/* Rentals / Sync statuses segmented row */}
-      <div className="mb-4 flex items-center gap-1 rounded-full bg-graphite-100 p-1 dark:bg-graphite-800">
-        <span className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white font-body text-[13.5px] font-semibold text-ink shadow-card dark:bg-graphite-900 dark:text-ink-inverted">
+      <div className="mb-4 flex items-center gap-1 rounded-lg bg-graphite-100 p-1 dark:bg-graphite-800">
+        <span className="flex h-11 flex-1 items-center justify-center gap-2 rounded bg-white font-body text-[13.5px] font-semibold text-ink shadow-card dark:bg-graphite-900 dark:text-ink-inverted">
           <CalendarIcon className="h-4 w-4" />
           Rentals
         </span>
@@ -245,7 +245,7 @@ export function RentalsList() {
           type="button"
           onClick={handleSyncStatuses}
           disabled={syncing}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full font-body text-[13.5px] font-medium text-graphite-500 disabled:opacity-60 dark:text-graphite-400"
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded font-body text-[13.5px] font-medium text-graphite-500 disabled:opacity-60 dark:text-graphite-400"
         >
           <RefreshIcon spinning={syncing} />
           {syncing ? "Syncing…" : "Sync statuses"}
