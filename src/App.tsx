@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
+import { PageTransition } from "./components/layout/PageTransition";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
 import { LoadingState } from "./components/ui/LoadingState";
@@ -92,20 +93,24 @@ function CustomerApp() {
   return (
     <div className="app-shell">
       <div className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))]">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/categories/:id" element={<CategoryDetail />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/more" element={<More />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/location" element={<Location />} />
-          <Route path="/enquire" element={<Enquire />} />
-          <Route path="/request-purchase" element={<RequestPurchase />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <PageTransition>
+          {(location) => (
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/categories/:id" element={<CategoryDetail />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/more" element={<More />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/location" element={<Location />} />
+              <Route path="/enquire" element={<Enquire />} />
+              <Route path="/request-purchase" element={<RequestPurchase />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          )}
+        </PageTransition>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
         <InstallAppBanner />

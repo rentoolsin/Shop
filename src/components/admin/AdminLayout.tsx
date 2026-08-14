@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useToast } from "../ui/Toast";
 import { AdminMobileNav } from "./AdminMobileNav";
@@ -104,6 +104,7 @@ function HelpIcon() {
 export function AdminLayout() {
   const { signOut, session } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const [collapsed, setCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -241,7 +242,7 @@ export function AdminLayout() {
           collapsed ? "md:ml-[76px]" : "md:ml-64",
         ].join(" ")}
       >
-        <div className="mx-auto max-w-4xl">
+        <div key={location.pathname} className="mx-auto max-w-4xl animate-page-in">
           <Outlet />
         </div>
       </main>

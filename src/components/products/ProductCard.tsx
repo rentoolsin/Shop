@@ -153,14 +153,18 @@ export function ProductCard({
               >
                 <ChatIcon />
               </button>
-              <a
-                href={`tel:${phone}`}
+              <button
+                type="button"
                 aria-label={`Call about ${name}`}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = `tel:${phone}`;
+                }}
                 className="flex h-9 flex-1 items-center justify-center text-graphite-600 hover:bg-graphite-50 dark:text-graphite-300 dark:hover:bg-graphite-800"
               >
                 <PhoneIcon />
-              </a>
+              </button>
             </div>
           </div>
         </Card>

@@ -92,9 +92,22 @@ export default {
           from: { transform: "translateY(100%)" },
           to: { transform: "translateY(0)" },
         },
+        "page-in": {
+          from: { opacity: "0", transform: "translateY(8px) scale(0.99)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        "page-out": {
+          from: { opacity: "1", transform: "translateY(0) scale(1)" },
+          to: { opacity: "0", transform: "translateY(-6px) scale(0.995)" },
+        },
       },
       animation: {
         "sheet-in": "sheet-in 220ms cubic-bezier(0.32, 0.72, 0, 1)",
+        // Route-change cross-fade: a short "out" on the leaving page
+        // handed off to a slightly longer "in" on the entering page, both
+        // on the same restrained sheet-like easing as the rest of the app.
+        "page-in": "page-in 240ms cubic-bezier(0.32, 0.72, 0, 1) both",
+        "page-out": "page-out 130ms cubic-bezier(0.32, 0.72, 0, 1) both",
       },
     },
   },

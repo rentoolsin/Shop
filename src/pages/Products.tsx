@@ -34,7 +34,6 @@ export function Products() {
     <div>
       <PageHeader
         title="Tools"
-        showBack={false}
         action={
           <button
             onClick={() => setFilterOpen(true)}

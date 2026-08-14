@@ -10,7 +10,7 @@ const LINKS = [
 export function More() {
   return (
     <div>
-      <PageHeader title="More" showBack={false} />
+      <PageHeader title="More" />
       <ul className="divide-y divide-graphite-200 dark:divide-graphite-800">
         {LINKS.map((link) => (
           <li key={link.to}>

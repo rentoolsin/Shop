@@ -32,7 +32,7 @@ export function Search() {
 
   return (
     <div>
-      <PageHeader title="Search" showBack={false} />
+      <PageHeader title="Search" />
 
       <div className="p-4">
         <SearchBar

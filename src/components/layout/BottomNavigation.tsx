@@ -64,6 +64,7 @@ export function BottomNavigation() {
               className={({ isActive }) =>
                 [
                   "flex h-full flex-col items-center justify-center gap-1 font-body text-[11px] font-medium",
+                  "transition-colors duration-150 ease-app",
                   isActive
                     ? "text-ink dark:text-ink-inverted"
                     : "text-graphite-500",
