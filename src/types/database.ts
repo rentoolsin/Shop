@@ -283,6 +283,22 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["site_settings"]["Row"]>;
         Relationships: [];
       };
+      locations: {
+        Row: {
+          id: string;
+          name: string;
+          state: string;
+          is_available: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["locations"]["Row"]> & {
+          name: string;
+          state: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["locations"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

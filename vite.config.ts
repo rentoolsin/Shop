@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      // "prompt": a new service worker installs and waits in the background;
+      // the app decides when to activate it (see usePwaUpdate.ts, which shows
+      // a "New version available" toast instead of silently reloading under
+      // the user mid-session).
+      registerType: "prompt",
       includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
         name: "RenTools — Construction Tool & Equipment Rental",

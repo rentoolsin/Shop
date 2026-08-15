@@ -6,6 +6,7 @@ import {
   ClipboardList,
   LayoutGrid,
   LayoutTemplate,
+  MapPin,
   Settings as SettingsIcon,
 } from "lucide-react";
 
@@ -37,6 +38,12 @@ export const ADMIN_MORE_ITEMS: AdminMoreItem[] = [
     label: "Categories",
     description: "Product categories",
     icon: <LayoutGrid {...iconProps} />,
+  },
+  {
+    to: "/admin/locations",
+    label: "Locations",
+    description: "Delivery cities",
+    icon: <MapPin {...iconProps} />,
   },
   {
     to: "/admin/reports",

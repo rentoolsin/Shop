@@ -1,4 +1,4 @@
-import { ChevronLeft, ClipboardList, HelpCircle, LayoutTemplate, LogOut, Settings as SettingsIcon, BarChart3 } from "lucide-react";
+import { ChevronLeft, ClipboardList, HelpCircle, LayoutTemplate, LogOut, MapPin, Settings as SettingsIcon, BarChart3 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
@@ -42,6 +42,11 @@ const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[]
     to: "/admin/categories",
     label: "Categories",
     icon: <MoreIcon />,
+  },
+  {
+    to: "/admin/locations",
+    label: "Locations",
+    icon: <MapPin className="h-[18px] w-[18px]" strokeWidth={1.6} />,
   },
   {
     to: "/admin/reports",

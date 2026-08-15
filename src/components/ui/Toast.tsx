@@ -19,10 +19,13 @@ interface ToastItem {
   message: string;
   tone: ToastTone;
   action?: ToastAction;
+  persist?: boolean;
 }
 
 interface ToastOptions {
   action?: ToastAction;
+  /** Skip the auto-dismiss timer — the toast stays until the user acts on it. */
+  persist?: boolean;
 }
 
 interface ToastContextValue {
@@ -45,10 +48,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (message: string, tone: ToastTone = "default", options?: ToastOptions) => {
       const id = Date.now() + Math.random();
-      setToasts((current) => [...current, { id, message, tone, action: options?.action }]);
-      window.setTimeout(() => {
-        setToasts((current) => current.filter((t) => t.id !== id));
-      }, AUTO_DISMISS_MS);
+      setToasts((current) => [
+        ...current,
+        { id, message, tone, action: options?.action, persist: options?.persist },
+      ]);
+      if (!options?.persist) {
+        window.setTimeout(() => {
+          setToasts((current) => current.filter((t) => t.id !== id));
+        }, AUTO_DISMISS_MS);
+      }
     },
     [],
   );

@@ -19,6 +19,7 @@ import {
 } from "../services/admin-homepage-content.service";
 import type { HomepageSectionKey } from "../utils/homepage-content";
 import { fetchAdminSiteSettings } from "../services/admin-site-settings.service";
+import { fetchAllAdminLocations, fetchLocationById } from "../services/admin-locations.service";
 
 // Product data spans three tables (a variant or image change doesn't touch
 // the product row itself), so anything reading products watches all three.
@@ -105,4 +106,14 @@ export function useAdminHomepageRevisions(key: HomepageSectionKey) {
 
 export function useAdminSiteSettings() {
   return useAsyncData(fetchAdminSiteSettings, [], { realtimeTables: ["site_settings"] });
+}
+
+export function useAdminLocations() {
+  return useAsyncData(fetchAllAdminLocations, [], { realtimeTables: ["locations"] });
+}
+
+export function useAdminLocation(id: string | undefined) {
+  return useAsyncData(() => (id ? fetchLocationById(id) : Promise.resolve(null)), [id], {
+    realtimeTables: ["locations"],
+  });
 }

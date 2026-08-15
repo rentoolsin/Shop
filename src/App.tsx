@@ -8,6 +8,7 @@ import { Footer } from "./components/layout/Footer";
 import { FloatingWhatsApp } from "./components/actions/FloatingWhatsApp";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
+import { usePwaUpdate } from "./hooks/usePwaUpdate";
 import { useReportBottomBarHeight, useBottomBarHeight } from "./hooks/useBottomBarHeight";
 import { useSiteSettings } from "./hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "./utils/site-settings";
@@ -38,6 +39,12 @@ const CategoriesList = lazy(() =>
 );
 const CategoryForm = lazy(() =>
   import("./pages/admin/categories/CategoryForm").then((m) => ({ default: m.CategoryForm })),
+);
+const LocationsList = lazy(() =>
+  import("./pages/admin/locations/LocationsList").then((m) => ({ default: m.LocationsList })),
+);
+const LocationForm = lazy(() =>
+  import("./pages/admin/locations/LocationForm").then((m) => ({ default: m.LocationForm })),
 );
 const ProductsList = lazy(() =>
   import("./pages/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
@@ -165,6 +172,7 @@ function CustomerApp() {
 export function App() {
   useScrollRestoration();
   useManifestForRoute();
+  usePwaUpdate();
 
   return (
     <Suspense fallback={<LoadingState label="Loading…" />}>
@@ -179,6 +187,9 @@ export function App() {
             <Route path="categories" element={<CategoriesList />} />
             <Route path="categories/new" element={<CategoryForm />} />
             <Route path="categories/:id/edit" element={<CategoryForm />} />
+            <Route path="locations" element={<LocationsList />} />
+            <Route path="locations/new" element={<LocationForm />} />
+            <Route path="locations/:id/edit" element={<LocationForm />} />
             <Route path="products" element={<ProductsList />} />
             <Route path="products/new" element={<ProductForm />} />
             <Route path="products/:id/edit" element={<ProductForm />} />
