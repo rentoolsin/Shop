@@ -72,8 +72,8 @@
   }
 
   .spec-tag--accent {
-    @apply border-graphite-300 bg-graphite-100 text-ink
-      dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted;
+    @apply border-accent-500 bg-accent-500 text-graphite-950
+      dark:border-accent-400 dark:bg-accent-400 dark:text-graphite-950;
   }
 
   /* Skip-to-content link: off-screen until focused, then docked at the
