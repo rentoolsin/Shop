@@ -57,7 +57,7 @@ export function InstallAppBanner({
           type="button"
           onClick={dismiss}
           aria-label="Dismiss install prompt"
-          className="-mr-1 -mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-graphite-400 transition-colors duration-150 ease-app hover:bg-graphite-100 hover:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
+          className="-mr-2 -mt-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors duration-150 ease-app active:bg-graphite-100 active:text-ink dark:active:bg-graphite-800 dark:active:text-ink-inverted"
         >
           <X className="h-4 w-4" strokeWidth={1.8} />
         </button>

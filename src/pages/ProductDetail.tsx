@@ -15,6 +15,7 @@ import { formatCurrency } from "../utils/currency";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 import { parseProductDescription } from "../utils/product-features";
+import { useBottomBarHeight } from "../hooks/useBottomBarHeight";
 
 function HeartIcon({ filled }: { filled: boolean }) {
   return <Heart fill={filled ? "currentColor" : "none"} strokeWidth={1.8} className="h-5 w-5" />;
@@ -35,6 +36,7 @@ export function ProductDetail() {
   const phone = settings.status === "success" ? settings.data.phone : SITE_SETTINGS_DEFAULTS.phone;
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const bottomBarHeight = useBottomBarHeight();
 
   if (product.status === "loading") {
     return (
@@ -174,7 +176,20 @@ export function ProductDetail() {
         )}
       </div>
 
-      <div className="sticky bottom-0 flex gap-2 border-t border-graphite-200 bg-graphite-50/95 p-3 pb-safe-b backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95">
+      {/* Sticky above the floating bottom nav, not behind it — `sticky
+          bottom-0` alone would pin this to the true bottom of the
+          viewport, the exact same space the fixed, higher-z-index nav
+          dock occupies, hiding the two most important buttons on this
+          page (Enquire/Request, Call) underneath it once scrolled. */}
+      <div
+        className="sticky z-20 flex gap-2 border-t border-graphite-200 bg-graphite-50/95 p-3 backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95"
+        style={{
+          bottom:
+            bottomBarHeight > 0
+              ? bottomBarHeight
+              : "calc(5.25rem + env(safe-area-inset-bottom))",
+        }}
+      >
         {outOfStock ? (
           <RequestPurchaseButton productName={item.name} fullWidth />
         ) : (

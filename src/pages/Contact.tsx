@@ -22,7 +22,7 @@ export function Contact() {
         </div>
         <a
           href={`mailto:${email}`}
-          className="block font-body text-[14px] text-ink underline dark:text-ink-inverted"
+          className="-mx-1 block rounded-lg px-1 py-2 font-body text-[14px] text-ink underline transition-colors active:bg-graphite-100 dark:text-ink-inverted dark:active:bg-graphite-800"
         >
           {email}
         </a>

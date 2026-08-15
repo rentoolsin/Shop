@@ -18,7 +18,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
   if (images.length === 0) {
     return (
       <div className="flex aspect-square w-full items-center justify-center bg-graphite-100 dark:bg-graphite-800">
-        <span className="font-display text-[24px] text-graphite-400">{alt.charAt(0)}</span>
+        <span className="font-display text-[24px] text-graphite-500">{alt.charAt(0)}</span>
       </div>
     );
   }
@@ -30,8 +30,20 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
     setActive(Math.min(images.length - 1, Math.max(0, index)));
   };
 
+  const goTo = (index: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({ left: index * el.clientWidth, behavior: "smooth" });
+    setActive(index);
+  };
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      role="group"
+      aria-roledescription="carousel"
+      aria-label={images.length > 1 ? `${alt} photos` : alt}
+    >
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
@@ -42,21 +54,38 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
             key={`${src}-${index}`}
             className="flex h-full w-full flex-shrink-0 snap-center items-center justify-center bg-graphite-100 dark:bg-graphite-800"
           >
-            <img src={src} alt={alt} className="h-full w-full object-cover" />
+            <img
+              src={src}
+              // Every photo sharing one identical alt gives a screen-reader
+              // user no indication there are multiple distinct images at
+              // all — differentiate by position once there's more than one.
+              alt={images.length > 1 ? `${alt} — photo ${index + 1} of ${images.length}` : alt}
+              className="h-full w-full object-cover"
+              loading={index === 0 ? "eager" : "lazy"}
+            />
           </div>
         ))}
       </div>
 
       {images.length > 1 && (
-        <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5">
+        <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1">
           {images.map((_, index) => (
-            <span
+            <button
               key={index}
-              className={[
-                "h-1.5 rounded-full transition-all duration-150 ease-app",
-                index === active ? "w-4 bg-accent-500" : "w-1.5 bg-white/70",
-              ].join(" ")}
-            />
+              type="button"
+              onClick={() => goTo(index)}
+              aria-label={`Go to photo ${index + 1} of ${images.length}`}
+              aria-current={index === active}
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center"
+            >
+              <span
+                aria-hidden="true"
+                className={[
+                  "h-1.5 rounded-full transition-all duration-150 ease-app",
+                  index === active ? "w-4 bg-accent-500" : "w-1.5 bg-white/70",
+                ].join(" ")}
+              />
+            </button>
           ))}
         </div>
       )}

@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useBottomBarHeight } from "../../hooks/useBottomBarHeight";
 
 type ToastTone = "default" | "success" | "danger";
 
@@ -29,6 +30,7 @@ const toneClasses: Record<ToastTone, string> = {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const bottomBarHeight = useBottomBarHeight();
 
   const showToast = useCallback((message: string, tone: ToastTone = "default") => {
     const id = Date.now() + Math.random();
@@ -42,8 +44,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div
+        role="status"
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex flex-col items-center gap-2 px-4"
+        // Rides on the real, measured height of the bottom bar (nav +
+        // install banner, when present) so it always clears it — falls
+        // back to a fixed estimate only before that measurement exists
+        // (e.g. on the admin side, which reports no bottom bar).
+        className="pointer-events-none fixed inset-x-0 z-50 flex flex-col items-center gap-2 px-4"
+        style={{
+          bottom:
+            bottomBarHeight > 0
+              ? `calc(${bottomBarHeight}px + 16px)`
+              : "calc(6rem + env(safe-area-inset-bottom))",
+        }}
       >
         {toasts.map((toast) => (
           <div

@@ -75,7 +75,7 @@ export function ProductCard({
       {imageUrl ? (
         <img src={imageUrl} alt="" className="h-full w-full object-cover" />
       ) : (
-        <span className="font-display text-[13px] text-graphite-400">
+        <span className="font-display text-[13px] text-graphite-500">
           {name.charAt(0)}
         </span>
       )}

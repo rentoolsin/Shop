@@ -17,7 +17,7 @@ export function More() {
           <li key={link.to}>
             <Link
               to={link.to}
-              className="flex items-center justify-between px-4 py-4 font-body text-[15px] text-ink dark:text-ink-inverted"
+              className="flex items-center justify-between px-4 py-4 font-body text-[15px] text-ink transition-colors active:bg-graphite-100 dark:text-ink-inverted dark:active:bg-graphite-800"
             >
               {link.label}
               <ChevronRight className="h-4 w-4 text-graphite-400" strokeWidth={1.6} />

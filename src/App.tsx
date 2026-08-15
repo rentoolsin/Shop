@@ -1,10 +1,11 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { PageTransition } from "./components/layout/PageTransition";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
+import { useReportBottomBarHeight, useBottomBarHeight } from "./hooks/useBottomBarHeight";
 import { LoadingState } from "./components/ui/LoadingState";
 import { Home } from "./pages/Home";
 import { Products } from "./pages/Products";
@@ -90,9 +91,21 @@ const AdminLayout = lazy(() =>
 );
 
 function CustomerApp() {
+  const bottomBarRef = useRef<HTMLDivElement>(null);
+  useReportBottomBarHeight(bottomBarRef);
+  const bottomBarHeight = useBottomBarHeight();
+
   return (
     <div className="app-shell">
-      <div className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
+      {/* Static fallback padding (className) covers the first paint before
+          ResizeObserver reports a real height; the inline style then takes
+          over with the exact measured value — including whenever the
+          install banner appears/disappears, which the static estimate
+          alone can never account for. */}
+      <div
+        className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))]"
+        style={bottomBarHeight > 0 ? { paddingBottom: bottomBarHeight } : undefined}
+      >
         <PageTransition>
           {(location) => (
             <Routes location={location}>
@@ -112,7 +125,7 @@ function CustomerApp() {
           )}
         </PageTransition>
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
+      <div ref={bottomBarRef} className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
         <InstallAppBanner />
         <BottomNavigation />
       </div>

@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { ProductCard } from "../components/products/ProductCard";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -25,7 +25,7 @@ export function CategoryDetail() {
         <div className="grid grid-cols-2 gap-3 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
-              <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+              <Skeleton className="aspect-square w-full rounded-t-lg" />
               <Skeleton className="mt-1 h-4 w-full" />
             </div>
           ))}
@@ -33,14 +33,26 @@ export function CategoryDetail() {
       )}
 
       {products.status === "error" && (
-        <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
+        <div className="px-4">
+          <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
+        </div>
       )}
 
       {products.status === "success" && products.data.length === 0 && (
-        <EmptyState
-          title="No tools in this category yet"
-          description="Check back soon, or browse all tools instead."
-        />
+        <div className="px-4">
+          <EmptyState
+            title="No tools in this category yet"
+            description="Check back soon, or browse all tools instead."
+            action={
+              <Link
+                to="/products"
+                className="inline-flex h-10 items-center rounded-lg border border-graphite-300 px-4 font-body text-[13px] font-medium text-ink transition-colors active:bg-graphite-100 dark:border-graphite-700 dark:text-ink-inverted dark:active:bg-graphite-800"
+              >
+                Browse all tools
+              </Link>
+            }
+          />
+        </div>
       )}
 
       {products.status === "success" && products.data.length > 0 && (

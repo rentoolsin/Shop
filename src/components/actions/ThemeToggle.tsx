@@ -29,7 +29,7 @@ export function ThemeToggle() {
       onClick={cycleNext}
       aria-label={`Theme: ${LABEL[preference]}. Tap to change.`}
       title={LABEL[preference]}
-      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-graphite-500 transition-colors duration-150 ease-app hover:bg-graphite-100 hover:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
+      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-graphite-500 transition-all duration-150 ease-app hover:bg-graphite-100 hover:text-ink active:scale-90 active:bg-graphite-100 active:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted dark:active:bg-graphite-800 dark:active:text-ink-inverted"
     >
       {preference === "system" && <Monitor className="h-[18px] w-[18px]" strokeWidth={1.6} />}
       {preference === "light" && <Sun className="h-[18px] w-[18px]" strokeWidth={1.6} />}

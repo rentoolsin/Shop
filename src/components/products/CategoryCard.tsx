@@ -20,7 +20,7 @@ export function CategoryCard({ id, name, imageUrl }: CategoryCardProps) {
         {imageUrl ? (
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="font-display text-[18px] font-semibold text-graphite-400">
+          <span className="font-display text-[18px] font-semibold text-graphite-500">
             {name.charAt(0)}
           </span>
         )}

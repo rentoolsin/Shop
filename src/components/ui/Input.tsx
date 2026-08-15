@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { baseFieldClass } from "./form-field";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,7 +10,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, trailing, className = "", id, ...rest }, ref) => {
-    const inputId = id ?? rest.name;
+    const generatedId = useId();
+    const inputId = id ?? rest.name ?? generatedId;
     return (
       <label className="block" htmlFor={inputId}>
         {label && (
@@ -34,7 +35,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {hint && !error && (
-          <span className="mt-1 block font-body text-[12px] text-graphite-400">{hint}</span>
+          <span className="mt-1 block font-body text-[12px] text-graphite-500">{hint}</span>
         )}
         {error && (
           <span id={`${inputId}-error`} className="mt-1 block font-body text-[12px] text-state-danger">

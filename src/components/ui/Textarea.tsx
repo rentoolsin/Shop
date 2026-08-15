@@ -1,4 +1,4 @@
-import { forwardRef, type TextareaHTMLAttributes } from "react";
+import { forwardRef, useId, type TextareaHTMLAttributes } from "react";
 import { baseFieldClass } from "./form-field";
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -8,7 +8,8 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ label, error, className = "", id, ...rest }, ref) => {
-    const fieldId = id ?? rest.name;
+    const generatedId = useId();
+    const fieldId = id ?? rest.name ?? generatedId;
     return (
       <label className="block" htmlFor={fieldId}>
         {label && (
@@ -21,10 +22,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={fieldId}
           className={[baseFieldClass(!!error), "min-h-24 h-auto resize-none py-2", className].join(" ")}
           aria-invalid={!!error}
+          aria-describedby={error ? `${fieldId}-error` : undefined}
           {...rest}
         />
         {error && (
-          <span className="mt-1 block font-body text-[12px] text-state-danger">{error}</span>
+          <span id={`${fieldId}-error`} className="mt-1 block font-body text-[12px] text-state-danger">
+            {error}
+          </span>
         )}
       </label>
     );

@@ -31,6 +31,19 @@
     border-radius: 4px;
   }
 
+  /* Every text-type=search field renders its own custom clear button
+     (see SearchBar.tsx). WebKit (Safari/iOS) draws a native cancel
+     button of its own on top of that by default — without this reset,
+     iOS users see two overlapping clear buttons on every search field
+     in the app. */
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-results-button,
+  input[type="search"]::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

@@ -1,3 +1,5 @@
+import { useBottomBarHeight } from "../../hooks/useBottomBarHeight";
+
 interface FloatingWhatsAppProps {
   phone: string; // digits only, country code included, e.g. "91XXXXXXXXXX"
   message?: string;
@@ -14,16 +16,27 @@ const WHATSAPP_GREEN = "#25D366";
  * centered `max-w-app` column (same `fixed inset-x-0 … mx-auto max-w-app`
  * technique used by the install-banner/bottom-nav stack in App.tsx) so it
  * lines up with the mobile canvas instead of drifting to the true edge of
- * a wide desktop viewport. Positioned above the fixed bottom nav.
+ * a wide desktop viewport. Clearance above the bottom bar rides on its
+ * real measured height (see useBottomBarHeight) so it stays correct
+ * whether or not the install banner is currently showing above the nav.
  */
 export function FloatingWhatsApp({
   phone,
   message = "Hi RenTools, I'd like to ask about a tool rental.",
 }: FloatingWhatsAppProps) {
   const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  const bottomBarHeight = useBottomBarHeight();
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom)+16px)] z-40 mx-auto w-full max-w-app">
+    <div
+      className="pointer-events-none fixed inset-x-0 z-40 mx-auto w-full max-w-app"
+      style={{
+        bottom:
+          bottomBarHeight > 0
+            ? `calc(${bottomBarHeight}px + 16px)`
+            : "calc(5.75rem + env(safe-area-inset-bottom))",
+      }}
+    >
       <a
         href={href}
         target="_blank"

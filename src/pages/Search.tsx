@@ -45,29 +45,35 @@ export function Search() {
       </div>
 
       {!debounced && (
-        <EmptyState
-          title="Search RenTools' inventory"
-          description="Try a tool name like “ladder” or “pipe cutter”."
-        />
+        <div className="px-4">
+          <EmptyState
+            title="Search RenTools' inventory"
+            description="Try a tool name like “ladder” or “pipe cutter”."
+          />
+        </div>
       )}
 
       {debounced && products.status === "loading" && (
         <div className="grid grid-cols-2 gap-3 p-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-[4/3] w-full rounded-lg" />
+            <Skeleton key={i} className="aspect-square w-full rounded-lg" />
           ))}
         </div>
       )}
 
       {debounced && products.status === "error" && (
-        <ErrorState title="Search failed" onRetry={products.refetch} />
+        <div className="px-4">
+          <ErrorState title="Search failed" onRetry={products.refetch} />
+        </div>
       )}
 
       {debounced && products.status === "success" && products.data.length === 0 && (
-        <EmptyState
-          title="No tools matched"
-          description={`Nothing found for "${debounced}". Try a different search.`}
-        />
+        <div className="px-4">
+          <EmptyState
+            title="No tools matched"
+            description={`Nothing found for "${debounced}". Try a different search.`}
+          />
+        </div>
       )}
 
       {debounced && products.status === "success" && products.data.length > 0 && (

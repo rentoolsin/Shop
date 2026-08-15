@@ -166,7 +166,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
             <ChevronIcon direction="right" />
           </button>
 
-          <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
+          <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 items-center gap-1">
             {slides.map((slide, index) => (
               <button
                 key={slide.id}
@@ -174,11 +174,16 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 aria-label={`Go to slide ${index + 1}`}
                 aria-current={index === activeIndex}
                 onClick={() => goTo(index)}
-                className={[
-                  "h-1.5 rounded-full transition-all duration-200 ease-app",
-                  index === activeIndex ? "w-5 bg-white" : "w-1.5 bg-white/50",
-                ].join(" ")}
-              />
+                className="flex h-6 w-6 flex-shrink-0 items-center justify-center"
+              >
+                <span
+                  aria-hidden="true"
+                  className={[
+                    "h-1.5 rounded-full transition-all duration-200 ease-app",
+                    index === activeIndex ? "w-5 bg-white" : "w-1.5 bg-white/50",
+                  ].join(" ")}
+                />
+              </button>
             ))}
           </div>
         </>

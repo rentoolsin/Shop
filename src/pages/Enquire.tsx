@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useLocation } from "react-router-dom";
+import { useRef, useState, type FormEvent } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/Textarea";
@@ -46,6 +46,7 @@ function validate(values: FormValues): Partial<Record<keyof FormValues, string>>
 
 export function Enquire() {
   const location = useLocation();
+  const navigate = useNavigate();
   const state = (location.state ?? {}) as LocationState;
   const { showToast } = useToast();
 
@@ -53,6 +54,17 @@ export function Enquire() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  const mobileRef = useRef<HTMLInputElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  // Order matters here — mirrors the field order on screen, so whichever
+  // invalid field appears first visually is also the one that gets focus.
+  const fieldRefs: Partial<Record<keyof FormValues, typeof nameRef>> = {
+    name: nameRef,
+    mobile: mobileRef,
+    quantity: quantityRef,
+  };
 
   const setField = (field: keyof FormValues, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
@@ -64,7 +76,17 @@ export function Enquire() {
 
     const validationErrors = validate(values);
     setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0) {
+      // Move focus (and the viewport) to the first invalid field — without
+      // this, a screen-reader user gets no indication anything failed, and
+      // a sighted user can miss an error that's scrolled off-screen behind
+      // the keyboard.
+      const firstErrorField = (Object.keys(validationErrors) as (keyof FormValues)[]).find(
+        (field) => fieldRefs[field],
+      );
+      fieldRefs[firstErrorField ?? "name"]?.current?.focus();
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -94,12 +116,28 @@ export function Enquire() {
     return (
       <div>
         <PageHeader title="Enquiry sent" />
-        <div className="p-4">
+        <div className="flex flex-col items-center gap-4 p-4 pt-10 text-center">
+          <span
+            aria-hidden="true"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-state-success/10 text-state-success"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" strokeWidth={2}>
+              <path d="M5 12l4.5 4.5L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
           <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
             Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
             at {values.mobile} about
             {state.productName ? ` ${state.productName}` : " your enquiry"}.
           </p>
+          <div className="mt-2 flex w-full flex-col gap-2">
+            <Button fullWidth onClick={() => navigate("/products")}>
+              Browse more tools
+            </Button>
+            <Button variant="ghost" fullWidth onClick={() => navigate("/")}>
+              Back to home
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -114,7 +152,11 @@ export function Enquire() {
         )}
 
         <Input
+          ref={nameRef}
           label="Name"
+          name="name"
+          autoComplete="name"
+          required
           value={values.name}
           onChange={(e) => setField("name", e.target.value)}
           error={errors.name}
@@ -122,9 +164,13 @@ export function Enquire() {
         />
 
         <Input
+          ref={mobileRef}
           label="Mobile number"
+          name="mobile"
           type="tel"
           inputMode="tel"
+          autoComplete="tel"
+          required
           value={values.mobile}
           onChange={(e) => setField("mobile", e.target.value)}
           error={errors.mobile}
@@ -133,7 +179,9 @@ export function Enquire() {
 
         <div className="grid grid-cols-2 gap-3">
           <Input
+            ref={quantityRef}
             label="Quantity"
+            name="quantity"
             type="number"
             min={1}
             inputMode="numeric"
@@ -143,9 +191,11 @@ export function Enquire() {
           />
           <Input
             label="Number of days"
+            name="numberOfDays"
             type="number"
             min={1}
             inputMode="numeric"
+            hint="Optional"
             value={values.numberOfDays}
             onChange={(e) => setField("numberOfDays", e.target.value)}
           />
@@ -153,13 +203,17 @@ export function Enquire() {
 
         <Input
           label="Required date"
+          name="requiredDate"
           type="date"
+          hint="Optional"
           value={values.requiredDate}
           onChange={(e) => setField("requiredDate", e.target.value)}
         />
 
         <Input
           label="Address"
+          name="address"
+          autoComplete="street-address"
           value={values.address}
           onChange={(e) => setField("address", e.target.value)}
           placeholder="Site address (optional)"
@@ -167,6 +221,7 @@ export function Enquire() {
 
         <Textarea
           label="Message"
+          name="message"
           value={values.message}
           onChange={(e) => setField("message", e.target.value)}
           placeholder="Anything else RenTools should know (optional)"

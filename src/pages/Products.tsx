@@ -62,7 +62,7 @@ export function Products() {
         <div className="grid grid-cols-2 gap-3 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
-              <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+              <Skeleton className="aspect-square w-full rounded-t-lg" />
               <Skeleton className="mt-1 h-4 w-full" />
             </div>
           ))}
@@ -70,14 +70,18 @@ export function Products() {
       )}
 
       {products.status === "error" && (
-        <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
+        <div className="px-4">
+          <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
+        </div>
       )}
 
       {products.status === "success" && products.data.length === 0 && (
-        <EmptyState
-          title="No tools found"
-          description="Try a different category or check back once inventory is added."
-        />
+        <div className="px-4">
+          <EmptyState
+            title="No tools found"
+            description="Try a different category or check back once inventory is added."
+          />
+        </div>
       )}
 
       {products.status === "success" && products.data.length > 0 && (

@@ -173,7 +173,7 @@ export function Home() {
             <HorizontalScroller>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="w-40 flex-shrink-0">
-                  <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+                  <Skeleton className="aspect-square w-full rounded-t-lg" />
                   <Skeleton className="mt-1 h-4 w-full" />
                 </div>
               ))}
