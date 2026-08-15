@@ -14,7 +14,7 @@ const EXPLORE_LINKS = [
 
 const SUPPORT_LINKS = [
   { to: "/enquire", label: "Send an enquiry" },
-  { to: "/request-purchase", label: "Request purchase" },
+  { to: "/request-purchase", label: "Request a tool" },
   { to: "/search", label: "Search tools" },
 ];
 

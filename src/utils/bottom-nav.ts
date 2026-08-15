@@ -94,7 +94,7 @@ export const BOTTOM_NAV_PAGE_OPTIONS: { path: string; label: string }[] = [
   { path: "/about", label: "About" },
   { path: "/contact", label: "Contact" },
   { path: "/enquire", label: "Enquire" },
-  { path: "/request-purchase", label: "Request purchase" },
+  { path: "/request-purchase", label: "Request a tool" },
 ];
 
 /** Reproduces the previous hardcoded bar exactly, used whenever no custom config has been saved yet. */

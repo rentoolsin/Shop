@@ -60,7 +60,7 @@ export function RequestPurchase() {
   };
 
   useDocumentMeta({
-    title: submitted ? "Request sent" : "Request this item",
+    title: submitted ? "Request sent" : "Request a tool",
     description: "Ask RenTools to notify you when an out-of-stock tool is available to rent again.",
     noindex: true,
   });
@@ -136,7 +136,7 @@ export function RequestPurchase() {
 
   return (
     <div>
-      <PageHeader title="Request this item" />
+      <PageHeader title="Request a tool" />
       <form onSubmit={handleSubmit} className="space-y-4 p-4" noValidate>
         {state.productName && (
           <div className="spec-tag spec-tag--accent">{state.productName}</div>

@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ChevronRight, PackageSearch, SlidersHorizontal } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MobileHeader } from "../components/layout/MobileHeader";
@@ -170,7 +170,7 @@ export function Home() {
                 fullWidth
                 onClick={() => navigate("/request-purchase")}
               >
-                Request purchase
+                Request a tool
               </Button>
             </div>
           </div>
@@ -251,6 +251,36 @@ export function Home() {
               ))}
             </HorizontalScroller>
           )}
+        </div>
+      </section>
+
+      {/* Request a tool — explains the "not listed? ask for it" flow, since
+          the quick hero-row button alone wasn't clear about what it does. */}
+      <section className="mb-7 px-4">
+        <div className="relative overflow-hidden rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-accent-500/10 text-accent-600 dark:text-accent-400">
+              <PackageSearch className="h-5 w-5" strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                Don&apos;t see the tool you need?
+              </h2>
+              <p className="mt-1 font-body text-[13px] leading-relaxed text-graphite-500">
+                Not everything RenTools stocks is listed online yet. Tell us what you&apos;re looking
+                for — the tool, quantity, and when you need it — and we&apos;ll reach out to confirm
+                availability and rate. No charge until you confirm.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="accent"
+            fullWidth
+            className="mt-3.5"
+            onClick={() => navigate("/request-purchase")}
+          >
+            Request a tool
+          </Button>
         </div>
       </section>
 

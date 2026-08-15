@@ -11,7 +11,7 @@ interface RequestPurchaseButtonProps {
 export function RequestPurchaseButton({
   productName,
   fullWidth,
-  label = "Request when in stock",
+  label = "Request this tool",
   className = "",
 }: RequestPurchaseButtonProps) {
   const navigate = useNavigate();
