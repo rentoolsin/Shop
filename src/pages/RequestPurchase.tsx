@@ -6,6 +6,7 @@ import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { submitPurchaseRequest } from "../services/purchase-requests.service";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 interface LocationState {
   productName?: string;
@@ -57,6 +58,12 @@ export function RequestPurchase() {
     mobile: mobileRef,
     quantity: quantityRef,
   };
+
+  useDocumentMeta({
+    title: submitted ? "Request sent" : "Request this item",
+    description: "Ask RenTools to notify you when an out-of-stock tool is available to rent again.",
+    noindex: true,
+  });
 
   const setField = (field: keyof FormValues, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));

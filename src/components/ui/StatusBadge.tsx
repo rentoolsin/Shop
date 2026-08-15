@@ -8,10 +8,14 @@ interface StatusBadgeProps {
 const toneClasses: Record<Tone, string> = {
   neutral:
     "bg-graphite-100 text-graphite-700 dark:bg-graphite-800 dark:text-graphite-300",
-  success: "bg-state-success/10 text-state-success",
-  warning: "bg-state-warning/10 text-state-warning",
-  danger: "bg-state-danger/10 text-state-danger",
-  info: "bg-state-info/10 text-state-info",
+  // Label text uses the *-text token pair, not the base tone — the base
+  // tones (used below for the tinted background and the dot) read below
+  // 4.5:1 as 12px text against the tint in at least one theme. See
+  // tailwind.config.ts and docs/DESIGN-AUDIT.md.
+  success: "bg-state-success/10 text-state-success-text dark:text-state-success-text-dark",
+  warning: "bg-state-warning/10 text-state-warning-text dark:text-state-warning-text-dark",
+  danger: "bg-state-danger/10 text-state-danger-text dark:text-state-danger-text-dark",
+  info: "bg-state-info/10 text-state-info-text dark:text-state-info-text-dark",
 };
 
 const dotClasses: Record<Tone, string> = {

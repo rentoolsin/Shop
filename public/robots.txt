@@ -1,0 +1,7 @@
+# RenTools — public customer site is crawlable; the admin section is not
+# indexable content and has nothing for a crawler to do (auth-gated).
+User-agent: *
+Allow: /
+Disallow: /admin/
+
+Sitemap: https://rentoolz.vercel.app/sitemap.xml

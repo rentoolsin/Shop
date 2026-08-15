@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const LINKS = [
   { to: "/about", label: "About RenTools" },
@@ -9,6 +10,8 @@ const LINKS = [
 ];
 
 export function More() {
+  useDocumentMeta({ title: "More", description: "About, contact, and location information for RenTools." });
+
   return (
     <div>
       <PageHeader title="More" />

@@ -26,7 +26,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...rest}
         />
         {error && (
-          <span id={`${fieldId}-error`} className="mt-1 block font-body text-[12px] text-state-danger">
+          <span
+            id={`${fieldId}-error`}
+            className="mt-1 block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark"
+          >
             {error}
           </span>
         )}

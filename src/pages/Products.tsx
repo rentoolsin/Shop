@@ -10,6 +10,7 @@ import { BottomSheet } from "../components/ui/BottomSheet";
 import { Button } from "../components/ui/Button";
 import { useProducts } from "../hooks/useProducts";
 import { useCategories } from "../hooks/useCategories";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 export function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,6 +23,13 @@ export function Products() {
   const activeCategoryName = categories.status === "success"
     ? categories.data.find((c) => c.id === categoryId)?.name
     : undefined;
+
+  useDocumentMeta({
+    title: activeCategoryName ? `${activeCategoryName} tools` : "Tools",
+    description: activeCategoryName
+      ? `Browse ${activeCategoryName.toLowerCase()} available for rent in Coimbatore, with daily rates and availability.`
+      : "Browse all construction tools and equipment available for rent in Coimbatore, with daily rates and availability.",
+  });
 
   const applyCategory = (id?: string) => {
     const next = new URLSearchParams(searchParams);

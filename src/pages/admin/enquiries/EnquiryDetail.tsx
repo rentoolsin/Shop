@@ -157,7 +157,7 @@ export function EnquiryDetail() {
           ))}
         </Select>
         {statusError && (
-          <p className="mt-1 font-body text-[12px] text-state-danger">Couldn't save. Try again.</p>
+          <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
         )}
       </div>
 

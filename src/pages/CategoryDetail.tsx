@@ -6,6 +6,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { useProducts } from "../hooks/useProducts";
 import { useCategories } from "../hooks/useCategories";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 export function CategoryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,13 @@ export function CategoryDetail() {
     categories.status === "success"
       ? categories.data.find((c) => c.id === id)?.name
       : undefined;
+
+  useDocumentMeta({
+    title: categoryName ?? "Category",
+    description: categoryName
+      ? `Browse ${categoryName.toLowerCase()} available for rent in Coimbatore, with daily rates and availability.`
+      : undefined,
+  });
 
   return (
     <div>

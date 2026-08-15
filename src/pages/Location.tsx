@@ -2,8 +2,14 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/ui/Button";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 export function Location() {
+  useDocumentMeta({
+    title: "Location",
+    description: "Find RenTools' tool and equipment rental location in Coimbatore, Tamil Nadu.",
+  });
+
   const settings = useSiteSettings();
   const { address } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

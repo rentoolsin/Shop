@@ -7,6 +7,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { SearchBar } from "../components/ui/SearchBar";
 import { useProducts } from "../hooks/useProducts";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const DEBOUNCE_MS = 350;
 
@@ -15,6 +16,14 @@ export function Search() {
   const urlQuery = searchParams.get("q") ?? "";
   const [input, setInput] = useState(urlQuery);
   const [debounced, setDebounced] = useState(urlQuery);
+
+  // Search-result pages are per-visitor and low-value to index individually —
+  // noindex avoids diluting the crawl budget/index with endless "?q=" variants.
+  useDocumentMeta({
+    title: "Search",
+    description: "Search RenTools' tool and equipment rental inventory in Coimbatore.",
+    noindex: true,
+  });
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

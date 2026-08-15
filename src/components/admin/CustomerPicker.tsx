@@ -153,7 +153,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
       )}
 
       {!searching && searchError && (
-        <p className="mt-2 font-body text-[13px] text-state-danger">
+        <p className="mt-2 font-body text-[13px] text-state-danger-text dark:text-state-danger-text-dark">
           Couldn't search customers. Try again.
         </p>
       )}

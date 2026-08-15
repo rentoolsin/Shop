@@ -1,6 +1,12 @@
 import { PageHeader } from "../components/layout/PageHeader";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 export function About() {
+  useDocumentMeta({
+    title: "About",
+    description: "About RenTools, a construction tool and equipment rental business in Coimbatore, Tamil Nadu.",
+  });
+
   return (
     <div>
       <PageHeader title="About" />

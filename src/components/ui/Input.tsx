@@ -38,7 +38,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <span className="mt-1 block font-body text-[12px] text-graphite-500">{hint}</span>
         )}
         {error && (
-          <span id={`${inputId}-error`} className="mt-1 block font-body text-[12px] text-state-danger">
+          <span
+            id={`${inputId}-error`}
+            className="mt-1 block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark"
+          >
             {error}
           </span>
         )}

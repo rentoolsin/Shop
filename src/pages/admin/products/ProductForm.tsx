@@ -251,7 +251,7 @@ export function ProductForm() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="mt-2 text-state-danger"
+                  className="mt-2 text-state-danger-text dark:text-state-danger-text-dark"
                   onClick={() => removeVariant(index)}
                 >
                   Remove variant

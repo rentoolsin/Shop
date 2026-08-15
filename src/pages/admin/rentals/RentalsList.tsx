@@ -357,7 +357,7 @@ export function RentalsList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-state-danger"
+                        className="text-state-danger-text dark:text-state-danger-text-dark"
                         onClick={() => setCancelling(rental)}
                       >
                         Cancel
@@ -414,7 +414,7 @@ export function RentalsList() {
               </div>
             )}
             {extendError && (
-              <p className="font-body text-[12px] text-state-danger">{extendError}</p>
+              <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{extendError}</p>
             )}
             <div className="flex gap-2 pt-1">
               <Button variant="secondary" fullWidth onClick={() => setExtending(null)} disabled={savingExtend}>

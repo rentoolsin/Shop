@@ -204,7 +204,7 @@ export function ProductsList() {
                             setOpenMenuId(null);
                             setPendingDelete({ id: product.id, name: product.name });
                           }}
-                          className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-state-danger hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                          className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
                         >
                           Delete
                         </button>

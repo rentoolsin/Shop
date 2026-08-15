@@ -85,18 +85,25 @@
 
 13. Production-readiness pass: accessibility audit, performance
     (pagination/lazy loading once real data volume exists), dark mode
-    visual QA. **Partially done (Sessions 11, 16)** — see COMPLETED.md.
-    Accessibility (dialog keyboard/focus behavior, unlabeled search
-    inputs, decorative icons), route-level code-splitting, and
-    client-side pagination for all five admin lists (Products,
-    Customers, Enquiries, Purchase Requests, Rentals — `usePagination`
-    hook + `Pagination` control, pageSize 20) are done. Still open:
-    *visual* dark-mode QA on a real device/browser (a code-level class
-    audit found no gaps, but that's not a substitute for actually
-    looking at it rendered), and a full screen-reader pass — genuinely
-    blocked, re-confirmed Session 16 (attempted a headless-browser
-    install; this environment's network egress only reaches package
-    registries, not browser-download CDNs).
+    visual QA. **Partially done (Sessions 11, 16, 19)** — see
+    COMPLETED.md. Accessibility (dialog keyboard/focus behavior,
+    unlabeled search inputs, decorative icons, skip-link + `<main>`
+    landmark, repo-wide WCAG AA text-contrast fix for the `state-*`
+    colors, `NotFound`'s missing `h1`), route-level code-splitting,
+    per-route SEO (`useDocumentMeta`: title/description/canonical/
+    robots/OG tags + JSON-LD Product/LocalBusiness structured data,
+    `robots.txt`, `sitemap.xml` — domain confirmed same-day as
+    `https://rentoolz.vercel.app`), and client-side pagination for all
+    five admin lists (Products, Customers, Enquiries, Purchase Requests,
+    Rentals — `usePagination` hook + `Pagination` control, pageSize 20)
+    are done. Still open: dynamic sitemap entries for individual
+    `/products/:id` / `/categories/:id` pages (needs a live Supabase
+    project to enumerate from — see item 1), *visual* dark-mode QA on a
+    real device/browser (a code-level class audit found no gaps, but
+    that's not a substitute for actually looking at it rendered), and a
+    full screen-reader pass — genuinely blocked, re-confirmed Session 16
+    (attempted a headless-browser install; this environment's network
+    egress only reaches package registries, not browser-download CDNs).
 
 14. ~~Fix `npm run lint`~~ — found already fixed (Session 13). Docs from
     Session 4 onward claimed ESLint had no config and failed immediately;

@@ -40,7 +40,7 @@ export function Login() {
         </p>
 
         {notAdmin && (
-          <p className="mt-3 rounded bg-state-danger/10 px-3 py-2 font-body text-[13px] text-state-danger">
+          <p className="mt-3 rounded bg-state-danger/10 px-3 py-2 font-body text-[13px] text-state-danger-text dark:text-state-danger-text-dark">
             That account isn't set up for admin access.
           </p>
         )}
@@ -63,7 +63,7 @@ export function Login() {
             required
           />
           {error && (
-            <p className="font-body text-[13px] text-state-danger">{error}</p>
+            <p className="font-body text-[13px] text-state-danger-text dark:text-state-danger-text-dark">{error}</p>
           )}
           <Button type="submit" fullWidth disabled={submitting}>
             {submitting ? "Signing in…" : "Sign in"}

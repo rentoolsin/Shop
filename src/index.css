@@ -75,4 +75,15 @@
     @apply border-graphite-300 bg-graphite-100 text-ink
       dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted;
   }
+
+  /* Skip-to-content link: off-screen until focused, then docked at the
+     top of the viewport above everything else — the standard pattern
+     so a keyboard user isn't forced to tab through the header/hero
+     carousel on every single page before reaching real content. */
+  .skip-link {
+    @apply fixed left-3 top-3 z-50 -translate-y-16 rounded-lg bg-graphite-900 px-4 py-2.5
+      font-body text-[14px] font-medium text-graphite-25 opacity-0 transition-all duration-150
+      focus:translate-y-0 focus:opacity-100
+      dark:bg-white dark:text-graphite-950;
+  }
 }

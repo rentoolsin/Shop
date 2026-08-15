@@ -21,12 +21,49 @@
       name="description"
       content="Rent construction tools and equipment in Coimbatore. Browse tools, check daily rates, and enquire by call or WhatsApp."
     />
+    <meta name="robots" content="index, follow" />
+    <!-- Per-route title/description/canonical/og:url are overridden at
+         runtime by useDocumentMeta (src/hooks/useDocumentMeta.ts) using
+         window.location.origin; the values below are the site-level
+         defaults for the root route and as a fallback before that hook
+         runs (e.g. for crawlers that don't execute JS). -->
+    <link rel="canonical" href="https://rentoolz.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RenTools" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:url" content="https://rentoolz.vercel.app/" />
+    <meta property="og:image" content="https://rentoolz.vercel.app/pwa-512x512.png" />
+    <meta name="twitter:card" content="summary" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap"
       rel="stylesheet"
     />
+    <!-- LocalBusiness structured data — values sourced from
+         src/utils/site-settings.ts (SITE_SETTINGS_DEFAULTS), which the code
+         there already documents as the business's real live contact info,
+         not placeholders. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "HardwareStore",
+        "name": "RenTools",
+        "url": "https://rentoolz.vercel.app/",
+        "description": "Construction tool and equipment rental in Coimbatore, Tamil Nadu.",
+        "image": "https://rentoolz.vercel.app/logo-black.png",
+        "telephone": "+919688755349",
+        "email": "rentools.in@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Kovilmedu",
+          "addressLocality": "Coimbatore",
+          "addressRegion": "Tamil Nadu",
+          "addressCountry": "IN"
+        },
+        "priceRange": "₹₹"
+      }
+    </script>
     <script>
       // Prevent theme flash: resolve light/dark/system before paint.
       (function () {

@@ -20,6 +20,7 @@ import { useHomepageContent } from "../hooks/useHomepageContent";
 import { HOMEPAGE_SECTION_DEFAULTS } from "../utils/homepage-content";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 function SectionHeading({
   title,
@@ -70,6 +71,12 @@ export function Home() {
   const hiddenSections = homepage.status === "success" ? homepage.data.hiddenSections : new Set();
   const { phone, whatsapp } =
     settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
+
+  useDocumentMeta({
+    title: "RenTools",
+    description:
+      "Rent construction tools and equipment in Coimbatore. Browse tools, check daily rates, and enquire by call or WhatsApp.",
+  });
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault();

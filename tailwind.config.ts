@@ -43,6 +43,23 @@ export default {
           warning: "#B9862C",
           danger: "#B4432F",
           info: "#4C6B8A",
+          // Text-safe variants: the base tones above are tuned for small
+          // dots/solid backgrounds, and fail WCAG AA (4.5:1) as *text* on a
+          // 10%-tint badge or on the opposite theme's page background —
+          // see docs/DESIGN-AUDIT.md for the measured ratios. Each pair
+          // below is verified >=4.5:1 for its own theme; use
+          // `text-state-<tone>-text dark:text-state-<tone>-text-dark`
+          // anywhere a state color wraps actual text (error copy, badge
+          // labels), not for icons/dots, which fall under the more lenient
+          // 3:1 non-text-contrast rule and already pass.
+          "success-text": "#2F6B46",
+          "success-text-dark": "#7DD0A0",
+          "warning-text": "#8A5A12",
+          "warning-text-dark": "#B9862C",
+          "danger-text": "#B4432F",
+          "danger-text-dark": "#E0796A",
+          "info-text": "#4C6B8A",
+          "info-text-dark": "#8FB4D9",
         },
         accent: {
           50: "#FFF8E6",

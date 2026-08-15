@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Static, indexable public routes only (see docs/ROUTES.md).
+
+  Deliberately excluded:
+  - /products/:id, /categories/:id — dynamic, depend on live Supabase
+    product/category data this build has no access to. Enumerate these
+    from the products/categories tables once a real project is linked
+    (TODO.md item 1) rather than listing IDs that may not exist.
+  - /search, /enquire, /request-purchase, and the 404 route — all set
+    noindex via useDocumentMeta (per-visitor or low-value to index; see
+    docs/DESIGN-AUDIT.md's sibling reasoning in useDocumentMeta.ts).
+
+  No lastmod/changefreq dates are given — inventing them would be no
+  more accurate than omitting them, and Google ignores changefreq/
+  priority hints today regardless.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://rentoolz.vercel.app/</loc>
+  </url>
+  <url>
+    <loc>https://rentoolz.vercel.app/products</loc>
+  </url>
+  <url>
+    <loc>https://rentoolz.vercel.app/about</loc>
+  </url>
+  <url>
+    <loc>https://rentoolz.vercel.app/contact</loc>
+  </url>
+  <url>
+    <loc>https://rentoolz.vercel.app/location</loc>
+  </url>
+  <url>
+    <loc>https://rentoolz.vercel.app/more</loc>
+  </url>
+</urlset>

@@ -1,6 +1,80 @@
 # In Progress
 
-Nothing left mid-implementation at the end of Session 18.
+Nothing left mid-implementation at the end of Session 19.
+
+## Session 19 — SEO + accessibility pass (TODO item 13, production-readiness)
+
+A prior session had edited 20 customer-facing files (per-page
+`useDocumentMeta` calls, a skip-link + `<main>` landmark, WCAG contrast
+tokens) but never created the `useDocumentMeta` hook itself — every one
+of those files imported a hook that didn't exist, so none of it actually
+built. That's the real reason it hadn't "merged": missing dependency, not
+a conflict.
+
+Fixed:
+- Added `src/hooks/useDocumentMeta.ts` — sets per-route
+  title/description/canonical/robots(index|noindex)/OG tags on mount,
+  reverts on unmount so metadata never leaks across client-side
+  navigation; `structuredData` param injects/removes a route-scoped
+  JSON-LD `<script>`. Title format is `"{page} | RenTools"`, except Home
+  (`title: "RenTools"`) which is used as-is.
+- Applied the prior session's 20 files as-is on top of current `main`
+  (only trivial rebasing — none touched the same lines as the same-day
+  "UX" commit).
+- Added `docs/DESIGN-AUDIT.md`: measured WCAG contrast ratios (WCAG
+  relative-luminance formula, not a spot check) for the `state-*-text`
+  tokens `tailwind.config.ts` already had comments pointing at.
+- Extended the contrast fix (`text-state-<tone>` → text-safe
+  `-text`/`-text-dark` pair) beyond the 4 shared UI components the prior
+  session touched to every other real-text usage found repo-wide:
+  `CustomerPicker`, `StatCard`, `ImageInput`, `AdminMore`, `Login`,
+  `RentalsList`, `RentalForm`, `PurchaseRequestDetail`,
+  `PurchaseRequestForm`, `ProductForm`, `ProductsList`, `EnquiryDetail`.
+  Left the two `aria-hidden` success-checkmark icons (Enquire,
+  RequestPurchase) on the base tone — icons are governed by the more
+  lenient 3:1 rule and already pass; see DESIGN-AUDIT.md.
+- `NotFound.tsx`: added a visually-hidden (`sr-only`) `h1` — this route
+  skips `PageHeader`, so `EmptyState`'s `h3` was the only heading on the
+  page, leaving it without a real top-level landmark.
+- Added `public/robots.txt` (disallows `/admin/`, allows the rest). Did
+  **not** add `sitemap.xml`: a sitemap's `<loc>` entries must be absolute
+  URLs and, per the existing comment in `index.html`, no production
+  domain is defined anywhere in this repo — guessing one would ship a
+  broken sitemap. Add it once a domain is set (`robots.txt` already has
+  a commented `Sitemap:` line ready to uncomment).
+
+`npm install` / `npx tsc -b` / `npm run build` all pass. `npm run lint`
+has 1 pre-existing error + 2 pre-existing warnings, all in files this
+session didn't touch (`useAsyncData.ts`, `more-items.tsx`,
+`ProductsList.tsx`'s unrelated `useMemo` dep) — confirmed pre-existing
+via `git stash` against the same-day "UX" commit before making any
+changes.
+
+Not verified: real screen-reader pass and Open Graph/Twitter share-card
+preview on a real device — same recurring sandbox limitation as prior
+sessions (no browser/device here). Structured data was validated by
+parsing the built `dist/index.html` JSON-LD as JSON, not against
+Google's Rich Results Test (no network path to it from this sandbox).
+
+**Addendum, same day:** user confirmed the production domain —
+`https://rentoolz.vercel.app`. Closed out everything Session 19 had left
+blocked on it:
+- `public/sitemap.xml` added (static indexable routes only: `/`,
+  `/products`, `/about`, `/contact`, `/location`, `/more` — see the
+  in-file comment for why `/products/:id`/`/categories/:id` and the
+  noindex routes are excluded).
+- `robots.txt`'s `Sitemap:` line uncommented and pointed at it.
+- `index.html`: `og:image` and the LocalBusiness JSON-LD `image` made
+  absolute (both now `https://rentoolz.vercel.app/...`); added a static
+  `og:url` and `<link rel="canonical">` for the root route/crawlers that
+  don't execute JS (useDocumentMeta still overrides both per-route via
+  `window.location.origin` for real navigation) and `url` on the
+  LocalBusiness JSON-LD.
+
+`npx tsc -b` / `npm run build` re-verified after; JSON-LD re-parsed from
+`dist/index.html` and `dist/sitemap.xml` re-parsed as XML, both valid.
+
+---
 
 ## Session 18 — Admin mobile UI pass (Rentals) + admin bottom nav
 

@@ -6,6 +6,7 @@ import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { submitEnquiry } from "../services/enquiries.service";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 interface LocationState {
   productId?: string;
@@ -65,6 +66,15 @@ export function Enquire() {
     mobile: mobileRef,
     quantity: quantityRef,
   };
+
+  // Both the form and its post-submit confirmation are per-visitor and
+  // carry no distinct content worth indexing — noindex avoids the
+  // confirmation screen appearing in search results.
+  useDocumentMeta({
+    title: submitted ? "Enquiry sent" : "Enquire",
+    description: "Send a tool rental enquiry to RenTools in Coimbatore.",
+    noindex: true,
+  });
 
   const setField = (field: keyof FormValues, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));

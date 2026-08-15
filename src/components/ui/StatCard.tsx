@@ -5,10 +5,10 @@ type Tone = "neutral" | "success" | "warning" | "danger" | "info";
 
 const VALUE_TONE_CLASSES: Record<Tone, string> = {
   neutral: "text-ink dark:text-ink-inverted",
-  success: "text-state-success",
-  warning: "text-state-warning",
-  danger: "text-state-danger",
-  info: "text-state-info",
+  success: "text-state-success-text dark:text-state-success-text-dark",
+  warning: "text-state-warning-text dark:text-state-warning-text-dark",
+  danger: "text-state-danger-text dark:text-state-danger-text-dark",
+  info: "text-state-info-text dark:text-state-info-text-dark",
 };
 
 interface StatCardProps {

@@ -3,8 +3,14 @@ import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 export function Contact() {
+  useDocumentMeta({
+    title: "Contact",
+    description: "Call, WhatsApp, or email RenTools to enquire about tool and equipment rental in Coimbatore.",
+  });
+
   const settings = useSiteSettings();
   // Best-effort like homepage CMS content: render defaults while loading
   // or on error rather than blocking or showing an error state for what

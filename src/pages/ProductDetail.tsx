@@ -16,6 +16,9 @@ import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 import { parseProductDescription } from "../utils/product-features";
 import { useBottomBarHeight } from "../hooks/useBottomBarHeight";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
+// Aliased — this file's own component is also named ProductDetail.
+import type { ProductDetail as ProductDetailData } from "../services/products.service";
 
 function HeartIcon({ filled }: { filled: boolean }) {
   return <Heart fill={filled ? "currentColor" : "none"} strokeWidth={1.8} className="h-5 w-5" />;
@@ -29,6 +32,34 @@ function CheckIcon() {
   );
 }
 
+/** JSON-LD Product/Offer structured data for search engines and share previews. */
+function buildProductStructuredData(item: ProductDetailData) {
+  const images = [item.imageUrl, ...item.galleryImageUrls].filter(
+    (url, index, all): url is string => !!url && all.indexOf(url) === index,
+  );
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: item.name,
+    ...(images.length > 0 ? { image: images } : {}),
+    ...(item.description ? { description: item.description } : {}),
+    ...(item.variants.length > 0
+      ? {
+          offers: item.variants.map((variant) => ({
+            "@type": "Offer",
+            name: variant.label,
+            price: variant.dailyRate,
+            priceCurrency: "INR",
+            availability:
+              variant.availableQuantity > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+          })),
+        }
+      : {}),
+  };
+}
+
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const product = useProduct(id);
@@ -37,6 +68,15 @@ export function ProductDetail() {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const bottomBarHeight = useBottomBarHeight();
+  const loadedProduct = product.status === "success" ? product.data : null;
+
+  useDocumentMeta({
+    title: loadedProduct?.name ?? "Tool",
+    description: loadedProduct
+      ? `Rent ${loadedProduct.name} in Coimbatore — check daily rates and availability, then enquire by call or WhatsApp.`
+      : undefined,
+    structuredData: loadedProduct ? buildProductStructuredData(loadedProduct) : undefined,
+  });
 
   if (product.status === "loading") {
     return (
@@ -103,9 +143,9 @@ export function ProductDetail() {
       <ImageCarousel images={galleryImages} alt={item.name} />
 
       <div className="p-4">
-        <h1 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
+        <h2 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
           {item.name}
-        </h1>
+        </h2>
 
         {item.variants.length === 0 && (
           <p className="mt-4 font-body text-[13px] text-graphite-500">
@@ -115,7 +155,7 @@ export function ProductDetail() {
 
         {item.variants.length > 0 && (
           <div className="mt-4">
-            <h2 className="font-body text-[13px] font-medium text-graphite-500">Size / Variant</h2>
+            <h3 className="font-body text-[13px] font-medium text-graphite-500">Size / Variant</h3>
             <div className="mt-2 flex flex-wrap gap-2">
               {item.variants.map((variant) => (
                 <button
@@ -149,9 +189,9 @@ export function ProductDetail() {
 
         {(intro || highlights.length > 0) && (
           <div className="mt-5">
-            <h2 className="font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
+            <h3 className="font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
               About this tool
-            </h2>
+            </h3>
             {intro && (
               <p className="mt-1.5 font-body text-[14px] leading-relaxed text-graphite-600 dark:text-graphite-300">
                 {intro}

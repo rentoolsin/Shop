@@ -97,12 +97,16 @@ function CustomerApp() {
 
   return (
     <div className="app-shell">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       {/* Static fallback padding (className) covers the first paint before
           ResizeObserver reports a real height; the inline style then takes
           over with the exact measured value — including whenever the
           install banner appears/disappears, which the static estimate
           alone can never account for. */}
-      <div
+      <main
+        id="main-content"
         className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))]"
         style={bottomBarHeight > 0 ? { paddingBottom: bottomBarHeight } : undefined}
       >
@@ -124,7 +128,7 @@ function CustomerApp() {
             </Routes>
           )}
         </PageTransition>
-      </div>
+      </main>
       <div ref={bottomBarRef} className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
         <InstallAppBanner />
         <BottomNavigation />

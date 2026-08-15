@@ -129,7 +129,11 @@ export function ImageInput({ label, value, onChange, folder, hint, error }: Imag
       {hint && !error && (
         <span className="mt-1 block font-body text-[12px] text-graphite-400">{hint}</span>
       )}
-      {error && <span className="mt-1 block font-body text-[12px] text-state-danger">{error}</span>}
+      {error && (
+        <span className="mt-1 block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

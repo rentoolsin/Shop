@@ -179,7 +179,7 @@ export function RentalForm({
             initialName={initialCustomerName}
           />
           {errors.customer && (
-            <span className="mt-1 block font-body text-[12px] text-state-danger">{errors.customer}</span>
+            <span className="mt-1 block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{errors.customer}</span>
           )}
         </div>
 

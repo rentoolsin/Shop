@@ -74,7 +74,7 @@ export function PurchaseRequestForm() {
           </span>
           <CustomerPicker value={customer} onChange={setCustomer} />
           {errors.customer && (
-            <p className="mt-1 font-body text-[12px] text-state-danger">{errors.customer}</p>
+            <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{errors.customer}</p>
           )}
         </div>
 
