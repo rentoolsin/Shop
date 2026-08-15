@@ -7,10 +7,9 @@
 | `/products/:id` | ProductDetail | Variant selection, enquire/call |
 | `/categories/:id` | CategoryDetail | Products scoped to one category |
 | `/search` | Search | Debounced, query preserved in URL (`?q=`) |
-| `/more` | More | Links to About/Contact/Location |
+| `/more` | More | Links to About/Contact |
 | `/about` | About | |
-| `/contact` | Contact | Call / WhatsApp / email |
-| `/location` | Location | Address + Google Maps link |
+| `/contact` | Contact | Call / WhatsApp / email + address / Google Maps link (Location merged in) |
 | `/enquire` | Enquire | Enquiry form; accepts `{ productId, productName }` nav state |
 | `/request-purchase` | RequestPurchase | Out-of-stock "notify me" form; accepts `{ productName }` nav state; writes to `purchase_requests`, not `enquiries` |
 | `*` | NotFound | |

@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { PageTransition } from "./components/layout/PageTransition";
+import { Footer } from "./components/layout/Footer";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
 import { useReportBottomBarHeight, useBottomBarHeight } from "./hooks/useBottomBarHeight";
@@ -15,7 +16,6 @@ import { Search } from "./pages/Search";
 import { More } from "./pages/More";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
-import { Location } from "./pages/Location";
 import { Enquire } from "./pages/Enquire";
 import { RequestPurchase } from "./pages/RequestPurchase";
 import { NotFound } from "./pages/NotFound";
@@ -121,13 +121,13 @@ function CustomerApp() {
               <Route path="/more" element={<More />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/location" element={<Location />} />
               <Route path="/enquire" element={<Enquire />} />
               <Route path="/request-purchase" element={<RequestPurchase />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           )}
         </PageTransition>
+        <Footer />
       </main>
       <div ref={bottomBarRef} className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
         <InstallAppBanner />

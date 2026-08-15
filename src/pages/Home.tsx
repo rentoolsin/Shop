@@ -256,7 +256,7 @@ export function Home() {
       {/* Contact / Location */}
       {!hiddenSections.has("contact_location") && (
         <section className="mb-4 px-4">
-          <SectionHeading title="Contact & location" />
+          <SectionHeading title="Contact & location" viewAllTo="/contact" />
           <div className="mt-3 rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
             <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
               {cms.contact_location.address}

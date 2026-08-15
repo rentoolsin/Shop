@@ -6,11 +6,10 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 const LINKS = [
   { to: "/about", label: "About RenTools" },
   { to: "/contact", label: "Contact" },
-  { to: "/location", label: "Location" },
 ];
 
 export function More() {
-  useDocumentMeta({ title: "More", description: "About, contact, and location information for RenTools." });
+  useDocumentMeta({ title: "More", description: "About and contact information for RenTools." });
 
   return (
     <div>
