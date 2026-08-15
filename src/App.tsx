@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef } from "react";
 import { useSwipeNavigation } from "./hooks/useSwipeNavigation";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { PageTransition } from "./components/layout/PageTransition";
@@ -108,6 +108,15 @@ function CustomerApp() {
   const bottomBarHeight = useBottomBarHeight();
   const settings = useSiteSettings();
   const { whatsapp } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
+  const location = useLocation();
+  // The mobile 480px canvas cap (`.app-shell`, see index.css) is a
+  // deliberate mobile-first decision that every route still gets by
+  // default. Home is the only route with an actual desktop layout so
+  // far (see `pages/Home.tsx` / `components/home/DesktopHome.tsx`), so
+  // it's the only one that opts out of the cap at `md:` — every other
+  // route keeps rendering its mobile markup centered in the narrow
+  // column on desktop, unchanged, until it gets the same treatment.
+  const isHome = location.pathname === "/";
 
   // Android/iOS-style edge navigation: swipe right anywhere on the page to
   // go back, swipe left to go forward again — see useSwipeNavigation for
@@ -116,7 +125,7 @@ function CustomerApp() {
   useSwipeNavigation(mainRef);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${isHome ? " md:max-w-none" : ""}`}>
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
@@ -160,8 +169,17 @@ function CustomerApp() {
           inside that wrapper would scroll away with the page instead of
           staying pinned to the viewport, so it lives out here, and shows
           on every route instead of only the homepage. */}
-      <FloatingWhatsApp phone={whatsapp} />
-      <div ref={bottomBarRef} className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
+      {/* Hidden on desktop Home only (see `isHome`): a bottom tab bar +
+          floating chat bubble read as mobile chrome next to a full
+          desktop layout. Left showing on every other route until they
+          get their own desktop treatment too. */}
+      <div className={isHome ? "md:hidden" : undefined}>
+        <FloatingWhatsApp phone={whatsapp} />
+      </div>
+      <div
+        ref={bottomBarRef}
+        className={`fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app${isHome ? " md:hidden" : ""}`}
+      >
         <InstallAppBanner />
         <BottomNavigation />
       </div>

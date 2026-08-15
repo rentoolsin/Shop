@@ -16,6 +16,7 @@ import { TrustBar } from "../components/home/TrustBar";
 import { HowItWorksSteps } from "../components/home/HowItWorksSteps";
 import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
+import { DesktopHome } from "../components/home/DesktopHome";
 import { useCategories } from "../hooks/useCategories";
 import { useFeaturedProducts } from "../hooks/useProducts";
 import { useHomepageContent } from "../hooks/useHomepageContent";
@@ -103,7 +104,10 @@ export function Home() {
   };
 
   return (
-    <div>
+    <>
+      {/* Mobile / narrow-viewport layout — unchanged from before, just
+          scoped to `< md` now that a separate desktop layout exists below. */}
+      <div className="md:hidden">
       <MobileHeader />
 
       {/* Hero */}
@@ -336,6 +340,28 @@ export function Home() {
           </div>
         </section>
       )}
-    </div>
+      </div>
+
+      {/* Desktop / wide-viewport layout — separate tree so the mobile
+          markup above never has to compromise for desktop, and vice
+          versa. Just `hidden md:block` — no width tricks needed, since
+          `.app-shell`'s 480px mobile cap is itself lifted at `md:` for
+          this route only (see the `isHome` check in App.tsx). */}
+      <div className="hidden md:block">
+        <DesktopHome
+          categories={categories}
+          featured={featured}
+          cms={cms}
+          hiddenSections={hiddenSections}
+          phone={phone}
+          whatsapp={whatsapp}
+          latitude={latitude}
+          longitude={longitude}
+          query={query}
+          setQuery={setQuery}
+          onSearchSubmit={handleSearchSubmit}
+        />
+      </div>
+    </>
   );
 }
