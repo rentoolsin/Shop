@@ -1,4 +1,4 @@
-import { ArrowUpDown, Heart } from "lucide-react";
+import { ArrowUpDown, Heart, ShoppingCart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -11,6 +11,7 @@ import { Button } from "../components/ui/Button";
 import { useProducts } from "../hooks/useProducts";
 import { useCategories } from "../hooks/useCategories";
 import { useSavedProducts } from "../hooks/useSavedProducts";
+import { useCart } from "../hooks/useCart";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 type SortKey = "popular" | "price-asc" | "price-desc";
@@ -30,6 +31,7 @@ export function Products() {
   const categories = useCategories();
   const products = useProducts({ categoryId });
   const { ids: savedIds } = useSavedProducts();
+  const { totalItems: cartCount } = useCart();
 
   const activeCategoryName = categories.status === "success"
     ? categories.data.find((c) => c.id === categoryId)?.name
@@ -71,6 +73,16 @@ export function Products() {
         title="Tools"
         action={
           <div className="mr-1 flex items-center">
+            <Link
+              to="/cart"
+              aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+            >
+              <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              {cartCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-accent-500" />
+              )}
+            </Link>
             <Link
               to="/saved"
               aria-label={`Saved tools${savedIds.length > 0 ? ` (${savedIds.length})` : ""}`}

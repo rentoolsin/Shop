@@ -164,6 +164,42 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["enquiries"]["Row"]>;
         Relationships: [];
       };
+      enquiry_items: {
+        Row: {
+          id: string;
+          enquiry_id: string;
+          product_id: string | null;
+          product_name: string;
+          daily_rate: number | null;
+          quantity: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["enquiry_items"]["Row"]> & {
+          enquiry_id: string;
+          product_name: string;
+          quantity: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["enquiry_items"]["Row"]>;
+        Relationships: [];
+      };
+      product_reviews: {
+        Row: {
+          id: string;
+          product_id: string;
+          name: string;
+          rating: number;
+          comment: string | null;
+          is_approved: boolean;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["product_reviews"]["Row"]> & {
+          product_id: string;
+          name: string;
+          rating: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["product_reviews"]["Row"]>;
+        Relationships: [];
+      };
       purchase_requests: {
         Row: {
           id: string;

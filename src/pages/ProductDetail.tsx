@@ -1,11 +1,17 @@
-import { Check, Heart, ShieldCheck, Truck } from "lucide-react";
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Check, Heart, Minus, Plus, ShieldCheck, ShoppingCart, Truck } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { BottomSheet } from "../components/ui/BottomSheet";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Textarea } from "../components/ui/Textarea";
+import { StarRatingDisplay, StarRatingPicker } from "../components/ui/StarRating";
+import { useToast } from "../components/ui/Toast";
 import { CallButton } from "../components/actions/CallButton";
 import { EnquiryButton } from "../components/actions/EnquiryButton";
 import { RequestPurchaseButton } from "../components/actions/RequestPurchaseButton";
@@ -13,11 +19,15 @@ import { ImageCarousel } from "../components/products/ImageCarousel";
 import { useProduct, useProducts } from "../hooks/useProducts";
 import { ProductCard } from "../components/products/ProductCard";
 import { formatCurrency } from "../utils/currency";
+import { formatRelativeTime } from "../utils/relative-time";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 import { parseProductDescription } from "../utils/product-features";
 import { useBottomBarHeight } from "../hooks/useBottomBarHeight";
 import { useSavedProducts } from "../hooks/useSavedProducts";
+import { useCart } from "../hooks/useCart";
+import { useProductReviews } from "../hooks/useProductReviews";
+import { submitReview } from "../services/reviews.service";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 // Aliased — this file's own component is also named ProductDetail.
 import type { ProductDetail as ProductDetailData } from "../services/products.service";
@@ -25,6 +35,14 @@ import type { ProductDetail as ProductDetailData } from "../services/products.se
 function HeartIcon({ filled }: { filled: boolean }) {
   return <Heart fill={filled ? "currentColor" : "none"} strokeWidth={1.8} className="h-5 w-5" />;
 }
+
+interface ReviewFormValues {
+  name: string;
+  rating: number;
+  comment: string;
+}
+
+const EMPTY_REVIEW_FORM: ReviewFormValues = { name: "", rating: 0, comment: "" };
 
 function CheckIcon() {
   return (
@@ -69,7 +87,16 @@ export function ProductDetail() {
   const phone = settings.status === "success" ? settings.data.phone : SITE_SETTINGS_DEFAULTS.phone;
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const { isSaved, toggle: toggleSaved } = useSavedProducts();
+  const { addItem, totalItems: cartCount } = useCart();
+  const { showToast } = useToast();
+  const [cartQty, setCartQty] = useState(1);
   const bottomBarHeight = useBottomBarHeight();
+
+  const reviews = useProductReviews(id);
+  const [reviewSheetOpen, setReviewSheetOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState<ReviewFormValues>(EMPTY_REVIEW_FORM);
+  const [reviewErrors, setReviewErrors] = useState<Partial<Record<keyof ReviewFormValues, string>>>({});
+  const [submittingReview, setSubmittingReview] = useState(false);
   const loadedProduct = product.status === "success" ? product.data : null;
   // Same-category picks, shown once the product itself has loaded — a
   // rental app dead-ends hard at "unavailable" or "that's not quite it";
@@ -126,23 +153,79 @@ export function ProductDetail() {
     (url, index, all): url is string => !!url && all.indexOf(url) === index,
   );
 
+  const handleAddToCart = () => {
+    addItem(
+      {
+        productId: item.id,
+        productName: item.name,
+        variantLabel: activeVariant?.label,
+        dailyRate: activeVariant?.dailyRate ?? null,
+      },
+      cartQty,
+    );
+    showToast(`Added ${cartQty} × ${item.name} to cart`, "success");
+    setCartQty(1);
+  };
+
+  const handleReviewSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (submittingReview) return;
+
+    const errors: Partial<Record<keyof ReviewFormValues, string>> = {};
+    if (!reviewForm.name.trim()) errors.name = "Enter your name.";
+    if (reviewForm.rating < 1) errors.rating = "Pick a star rating.";
+    setReviewErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setSubmittingReview(true);
+    try {
+      await submitReview({
+        productId: item.id,
+        name: reviewForm.name.trim(),
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim() || undefined,
+      });
+      showToast("Thanks for your review!", "success");
+      setReviewForm(EMPTY_REVIEW_FORM);
+      setReviewErrors({});
+      setReviewSheetOpen(false);
+      reviews.refetch();
+    } catch {
+      showToast("Couldn't submit your review. Try again.", "danger");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   return (
     <div>
       <PageHeader
         title={item.name}
         action={
-          <button
-            onClick={() => toggleSaved(item.id)}
-            aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
-            className={[
-              "mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-app active:scale-90",
-              isSaved(item.id)
-                ? "text-accent-500 hover:bg-graphite-100 dark:hover:bg-graphite-800"
-                : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
-            ].join(" ")}
-          >
-            <HeartIcon filled={isSaved(item.id)} />
-          </button>
+          <div className="mr-1 flex items-center">
+            <Link
+              to="/cart"
+              aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
+              className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+            >
+              <ShoppingCart className="h-5 w-5" strokeWidth={1.8} />
+              {cartCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-accent-500" />
+              )}
+            </Link>
+            <button
+              onClick={() => toggleSaved(item.id)}
+              aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
+              className={[
+                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-app active:scale-90",
+                isSaved(item.id)
+                  ? "text-accent-500 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                  : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
+              ].join(" ")}
+            >
+              <HeartIcon filled={isSaved(item.id)} />
+            </button>
+          </div>
         }
       />
 
@@ -188,6 +271,36 @@ export function ProductDetail() {
                   label={activeVariant.availableQuantity > 0 ? "Available" : "Unavailable"}
                   tone={activeVariant.availableQuantity > 0 ? "success" : "danger"}
                 />
+              </div>
+            )}
+
+            {!outOfStock && (
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex items-center gap-1 rounded-full border border-graphite-200 dark:border-graphite-800">
+                  <button
+                    onClick={() => setCartQty((q) => Math.max(1, q - 1))}
+                    aria-label="Decrease quantity"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app active:scale-90 dark:text-ink-inverted"
+                  >
+                    <Minus className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                  <span className="w-6 text-center font-body text-[13px] font-medium text-ink dark:text-ink-inverted">
+                    {cartQty}
+                  </span>
+                  <button
+                    onClick={() => setCartQty((q) => q + 1)}
+                    aria-label="Increase quantity"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app active:scale-90 dark:text-ink-inverted"
+                  >
+                    <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                </div>
+                <Button variant="secondary" className="flex-1" onClick={handleAddToCart}>
+                  <span className="inline-flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4" strokeWidth={1.8} />
+                    Add to cart
+                  </span>
+                </Button>
               </div>
             )}
           </div>
@@ -238,6 +351,71 @@ export function ProductDetail() {
             )}
           </div>
         )}
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between">
+            <h3 className="font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
+              Ratings & Reviews
+            </h3>
+            <button
+              onClick={() => setReviewSheetOpen(true)}
+              className="font-body text-[13px] font-medium text-accent-500 hover:underline"
+            >
+              Write a review
+            </button>
+          </div>
+
+          {reviews.status === "loading" && (
+            <div className="mt-2 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          )}
+
+          {reviews.status === "success" && reviews.data.count === 0 && (
+            <p className="mt-2 font-body text-[13px] text-graphite-500">
+              No reviews yet — be the first to rate this tool.
+            </p>
+          )}
+
+          {reviews.status === "success" && reviews.data.count > 0 && (
+            <>
+              <div className="mt-2 flex items-center gap-2">
+                <StarRatingDisplay value={reviews.data.averageRating ?? 0} size="md" />
+                <span className="font-body text-[14px] font-semibold text-ink dark:text-ink-inverted">
+                  {reviews.data.averageRating!.toFixed(1)}
+                </span>
+                <span className="font-body text-[13px] text-graphite-500">
+                  ({reviews.data.count} review{reviews.data.count === 1 ? "" : "s"})
+                </span>
+              </div>
+
+              <ul className="mt-4 space-y-4">
+                {reviews.data.reviews.map((review) => (
+                  <li
+                    key={review.id}
+                    className="border-b border-graphite-200 pb-4 last:border-b-0 last:pb-0 dark:border-graphite-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-body text-[13.5px] font-medium text-ink dark:text-ink-inverted">
+                        {review.name}
+                      </span>
+                      <span className="font-body text-[11.5px] text-graphite-400">
+                        {formatRelativeTime(review.createdAt)}
+                      </span>
+                    </div>
+                    <StarRatingDisplay value={review.rating} className="mt-1" />
+                    {review.comment && (
+                      <p className="mt-1.5 font-body text-[13.5px] leading-relaxed text-graphite-600 dark:text-graphite-300">
+                        {review.comment}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       </div>
 
       {loadedProduct && related.status === "success" && (
@@ -287,6 +465,36 @@ export function ProductDetail() {
         )}
         <CallButton phone={phone} fullWidth />
       </div>
+
+      <BottomSheet
+        open={reviewSheetOpen}
+        onClose={() => setReviewSheetOpen(false)}
+        title={`Review ${item.name}`}
+      >
+        <form onSubmit={handleReviewSubmit} className="space-y-4" noValidate>
+          <Input
+            label="Name"
+            value={reviewForm.name}
+            onChange={(e) => setReviewForm((f) => ({ ...f, name: e.target.value }))}
+            error={reviewErrors.name ? reviewErrors.name : undefined}
+            placeholder="Your name"
+          />
+          <StarRatingPicker
+            value={reviewForm.rating}
+            onChange={(rating) => setReviewForm((f) => ({ ...f, rating }))}
+            error={reviewErrors.rating}
+          />
+          <Textarea
+            label="Comment"
+            value={reviewForm.comment}
+            onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
+            placeholder="How was the tool and the rental experience? (optional)"
+          />
+          <Button type="submit" fullWidth disabled={submittingReview}>
+            {submittingReview ? "Submitting…" : "Submit review"}
+          </Button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }

@@ -28,3 +28,64 @@ export async function submitEnquiry(input: EnquiryInput): Promise<void> {
 
   if (error) throw error;
 }
+
+export interface CartEnquiryItemInput {
+  productId?: string;
+  productName: string;
+  dailyRate?: number | null;
+  quantity: number;
+}
+
+export interface CartEnquiryInput {
+  name: string;
+  mobile: string;
+  items: CartEnquiryItemInput[];
+  requiredDate?: string;
+  numberOfDays?: number;
+  address?: string;
+  message?: string;
+}
+
+/**
+ * Submits a multi-item cart as one enquiry (the shared name/mobile/etc.
+ * envelope) plus one `enquiry_items` row per line — see
+ * supabase/migrations/0013_enquiry_items.sql for why this is a separate
+ * table rather than reshaping `enquiries` itself. `requested_product_text`
+ * gets a human-readable summary so the existing admin enquiries list still
+ * shows something meaningful without needing to open the item detail.
+ */
+export async function submitCartEnquiry(input: CartEnquiryInput): Promise<void> {
+  const summary =
+    input.items.length === 1
+      ? input.items[0].productName
+      : `${input.items.length} items: ${input.items.map((i) => i.productName).join(", ")}`;
+
+  const { data, error } = await supabase
+    .from("enquiries")
+    .insert({
+      name: input.name,
+      mobile: input.mobile,
+      requested_product_text: summary,
+      required_date: input.requiredDate ?? null,
+      number_of_days: input.numberOfDays ?? null,
+      address: input.address ?? null,
+      message: input.message ?? null,
+      status: "new",
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+
+  const { error: itemsError } = await supabase.from("enquiry_items").insert(
+    input.items.map((item) => ({
+      enquiry_id: data.id,
+      product_id: item.productId ?? null,
+      product_name: item.productName,
+      daily_rate: item.dailyRate ?? null,
+      quantity: item.quantity,
+    })),
+  );
+
+  if (itemsError) throw itemsError;
+}

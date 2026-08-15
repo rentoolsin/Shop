@@ -5,14 +5,26 @@ import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
-import { submitEnquiry } from "../services/enquiries.service";
+import { submitEnquiry, submitCartEnquiry } from "../services/enquiries.service";
 import { formatCurrency } from "../utils/currency";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import { useCart } from "../hooks/useCart";
+
+interface CartLineState {
+  productId?: string;
+  productName: string;
+  variantLabel?: string;
+  dailyRate: number | null;
+  quantity: number;
+}
 
 interface LocationState {
   productId?: string;
   productName?: string;
   dailyRate?: number;
+  /** Present when arriving from the Cart page — a multi-item enquiry. */
+  cartItems?: CartLineState[];
+  numberOfDays?: string;
 }
 
 interface FormValues {
@@ -25,23 +37,25 @@ interface FormValues {
   message: string;
 }
 
-const EMPTY_FORM: FormValues = {
-  name: "",
-  mobile: "",
-  quantity: "1",
-  requiredDate: "",
-  numberOfDays: "",
-  address: "",
-  message: "",
-};
+function buildEmptyForm(state: LocationState): FormValues {
+  return {
+    name: "",
+    mobile: "",
+    quantity: "1",
+    requiredDate: "",
+    numberOfDays: state.numberOfDays ?? "",
+    address: "",
+    message: "",
+  };
+}
 
-function validate(values: FormValues): Partial<Record<keyof FormValues, string>> {
+function validate(values: FormValues, isCartMode: boolean): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
   if (!values.name.trim()) errors.name = "Enter your name.";
   if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
     errors.mobile = "Enter a valid mobile number.";
   }
-  if (values.quantity && Number(values.quantity) <= 0) {
+  if (!isCartMode && values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
   return errors;
@@ -52,8 +66,11 @@ export function Enquire() {
   const navigate = useNavigate();
   const state = (location.state ?? {}) as LocationState;
   const { showToast } = useToast();
+  const { clearCart } = useCart();
 
-  const [values, setValues] = useState<FormValues>(EMPTY_FORM);
+  const isCartMode = !!state.cartItems && state.cartItems.length > 0;
+
+  const [values, setValues] = useState<FormValues>(() => buildEmptyForm(state));
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -82,23 +99,32 @@ export function Enquire() {
     setValues((v) => ({ ...v, [field]: value }));
   };
 
-  // Live cost estimate — only shown when we actually know the rate (came
-  // through from ProductDetail) and both quantity/days are valid numbers.
+  // Live cost estimate. Single-product mode needs a known rate + quantity +
+  // days; cart mode sums each line's own rate/quantity against the shared
+  // "number of days" field instead.
   const quantityNum = Number(values.quantity);
   const daysNum = Number(values.numberOfDays);
-  const estimateValid =
-    typeof state.dailyRate === "number" &&
-    values.quantity !== "" &&
-    values.numberOfDays !== "" &&
-    quantityNum > 0 &&
-    daysNum > 0;
-  const estimatedTotal = estimateValid ? state.dailyRate! * quantityNum * daysNum : null;
+  const daysValid = values.numberOfDays !== "" && daysNum > 0;
+
+  const singleEstimateValid =
+    !isCartMode && typeof state.dailyRate === "number" && values.quantity !== "" && quantityNum > 0 && daysValid;
+  const singleEstimatedTotal = singleEstimateValid ? state.dailyRate! * quantityNum * daysNum : null;
+
+  const cartEstimatedTotal =
+    isCartMode && daysValid
+      ? state.cartItems!.reduce<number | null>((sum, item) => {
+          if (sum === null || item.dailyRate == null) return null;
+          return sum + item.dailyRate * item.quantity * daysNum;
+        }, 0)
+      : null;
+
+  const estimatedTotal = isCartMode ? cartEstimatedTotal : singleEstimatedTotal;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting) return; // prevent duplicate submissions
 
-    const validationErrors = validate(values);
+    const validationErrors = validate(values, isCartMode);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) {
       // Move focus (and the viewport) to the first invalid field — without
@@ -114,17 +140,35 @@ export function Enquire() {
 
     setSubmitting(true);
     try {
-      await submitEnquiry({
-        name: values.name.trim(),
-        mobile: values.mobile.trim(),
-        productId: state.productId,
-        requestedProductText: state.productName,
-        quantity: values.quantity ? Number(values.quantity) : undefined,
-        requiredDate: values.requiredDate || undefined,
-        numberOfDays: values.numberOfDays ? Number(values.numberOfDays) : undefined,
-        address: values.address.trim() || undefined,
-        message: values.message.trim() || undefined,
-      });
+      if (isCartMode) {
+        await submitCartEnquiry({
+          name: values.name.trim(),
+          mobile: values.mobile.trim(),
+          items: state.cartItems!.map((item) => ({
+            productId: item.productId,
+            productName: item.variantLabel ? `${item.productName} (${item.variantLabel})` : item.productName,
+            dailyRate: item.dailyRate,
+            quantity: item.quantity,
+          })),
+          requiredDate: values.requiredDate || undefined,
+          numberOfDays: values.numberOfDays ? Number(values.numberOfDays) : undefined,
+          address: values.address.trim() || undefined,
+          message: values.message.trim() || undefined,
+        });
+        clearCart();
+      } else {
+        await submitEnquiry({
+          name: values.name.trim(),
+          mobile: values.mobile.trim(),
+          productId: state.productId,
+          requestedProductText: state.productName,
+          quantity: values.quantity ? Number(values.quantity) : undefined,
+          requiredDate: values.requiredDate || undefined,
+          numberOfDays: values.numberOfDays ? Number(values.numberOfDays) : undefined,
+          address: values.address.trim() || undefined,
+          message: values.message.trim() || undefined,
+        });
+      }
       setSubmitted(true);
       showToast("Enquiry sent. RenTools will get back to you shortly.", "success");
     } catch {
@@ -137,6 +181,12 @@ export function Enquire() {
   };
 
   if (submitted) {
+    const aboutText = isCartMode
+      ? ` about your ${state.cartItems!.length}-item order`
+      : state.productName
+        ? ` about ${state.productName}`
+        : " about your enquiry";
+
     return (
       <div>
         <PageHeader title="Enquiry sent" />
@@ -151,8 +201,7 @@ export function Enquire() {
           </span>
           <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
             Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
-            at {values.mobile} about
-            {state.productName ? ` ${state.productName}` : " your enquiry"}.
+            at {values.mobile}{aboutText}.
           </p>
           <div className="mt-2 flex w-full flex-col gap-2">
             <Button fullWidth onClick={() => navigate("/products")}>
@@ -171,8 +220,38 @@ export function Enquire() {
     <div>
       <PageHeader title="Enquire" />
       <form onSubmit={handleSubmit} className="space-y-4 p-4" noValidate>
-        {state.productName && (
-          <div className="spec-tag spec-tag--accent">{state.productName}</div>
+        {!isCartMode && state.productName && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-graphite-200 px-3.5 py-2.5 dark:border-graphite-800">
+            <span className="spec-tag spec-tag--accent">{state.productName}</span>
+            {typeof state.dailyRate === "number" && (
+              <span className="flex-shrink-0 font-body text-[13px] font-semibold text-ink dark:text-ink-inverted">
+                {formatCurrency(state.dailyRate)} / day
+              </span>
+            )}
+          </div>
+        )}
+
+        {isCartMode && (
+          <div className="space-y-2 rounded-lg border border-graphite-200 p-3.5 dark:border-graphite-800">
+            <span className="font-body text-[13px] font-medium text-graphite-500">
+              {state.cartItems!.length} item{state.cartItems!.length === 1 ? "" : "s"}
+            </span>
+            <ul className="space-y-1.5">
+              {state.cartItems!.map((item, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 font-body text-[13.5px]">
+                  <span className="min-w-0 truncate text-ink dark:text-ink-inverted">
+                    {item.productName}
+                    {item.variantLabel ? ` (${item.variantLabel})` : ""} × {item.quantity}
+                  </span>
+                  {item.dailyRate != null && (
+                    <span className="flex-shrink-0 text-graphite-500">
+                      {formatCurrency(item.dailyRate)}/day
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         <Input
@@ -201,18 +280,7 @@ export function Enquire() {
           placeholder="10-digit mobile number"
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            ref={quantityRef}
-            label="Quantity"
-            name="quantity"
-            type="number"
-            min={1}
-            inputMode="numeric"
-            value={values.quantity}
-            onChange={(e) => setField("quantity", e.target.value)}
-            error={errors.quantity}
-          />
+        {isCartMode ? (
           <Input
             label="Number of days"
             name="numberOfDays"
@@ -223,12 +291,38 @@ export function Enquire() {
             value={values.numberOfDays}
             onChange={(e) => setField("numberOfDays", e.target.value)}
           />
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              ref={quantityRef}
+              label="Quantity"
+              name="quantity"
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={values.quantity}
+              onChange={(e) => setField("quantity", e.target.value)}
+              error={errors.quantity}
+            />
+            <Input
+              label="Number of days"
+              name="numberOfDays"
+              type="number"
+              min={1}
+              inputMode="numeric"
+              hint="Optional"
+              value={values.numberOfDays}
+              onChange={(e) => setField("numberOfDays", e.target.value)}
+            />
+          </div>
+        )}
 
         {estimatedTotal !== null && (
           <div className="flex items-center justify-between rounded-lg border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-              Estimated total ({quantityNum} × {daysNum} day{daysNum === 1 ? "" : "s"})
+              {isCartMode
+                ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
+                : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
             </span>
             <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
               {formatCurrency(estimatedTotal)}
