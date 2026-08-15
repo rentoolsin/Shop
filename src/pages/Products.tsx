@@ -80,7 +80,9 @@ export function Products() {
             >
               <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.8} />
               {cartCount > 0 && (
-                <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-accent-500" />
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
               )}
             </Link>
             <Link

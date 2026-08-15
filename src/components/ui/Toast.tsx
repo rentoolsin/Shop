@@ -9,14 +9,24 @@ import { useBottomBarHeight } from "../../hooks/useBottomBarHeight";
 
 type ToastTone = "default" | "success" | "danger";
 
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface ToastItem {
   id: number;
   message: string;
   tone: ToastTone;
+  action?: ToastAction;
+}
+
+interface ToastOptions {
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
-  showToast: (message: string, tone?: ToastTone) => void;
+  showToast: (message: string, tone?: ToastTone, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -32,13 +42,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const bottomBarHeight = useBottomBarHeight();
 
-  const showToast = useCallback((message: string, tone: ToastTone = "default") => {
-    const id = Date.now() + Math.random();
-    setToasts((current) => [...current, { id, message, tone }]);
-    window.setTimeout(() => {
-      setToasts((current) => current.filter((t) => t.id !== id));
-    }, AUTO_DISMISS_MS);
-  }, []);
+  const showToast = useCallback(
+    (message: string, tone: ToastTone = "default", options?: ToastOptions) => {
+      const id = Date.now() + Math.random();
+      setToasts((current) => [...current, { id, message, tone, action: options?.action }]);
+      window.setTimeout(() => {
+        setToasts((current) => current.filter((t) => t.id !== id));
+      }, AUTO_DISMISS_MS);
+    },
+    [],
+  );
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -62,11 +75,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={toast.id}
             className={[
-              "pointer-events-auto max-w-app rounded px-4 py-2.5 font-body text-[14px] shadow-raised",
+              "pointer-events-auto flex max-w-app items-center gap-3 rounded px-4 py-2.5 font-body text-[14px] shadow-raised",
               toneClasses[toast.tone],
             ].join(" ")}
           >
-            {toast.message}
+            <span className="flex-1">{toast.message}</span>
+            {toast.action && (
+              <button
+                onClick={() => {
+                  toast.action?.onClick();
+                  setToasts((current) => current.filter((t) => t.id !== toast.id));
+                }}
+                className="flex-shrink-0 rounded font-body text-[13px] font-semibold underline underline-offset-2 opacity-90 transition-opacity duration-150 ease-app hover:opacity-100"
+              >
+                {toast.action.label}
+              </button>
+            )}
           </div>
         ))}
       </div>

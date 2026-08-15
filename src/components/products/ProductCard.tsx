@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart, Minus, Plus, ShoppingCart, Star } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -16,6 +16,8 @@ interface ProductCardProps {
   imageUrl?: string | null;
   /** Lowest daily rate across active variants — "from ₹X/day". */
   fromDailyRate: number | null;
+  /** Admin-set "was" rate, shown struck through next to fromDailyRate. Null = no strikethrough. */
+  originalFromDailyRate?: number | null;
   available: boolean;
   /** Category name for the category tag. Omit/null to hide the tag. */
   categoryName?: string | null;
@@ -31,6 +33,7 @@ export function ProductCard({
   name,
   imageUrl,
   fromDailyRate,
+  originalFromDailyRate,
   available,
   categoryName,
   rating,
@@ -40,34 +43,68 @@ export function ProductCard({
   const { addItem } = useCart();
   const { isSaved, toggle: toggleSaved } = useSavedProducts();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   // Local to this card — same "reset to 1 after adding" behavior as the
   // product detail page's quantity stepper.
   const [qty, setQty] = useState(1);
   const saved = isSaved(id);
 
+  const strikethroughPrice = originalFromDailyRate != null && (
+    <span className="font-body text-[12px] text-graphite-400 line-through dark:text-graphite-500">
+      {formatCurrency(originalFromDailyRate)}
+    </span>
+  );
+
   const priceTag = (
-    <span className={`spec-tag ${available ? "spec-tag--accent" : ""}`}>
-      {fromDailyRate != null
-        ? `${formatCurrency(fromDailyRate)}/day`
-        : "Rate on enquiry"}
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`spec-tag ${available ? "spec-tag--accent" : ""}`}>
+        {fromDailyRate != null
+          ? `${formatCurrency(fromDailyRate)}/day`
+          : "Rate on enquiry"}
+      </span>
+      {strikethroughPrice}
     </span>
   );
 
   const priceLine = (
-    <span className="font-body text-[13px] text-graphite-500">
-      {fromDailyRate != null ? (
-        <>
-          <span className="font-semibold text-ink dark:text-ink-inverted">
-            {formatCurrency(fromDailyRate)}
-          </span>{" "}
-          / day
-        </>
-      ) : (
-        "Rate on enquiry"
-      )}
+    <span className="flex items-center gap-1.5">
+      <span className="font-body text-[13px] text-graphite-500">
+        {fromDailyRate != null ? (
+          <>
+            <span className="font-semibold text-ink dark:text-ink-inverted">
+              {formatCurrency(fromDailyRate)}
+            </span>{" "}
+            / day
+          </>
+        ) : (
+          "Rate on enquiry"
+        )}
+      </span>
+      {strikethroughPrice}
     </span>
   );
+
+  // Grayscale the image and stamp "Out of stock" boldly across it — this
+  // needs to be unmissable at a glance, since it's the one thing that
+  // should stop someone from tapping "Add to enquiry". Smaller badge for
+  // the 64px horizontal thumbnail, where the full-size badge would overflow.
+  const outOfStockOverlay = (size: "sm" | "lg" = "lg") =>
+    !available && (
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 flex items-center justify-center bg-graphite-950/45"
+      >
+        <span
+          className={[
+            "rotate-[-8deg] rounded-sm bg-graphite-950/85 font-display font-bold uppercase tracking-wide text-white shadow-sm",
+            size === "lg" ? "px-3 py-1 text-[13px]" : "px-1.5 py-0.5 text-[8px] tracking-tight",
+          ].join(" ")}
+        >
+          Out of stock
+        </span>
+      </span>
+    );
 
   // Category + rating live in one wrapping row above the name, kept
   // separate from the availability/heart controls (which anchor the image
@@ -90,26 +127,6 @@ export function ProductCard({
         </span>
       )}
     </div>
-  );
-
-  // Light-tint pill anchored to the image's top-right corner — visible
-  // the instant the card renders, before any text below it. Heart moves to
-  // the opposite (top-left) corner so the two overlays don't collide.
-  const availabilityBadge = (
-    <span
-      className={[
-        "absolute right-1.5 top-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-body text-[11px] font-medium leading-tight shadow-sm backdrop-blur-sm",
-        available
-          ? "bg-state-success/15 text-state-success-text dark:bg-state-success/25 dark:text-state-success-text-dark"
-          : "bg-state-danger/15 text-state-danger-text dark:bg-state-danger/25 dark:text-state-danger-text-dark",
-      ].join(" ")}
-    >
-      <span
-        aria-hidden="true"
-        className={["h-1.5 w-1.5 flex-shrink-0 rounded-full", available ? "bg-state-success" : "bg-state-danger"].join(" ")}
-      />
-      {available ? "Available" : "Unavailable"}
-    </span>
   );
 
   // The whole card is a <Link> (tap-anywhere-to-open), so every control
@@ -178,19 +195,26 @@ export function ProductCard({
           { productId: id, productName: name, dailyRate: fromDailyRate },
           qty,
         );
-        showToast(`Added ${qty} × ${name} to enquiry`, "success");
+        showToast(`Added ${qty} × ${name} to cart`, "success", {
+          action: { label: "View cart", onClick: () => navigate("/cart") },
+        });
         setQty(1);
       }}
     >
       <span className="inline-flex items-center gap-1.5">
         <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.8} />
-        Add to enquiry
+        Add to cart
       </span>
     </Button>
   );
 
   const image = (
-    <span className="flex h-full w-full items-center justify-center overflow-hidden bg-graphite-100 dark:bg-graphite-800">
+    <span
+      className={[
+        "flex h-full w-full items-center justify-center overflow-hidden bg-graphite-100 dark:bg-graphite-800",
+        !available ? "grayscale" : "",
+      ].join(" ")}
+    >
       {imageUrl ? (
         <img src={imageUrl} alt="" className="h-full w-full object-cover" />
       ) : (
@@ -207,6 +231,7 @@ export function ProductCard({
         <Card interactive className="flex items-center gap-3 overflow-hidden rounded-xl p-2">
           <span className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
             {image}
+            {outOfStockOverlay("sm")}
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             {metaRow}
@@ -246,7 +271,7 @@ export function ProductCard({
           <span className="relative aspect-square w-full">
             {image}
             {heartButton}
-            {availabilityBadge}
+            {outOfStockOverlay()}
           </span>
           <div className="flex flex-col gap-1.5 p-2.5">
             {metaRow}
@@ -272,7 +297,7 @@ export function ProductCard({
         <span className="relative aspect-square w-full">
           {image}
           {heartButton}
-          {availabilityBadge}
+          {outOfStockOverlay()}
         </span>
         <div className="flex flex-col gap-1.5 p-3">
           {metaRow}

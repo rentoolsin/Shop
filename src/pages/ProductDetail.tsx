@@ -1,11 +1,10 @@
 import { Check, Heart, Minus, Plus, ShieldCheck, ShoppingCart, Truck } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { BottomSheet } from "../components/ui/BottomSheet";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -84,6 +83,7 @@ export function ProductDetail() {
   const { isSaved, toggle: toggleSaved } = useSavedProducts();
   const { addItem, totalItems: cartCount } = useCart();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [cartQty, setCartQty] = useState(1);
   const bottomBarHeight = useBottomBarHeight();
 
@@ -158,7 +158,9 @@ export function ProductDetail() {
       },
       cartQty,
     );
-    showToast(`Added ${cartQty} × ${item.name} to cart`, "success");
+    showToast(`Added ${cartQty} × ${item.name} to cart`, "success", {
+      action: { label: "View cart", onClick: () => navigate("/cart") },
+    });
     setCartQty(1);
   };
 
@@ -205,7 +207,9 @@ export function ProductDetail() {
             >
               <ShoppingCart className="h-5 w-5" strokeWidth={1.8} />
               {cartCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-accent-500" />
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
               )}
             </Link>
             <button
@@ -224,7 +228,7 @@ export function ProductDetail() {
         }
       />
 
-      <ImageCarousel images={galleryImages} alt={item.name} />
+      <ImageCarousel images={galleryImages} alt={item.name} outOfStock={outOfStock} />
 
       <div className="p-4">
         <h2 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
@@ -262,10 +266,11 @@ export function ProductDetail() {
                   {formatCurrency(activeVariant.dailyRate)}
                 </span>
                 <span className="font-body text-[13px] text-graphite-500">/ day</span>
-                <StatusBadge
-                  label={activeVariant.availableQuantity > 0 ? "Available" : "Unavailable"}
-                  tone={activeVariant.availableQuantity > 0 ? "success" : "danger"}
-                />
+                {activeVariant.originalDailyRate != null && (
+                  <span className="font-body text-[14px] text-graphite-400 line-through dark:text-graphite-500">
+                    {formatCurrency(activeVariant.originalDailyRate)}
+                  </span>
+                )}
               </div>
             )}
 

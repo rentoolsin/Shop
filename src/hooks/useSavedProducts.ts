@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "rentools:saved-products";
 // Same-tab components (ProductDetail's heart, the Saved page, any future
@@ -20,7 +20,6 @@ function readSaved(): string[] {
 function writeSaved(ids: string[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-    window.dispatchEvent(new CustomEvent(SYNC_EVENT));
   } catch {
     // Storage can be unavailable (private browsing, quota) — saved tools
     // are a convenience, not worth surfacing an error for.
@@ -30,9 +29,15 @@ function writeSaved(ids: string[]) {
 /** Shared saved/wishlist state, persisted to localStorage (no account system exists to attach this to server-side). */
 export function useSavedProducts() {
   const [ids, setIds] = useState<string[]>(() => readSaved());
+  // Distinguishes a local toggle (needs to persist + broadcast) from a sync
+  // picked up from another instance's broadcast (already persisted).
+  const isLocalUpdate = useRef(false);
 
   useEffect(() => {
-    const sync = () => setIds(readSaved());
+    const sync = () => {
+      isLocalUpdate.current = false;
+      setIds(readSaved());
+    };
     window.addEventListener("storage", sync);
     window.addEventListener(SYNC_EVENT, sync);
     return () => {
@@ -41,14 +46,21 @@ export function useSavedProducts() {
     };
   }, []);
 
+  // Persist/broadcast after commit rather than inside the setState updater —
+  // dispatching an event from within an updater is flagged by React as an
+  // unsafe side effect during render.
+  useEffect(() => {
+    if (!isLocalUpdate.current) return;
+    isLocalUpdate.current = false;
+    writeSaved(ids);
+    window.dispatchEvent(new CustomEvent(SYNC_EVENT));
+  }, [ids]);
+
   const isSaved = useCallback((id: string) => ids.includes(id), [ids]);
 
   const toggle = useCallback((id: string) => {
-    setIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id];
-      writeSaved(next);
-      return next;
-    });
+    isLocalUpdate.current = true;
+    setIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
   }, []);
 
   return { ids, isSaved, toggle };

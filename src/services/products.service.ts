@@ -5,6 +5,9 @@ export interface ProductListItem {
   name: string;
   imageUrl: string | null;
   fromDailyRate: number | null;
+  /** Admin-set "was" rate on the same variant fromDailyRate came from — shown struck
+   *  through next to it. Null when unset, or not greater than fromDailyRate. */
+  originalFromDailyRate: number | null;
   available: boolean;
   /** Name of the product's category, for the category tag on the card. Null if the join can't resolve it. */
   categoryName: string | null;
@@ -18,6 +21,8 @@ export interface ProductVariantDetail {
   id: string;
   label: string;
   dailyRate: number;
+  /** Admin-set "was" rate, shown struck through next to dailyRate. Null = no strikethrough. */
+  originalDailyRate: number | null;
   availableQuantity: number;
 }
 
@@ -34,6 +39,7 @@ export interface ProductDetail {
 
 type RawVariant = {
   daily_rate: number;
+  original_daily_rate: number | null;
   quantity_total: number;
   quantity_reserved: number;
   is_active: boolean;
@@ -68,11 +74,22 @@ function toListItem(product: RawListRow): ProductListItem {
     ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10) / 10
     : null;
 
+  const fromDailyRate = rates.length ? Math.min(...rates) : null;
+  // The strikethrough price pairs with the same variant fromDailyRate came
+  // from — not just "any" original rate across variants.
+  const cheapestVariant =
+    fromDailyRate != null ? activeVariants.find((v) => v.daily_rate === fromDailyRate) : undefined;
+  const originalFromDailyRate =
+    cheapestVariant?.original_daily_rate != null && cheapestVariant.original_daily_rate > fromDailyRate!
+      ? cheapestVariant.original_daily_rate
+      : null;
+
   return {
     id: product.id,
     name: product.name,
     imageUrl: product.image_url,
-    fromDailyRate: rates.length ? Math.min(...rates) : null,
+    fromDailyRate,
+    originalFromDailyRate,
     available,
     categoryName: categoryRow?.name ?? null,
     rating,
@@ -82,7 +99,7 @@ function toListItem(product: RawListRow): ProductListItem {
 
 const LIST_SELECT =
   "id, name, image_url, " +
-  "product_variants(daily_rate, quantity_total, quantity_reserved, is_active), " +
+  "product_variants(daily_rate, original_daily_rate, quantity_total, quantity_reserved, is_active), " +
   "categories(name), " +
   "product_reviews(rating)";
 
@@ -127,7 +144,15 @@ export async function fetchProductById(id: string): Promise<ProductDetail | null
     image_url: string | null;
     category_id: string;
     product_variants:
-      | { id: string; label: string; daily_rate: number; quantity_total: number; quantity_reserved: number; is_active: boolean }[]
+      | {
+          id: string;
+          label: string;
+          daily_rate: number;
+          original_daily_rate: number | null;
+          quantity_total: number;
+          quantity_reserved: number;
+          is_active: boolean;
+        }[]
       | null;
     product_images: { image_url: string; sort_order: number }[] | null;
   }
@@ -136,7 +161,7 @@ export async function fetchProductById(id: string): Promise<ProductDetail | null
     .from("products")
     .select(
       "id, name, description, image_url, category_id, " +
-        "product_variants(id, label, daily_rate, quantity_total, quantity_reserved, is_active), " +
+        "product_variants(id, label, daily_rate, original_daily_rate, quantity_total, quantity_reserved, is_active), " +
         "product_images(image_url, sort_order)",
     )
     .eq("id", id)
@@ -152,6 +177,8 @@ export async function fetchProductById(id: string): Promise<ProductDetail | null
       id: v.id,
       label: v.label,
       dailyRate: v.daily_rate,
+      originalDailyRate:
+        v.original_daily_rate != null && v.original_daily_rate > v.daily_rate ? v.original_daily_rate : null,
       availableQuantity: v.quantity_total - v.quantity_reserved,
     }));
 

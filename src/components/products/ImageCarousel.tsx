@@ -3,6 +3,8 @@ import { useRef, useState } from "react";
 interface ImageCarouselProps {
   images: string[];
   alt: string;
+  /** Grays out every photo and stamps a bold "Out of stock" badge over the carousel. */
+  outOfStock?: boolean;
 }
 
 /**
@@ -11,14 +13,28 @@ interface ImageCarouselProps {
  * carousel. A product with no gallery photos still works fine here — it
  * just renders as a single plain image with no dots.
  */
-export function ImageCarousel({ images, alt }: ImageCarouselProps) {
+export function ImageCarousel({ images, alt, outOfStock = false }: ImageCarouselProps) {
   const [active, setActive] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
+  const outOfStockBadge = outOfStock && (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-graphite-950/45"
+    >
+      <span className="rotate-[-8deg] rounded bg-graphite-950/85 px-5 py-2 font-display text-[22px] font-bold uppercase tracking-wide text-white shadow-raised">
+        Out of stock
+      </span>
+    </span>
+  );
+
   if (images.length === 0) {
     return (
-      <div className="flex aspect-square w-full items-center justify-center bg-graphite-100 dark:bg-graphite-800">
-        <span className="font-display text-[24px] text-graphite-500">{alt.charAt(0)}</span>
+      <div className="relative flex aspect-square w-full items-center justify-center bg-graphite-100 dark:bg-graphite-800">
+        <span className={["font-display text-[24px] text-graphite-500", outOfStock ? "grayscale" : ""].join(" ")}>
+          {alt.charAt(0)}
+        </span>
+        {outOfStockBadge}
       </div>
     );
   }
@@ -47,7 +63,10 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="flex aspect-square w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={[
+          "flex aspect-square w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          outOfStock ? "grayscale" : "",
+        ].join(" ")}
       >
         {images.map((src, index) => (
           <div
@@ -66,6 +85,8 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
           </div>
         ))}
       </div>
+
+      {outOfStockBadge}
 
       {images.length > 1 && (
         <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1">

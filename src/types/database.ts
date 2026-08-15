@@ -70,6 +70,8 @@ export interface Database {
           product_id: string;
           label: string; // e.g. "8 ft"
           daily_rate: number;
+          /** Optional admin-set "was" price, shown struck through next to daily_rate. Null = no strikethrough. */
+          original_daily_rate: number | null;
           quantity_total: number;
           quantity_reserved: number;
           is_active: boolean;

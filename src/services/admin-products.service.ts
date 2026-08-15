@@ -27,7 +27,14 @@ interface RawProductEditRow {
   is_active: boolean;
   sort_order: number;
   product_variants:
-    | { id: string; label: string; daily_rate: number; quantity_total: number; is_active: boolean }[]
+    | {
+        id: string;
+        label: string;
+        daily_rate: number;
+        original_daily_rate: number | null;
+        quantity_total: number;
+        is_active: boolean;
+      }[]
     | null;
   product_images: { id: string; image_url: string; sort_order: number }[] | null;
 }
@@ -47,6 +54,8 @@ export interface AdminVariant {
   id: string | null; // null = new, not yet saved
   label: string;
   dailyRate: number;
+  /** Optional "was" rate shown struck through next to dailyRate on the storefront. Null = no strikethrough. */
+  originalDailyRate: number | null;
   quantityTotal: number;
   isActive: boolean;
 }
@@ -108,7 +117,7 @@ export async function fetchProductForEdit(id: string): Promise<AdminProductDetai
     .from("products")
     .select(
       "id, name, slug, description, image_url, category_id, is_featured, is_active, sort_order, " +
-        "product_variants(id, label, daily_rate, quantity_total, is_active), " +
+        "product_variants(id, label, daily_rate, original_daily_rate, quantity_total, is_active), " +
         "product_images(id, image_url, sort_order)",
     )
     .eq("id", id)
@@ -131,6 +140,7 @@ export async function fetchProductForEdit(id: string): Promise<AdminProductDetai
       id: v.id,
       label: v.label,
       dailyRate: v.daily_rate,
+      originalDailyRate: v.original_daily_rate,
       quantityTotal: v.quantity_total,
       isActive: v.is_active,
     })),
@@ -171,6 +181,7 @@ export async function createProduct(values: ProductFormValues): Promise<string> 
       id: v.id,
       label: v.label,
       dailyRate: v.dailyRate,
+      originalDailyRate: v.originalDailyRate,
       quantityTotal: v.quantityTotal,
       isActive: v.isActive,
     })),
@@ -205,6 +216,7 @@ export async function updateProduct(id: string, values: ProductFormValues): Prom
       id: v.id,
       label: v.label,
       dailyRate: v.dailyRate,
+      originalDailyRate: v.originalDailyRate,
       quantityTotal: v.quantityTotal,
       isActive: v.isActive,
     })),

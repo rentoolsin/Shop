@@ -35,7 +35,7 @@ const EMPTY: ProductFormValues = {
 };
 
 function emptyVariant(): AdminVariant {
-  return { id: null, label: "", dailyRate: 0, quantityTotal: 1, isActive: true };
+  return { id: null, label: "", dailyRate: 0, originalDailyRate: null, quantityTotal: 1, isActive: true };
 }
 
 export function ProductForm() {
@@ -100,6 +100,9 @@ export function ProductForm() {
     values.variants.forEach((variant, i) => {
       if (!variant.label.trim()) next[`variant-${i}-label`] = "Enter a size/label.";
       if (variant.dailyRate < 0) next[`variant-${i}-rate`] = "Rate cannot be negative.";
+      if (variant.originalDailyRate != null && variant.originalDailyRate < 0) {
+        next[`variant-${i}-original-rate`] = "Rate cannot be negative.";
+      }
       if (variant.quantityTotal <= 0) next[`variant-${i}-qty`] = "Quantity must be greater than zero.";
     });
     setErrors(next);
@@ -230,6 +233,19 @@ export function ProductForm() {
                     value={variant.dailyRate}
                     onChange={(e) => updateVariant(index, { dailyRate: Number(e.target.value) })}
                     error={errors[`variant-${index}-rate`]}
+                  />
+                  <Input
+                    label="Original rate (₹)"
+                    type="number"
+                    min={0}
+                    value={variant.originalDailyRate ?? ""}
+                    onChange={(e) =>
+                      updateVariant(index, {
+                        originalDailyRate: e.target.value === "" ? null : Number(e.target.value),
+                      })
+                    }
+                    hint="Optional — shown struck through next to the daily rate. Leave blank to hide it."
+                    error={errors[`variant-${index}-original-rate`]}
                   />
                   <Input
                     label="Quantity"
