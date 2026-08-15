@@ -118,21 +118,13 @@ export function Home() {
             </div>
           )}
 
-          <div className="mt-5 flex items-start justify-between gap-3 px-4">
-            <div className="min-w-0 flex-1 pt-1">
-              <h1 className="font-display text-[24px] font-extrabold leading-tight text-ink dark:text-ink-inverted">
-                {cms.hero.heading}
-              </h1>
-              <p className="mt-2 font-body text-[14.5px] leading-snug text-graphite-500">
-                <HighlightSite text={cms.hero.subheading} />
-              </p>
-            </div>
-            <img
-              src="/hero-equipment.png"
-              alt=""
-              aria-hidden="true"
-              className="w-[132px] flex-shrink-0 select-none sm:w-[150px]"
-            />
+          <div className="mt-5 px-4">
+            <h1 className="font-display text-[24px] font-extrabold leading-tight text-ink dark:text-ink-inverted">
+              {cms.hero.heading}
+            </h1>
+            <p className="mt-2 font-body text-[14.5px] leading-snug text-graphite-500">
+              <HighlightSite text={cms.hero.subheading} />
+            </p>
           </div>
 
           <div className="px-4">
@@ -290,7 +282,7 @@ export function Home() {
           <p className="mt-1 font-body text-[13px] text-graphite-500">
             Send an enquiry and RenTools will get back to you with availability and rate.
           </p>
-          <Button fullWidth className="mt-3" onClick={() => navigate("/enquire")}>
+          <Button variant="accent" fullWidth className="mt-3" onClick={() => navigate("/enquire")}>
             Send enquiry
           </Button>
         </div>

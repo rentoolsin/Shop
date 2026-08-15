@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 
@@ -16,7 +17,13 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   if (!open) return null;
 
-  return (
+  // Portalled to document.body — see the matching comment in BottomSheet.tsx.
+  // Rendered in place, this "fixed inset-0" backdrop is confined to
+  // PageTransition's transformed wrapper instead of the real viewport, so
+  // it fails to cover/dim page content that sits outside that wrapper
+  // (e.g. <Footer/>). Every Modal user (including ConfirmDialog) gets the
+  // fix automatically.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
       onClick={onClose}
@@ -47,6 +54,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

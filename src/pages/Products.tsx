@@ -1,6 +1,6 @@
 import { ArrowUpDown, Heart, ShoppingCart } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { ProductCard } from "../components/products/ProductCard";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -23,10 +23,18 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 export function Products() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  // Local state, not useSearchParams: setSearchParams pushes a brand new
+  // browser history entry on every call by default, so each category tap
+  // was silently stacking history entries on the same page. That fought
+  // useScrollRestoration (which treats each one as a fresh page needing a
+  // scroll-to-top) and the swipe-back gesture (swiping back would step
+  // through old category selections one at a time instead of leaving the
+  // page) — which is what made switching categories look broken/undone.
+  // Category choice doesn't need to be shareable via URL, so plain state
+  // sidesteps the whole class of bug.
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [sortOpen, setSortOpen] = useState(false);
   const [sort, setSort] = useState<SortKey>("popular");
-  const categoryId = searchParams.get("category") ?? undefined;
 
   const categories = useCategories();
   const products = useProducts({ categoryId });
@@ -43,13 +51,6 @@ export function Products() {
       ? `Browse ${activeCategoryName.toLowerCase()} available for rent in Coimbatore, with daily rates and availability.`
       : "Browse all construction tools and equipment available for rent in Coimbatore, with daily rates and availability.",
   });
-
-  const applyCategory = (id?: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (id) next.set("category", id);
-    else next.delete("category");
-    setSearchParams(next);
-  };
 
   const sortedProducts = useMemo(() => {
     if (products.status !== "success") return [];
@@ -107,11 +108,17 @@ export function Products() {
       />
 
       {/* Category chips — always visible so switching categories doesn't
-          require a separate filter sheet round-trip. */}
+          require a separate filter sheet round-trip. `top-14` docks this
+          directly under PageHeader (which is h-14), and it shares the
+          header's z-index stacking so the two scroll/stick together as
+          one unit instead of the header stopping and the chips scrolling
+          out from underneath it. */}
       {categories.status === "success" && categories.data.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto border-b border-graphite-200/70 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-graphite-800/70">
+        <div className="sticky top-14 z-30 flex gap-2 overflow-x-auto border-b border-graphite-200/70 bg-graphite-50/90 px-4 py-3 backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-graphite-800/70 dark:bg-graphite-950/90">
           <button
-            onClick={() => applyCategory(undefined)}
+            type="button"
+            aria-pressed={!categoryId}
+            onClick={() => setCategoryId(undefined)}
             className={`spec-tag flex-shrink-0 ${!categoryId ? "spec-tag--accent" : ""}`}
           >
             All
@@ -119,7 +126,9 @@ export function Products() {
           {categories.data.map((category) => (
             <button
               key={category.id}
-              onClick={() => applyCategory(category.id)}
+              type="button"
+              aria-pressed={categoryId === category.id}
+              onClick={() => setCategoryId(category.id)}
               className={`spec-tag flex-shrink-0 ${categoryId === category.id ? "spec-tag--accent" : ""}`}
             >
               {category.name}

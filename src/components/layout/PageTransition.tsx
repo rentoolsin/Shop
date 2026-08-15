@@ -24,7 +24,23 @@ interface PageTransitionProps {
 export function PageTransition({ children, className }: PageTransitionProps) {
   const location = useLocation();
   const [displayLocation, setDisplayLocation] = useState(location);
-  const [stage, setStage] = useState<"in" | "out">("in");
+  // "idle" is the resting state once an entrance animation has finished —
+  // deliberately a *different* state from "in", not just "in" left
+  // sitting there. `animate-page-in`/`animate-page-out` both end on a
+  // `transform` keyframe, and `animation-fill-mode: both` (see
+  // tailwind.config.js) holds that transform forever once the animation
+  // completes — even though it's the identity transform
+  // `translateY(0) scale(1)` and looks like a no-op. Per spec, *any*
+  // non-"none" transform on an ancestor creates a new containing block
+  // for `position: fixed` AND `position: sticky` descendants, scoping
+  // them to this wrapper's box instead of the real viewport. That's what
+  // broke the sticky category-chip row under the header, and is the
+  // reason BottomSheet/Modal have to portal out to <body> instead of
+  // just using z-index. Dropping the animation class entirely once it's
+  // done (going to "idle", which has no className at all) removes the
+  // transform for real, so sticky/fixed descendants work normally for
+  // the rest of the time the page just sits there.
+  const [stage, setStage] = useState<"in" | "out" | "idle">("in");
 
   useEffect(() => {
     if (location.pathname !== displayLocation.pathname) {
@@ -36,16 +52,18 @@ export function PageTransition({ children, className }: PageTransitionProps) {
     if (stage === "out") {
       setDisplayLocation(location);
       setStage("in");
+    } else if (stage === "in") {
+      setStage("idle");
     }
   };
+
+  const stageClassName = stage === "out" ? "animate-page-out" : stage === "in" ? "animate-page-in" : "";
 
   return (
     <div
       key={displayLocation.pathname}
       onAnimationEnd={handleAnimationEnd}
-      className={[stage === "out" ? "animate-page-out" : "animate-page-in", className]
-        .filter(Boolean)
-        .join(" ")}
+      className={[stageClassName, className].filter(Boolean).join(" ")}
     >
       {children(displayLocation)}
     </div>

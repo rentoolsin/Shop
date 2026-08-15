@@ -1,4 +1,5 @@
 import { lazy, Suspense, useRef } from "react";
+import { useSwipeNavigation } from "./hooks/useSwipeNavigation";
 import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
@@ -101,6 +102,12 @@ function CustomerApp() {
   const settings = useSiteSettings();
   const { whatsapp } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
 
+  // Android/iOS-style edge navigation: swipe right anywhere on the page to
+  // go back, swipe left to go forward again — see useSwipeNavigation for
+  // how it avoids fighting carousels/chip strips.
+  const mainRef = useRef<HTMLElement>(null);
+  useSwipeNavigation(mainRef);
+
   return (
     <div className="app-shell">
       <a href="#main-content" className="skip-link">
@@ -113,6 +120,7 @@ function CustomerApp() {
           alone can never account for. */}
       <main
         id="main-content"
+        ref={mainRef}
         className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))]"
         style={bottomBarHeight > 0 ? { paddingBottom: bottomBarHeight } : undefined}
       >

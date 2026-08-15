@@ -61,6 +61,20 @@ export default {
           "info-text": "#4C6B8A",
           "info-text-dark": "#8FB4D9",
         },
+        // Dedicated "Save ₹X" savings-badge palette — sampled directly
+        // from the approved reference (light mint bg, deep green text,
+        // faint green border), not derived from `state.success`. The
+        // badge previously reused `state-success/15` as a low-opacity
+        // tint, which washes out differently depending on the card
+        // background it sits on; a fixed token avoids that.
+        savings: {
+          bg: "#F0FDF4",
+          "bg-dark": "#123322", // dark-mode equivalent: deep green, not a light tint
+          border: "#CAFADA",
+          "border-dark": "#1F4A34",
+          text: "#007A15",
+          "text-dark": "#7DD0A0",
+        },
         accent: {
           50: "#FFF8E6",
           100: "#FFEEC2",

@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
 
@@ -16,7 +17,18 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
 
   if (!open) return null;
 
-  return (
+  // Portalled to document.body rather than rendered in place: pages are
+  // mounted inside PageTransition's wrapper div, which carries a page-in/
+  // out `transform` with `animation-fill-mode: both` (see the comment on
+  // <FloatingWhatsApp/> in App.tsx). A transformed ancestor becomes the
+  // containing block for any `position: fixed` descendant, so without the
+  // portal this sheet's "fixed inset-0" backdrop only ever covers that
+  // wrapper's own box — not the real viewport — and page content that
+  // sits outside it (like <Footer/>, rendered as a sibling after
+  // PageTransition) paints on top of the backdrop instead of being
+  // dimmed/covered by it. Portalling out to <body> makes it fixed to the
+  // actual viewport again, on top of everything, everywhere this is used.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div className="w-full max-w-app" onClick={(e) => e.stopPropagation()}>
         <div
@@ -45,6 +57,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
           <div className="px-5 pb-6 pt-3">{children}</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

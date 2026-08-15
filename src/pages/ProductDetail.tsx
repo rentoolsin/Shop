@@ -215,6 +215,7 @@ export function ProductDetail() {
             <button
               onClick={() => toggleSaved(item.id)}
               aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
+              aria-pressed={isSaved(item.id)}
               className={[
                 "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-app active:scale-90",
                 isSaved(item.id)
@@ -251,8 +252,11 @@ export function ProductDetail() {
                   onClick={() => setSelectedVariantId(variant.id)}
                   aria-pressed={activeVariant?.id === variant.id}
                   className={[
-                    "spec-tag min-h-[40px] px-3.5",
-                    activeVariant?.id === variant.id ? "spec-tag--accent" : "",
+                    "inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border px-3.5",
+                    "font-body text-[13px] font-medium leading-none transition-colors duration-150 ease-app",
+                    activeVariant?.id === variant.id
+                      ? "border-accent-500 bg-transparent text-accent-700 dark:border-accent-400 dark:text-accent-300"
+                      : "border-graphite-300 bg-transparent text-graphite-700 dark:border-graphite-600 dark:text-graphite-300",
                   ].join(" ")}
                 >
                   {variant.label}
@@ -261,7 +265,7 @@ export function ProductDetail() {
             </div>
 
             {activeVariant && (
-              <div className="mt-4 flex items-center gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className="font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
                   {formatCurrency(activeVariant.dailyRate)}
                 </span>
@@ -271,6 +275,12 @@ export function ProductDetail() {
                     {formatCurrency(activeVariant.originalDailyRate)}
                   </span>
                 )}
+                {activeVariant.originalDailyRate != null &&
+                  activeVariant.originalDailyRate > activeVariant.dailyRate && (
+                    <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                      Save {formatCurrency(activeVariant.originalDailyRate - activeVariant.dailyRate)}/day
+                    </span>
+                  )}
               </div>
             )}
 
@@ -295,7 +305,7 @@ export function ProductDetail() {
                     <Plus className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
                 </div>
-                <Button variant="secondary" className="flex-1" onClick={handleAddToCart}>
+                <Button variant="accent" className="flex-1" onClick={handleAddToCart}>
                   <span className="inline-flex items-center gap-2">
                     <ShoppingCart className="h-4 w-4" strokeWidth={1.8} />
                     Add to cart
@@ -309,16 +319,16 @@ export function ProductDetail() {
         {/* Rental policy reassurance — generic across all tools (no
             per-tool deposit/delivery data exists yet), phrased as general
             business practice rather than a specific promised figure. */}
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded border border-graphite-200 bg-graphite-50 px-3.5 py-3 dark:border-graphite-800 dark:bg-graphite-900/50">
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-700/40 dark:bg-accent-500/10">
           <div className="flex items-center gap-2">
-            <Truck className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
-            <span className="font-body text-[11.5px] leading-tight text-graphite-500">
+            <Truck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" strokeWidth={1.8} />
+            <span className="font-body text-[11.5px] leading-tight text-graphite-700 dark:text-graphite-300">
               Pickup or delivery available
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
-            <span className="font-body text-[11.5px] leading-tight text-graphite-500">
+            <ShieldCheck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" strokeWidth={1.8} />
+            <span className="font-body text-[11.5px] leading-tight text-graphite-700 dark:text-graphite-300">
               Deposit refunded on return
             </span>
           </div>
@@ -442,28 +452,36 @@ export function ProductDetail() {
       {/* Sticky above the floating bottom nav, not behind it — `sticky
           bottom-0` alone would pin this to the true bottom of the
           viewport, the exact same space the fixed, higher-z-index nav
-          dock occupies, hiding the most important button on this
-          page (Enquire/Request) underneath it once scrolled. */}
-      <div
-        className="sticky z-20 flex gap-2 border-t border-graphite-200 bg-graphite-50/95 p-3 backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95"
-        style={{
-          bottom:
-            bottomBarHeight > 0
-              ? bottomBarHeight
-              : "calc(5.25rem + env(safe-area-inset-bottom))",
-        }}
-      >
-        {outOfStock ? (
-          <RequestPurchaseButton productName={item.name} fullWidth />
-        ) : (
-          <EnquiryButton
-            productId={item.id}
-            productName={item.name}
-            dailyRate={activeVariant?.dailyRate}
-            fullWidth
-          />
-        )}
-      </div>
+          dock occupies, hiding the button underneath it once scrolled.
+
+          Only rendered when there's no other primary CTA already on the
+          page: out-of-stock items (Request Purchase) and items with no
+          variants at all (no price/Add to Cart exists, so Enquiry is
+          the only way to get a quote). When the item is in stock and
+          has variants, Add to Cart above is already the primary action
+          — a second, separate Enquiry bar underneath it was redundant. */}
+      {(outOfStock || item.variants.length === 0) && (
+        <div
+          className="sticky z-20 flex gap-2 border-t border-graphite-200 bg-graphite-50/95 p-3 backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95"
+          style={{
+            bottom:
+              bottomBarHeight > 0
+                ? bottomBarHeight
+                : "calc(5.25rem + env(safe-area-inset-bottom))",
+          }}
+        >
+          {outOfStock ? (
+            <RequestPurchaseButton productName={item.name} fullWidth />
+          ) : (
+            <EnquiryButton
+              productId={item.id}
+              productName={item.name}
+              dailyRate={activeVariant?.dailyRate}
+              fullWidth
+            />
+          )}
+        </div>
+      )}
 
       <BottomSheet
         open={reviewSheetOpen}

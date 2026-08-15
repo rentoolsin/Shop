@@ -65,7 +65,7 @@ export function ProductCard({
       : null;
 
   const saveBadge = savingsAmount != null && (
-    <span className="inline-flex w-fit items-center rounded-full bg-state-success/15 px-2 py-0.5 font-body text-[10.5px] font-bold text-state-success-text dark:bg-state-success/20 dark:text-state-success-text-dark">
+    <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
       Save {formatCurrency(savingsAmount)}/day
     </span>
   );

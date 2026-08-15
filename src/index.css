@@ -9,7 +9,22 @@
 
   html,
   body {
-    @apply overflow-x-hidden;
+    /* `overflow-x: hidden` (not `clip`) has a spec side effect: whenever
+       one axis is non-`visible` and the other is left at its default
+       `visible`, the browser silently promotes the *other* axis to
+       `auto` too — so `overflow-x: hidden` here was quietly turning
+       `body` into its own `overflow-y: auto` scroll container instead
+       of the page just scrolling the real viewport. `position: sticky`
+       descendants (the header, the category-chip strip) then stick
+       relative to that inner scroll container, which several mobile
+       WebKit/Blink builds get wrong once the browser chrome (address
+       bar) collapses/expands during a real scroll gesture — the sticky
+       element can visually detach and scroll away. `overflow-x: clip`
+       gives the same "no horizontal scrollbar" result without ever
+       triggering that auto-promotion, so `body` never becomes its own
+       scroll container and sticky positions relative to the real
+       viewport as normal. */
+    @apply overflow-x-clip;
   }
 
   body {
@@ -63,17 +78,28 @@
     @apply relative flex flex-col;
   }
 
-  /* Signature element: the equipment "spec tag" — used for price/status,
-     echoes the physical rental tags tied to real tool-yard equipment. */
+  /* Signature element: the equipment "spec tag" — used for price/status
+     tags, the category chip strip, and the size/variant selector.
+     Pill-shaped (rounded-full) and set in the app's own body font
+     (font-body/Inter) — same family as the "Save ₹X" badge and
+     everything else in the app, not the mono font this used to carry,
+     which read as a mismatched, separate UI system next to normal text
+     labels like category names.
+
+     Border-only by design (transparent background, no fill) so it
+     reads as the same button language as `Button`'s `outline` variant
+     everywhere it appears — a filled pill background was inconsistent
+     with every other interactive control in the app, which are all
+     border/text-based rather than solid-fill. */
   .spec-tag {
-    @apply inline-flex items-center gap-1 rounded-sm border border-graphite-200
-      bg-graphite-25 px-2 py-1 font-mono text-[13px] font-medium leading-none
-      text-graphite-700 dark:border-graphite-700 dark:bg-graphite-900 dark:text-graphite-300;
+    @apply inline-flex items-center gap-1 rounded-full border border-graphite-300
+      bg-transparent px-3 py-1.5 font-body text-[13px] font-medium leading-none
+      text-graphite-700 dark:border-graphite-600 dark:bg-transparent dark:text-graphite-300;
   }
 
   .spec-tag--accent {
-    @apply border-accent-500 bg-accent-500 text-graphite-950
-      dark:border-accent-400 dark:bg-accent-400 dark:text-graphite-950;
+    @apply border-accent-500 bg-transparent text-accent-700
+      dark:border-accent-400 dark:bg-transparent dark:text-accent-300;
   }
 
   /* Skip-to-content link: off-screen until focused, then docked at the
