@@ -18,7 +18,7 @@ export function WhatsAppButton({
 
   return (
     <Button
-      variant="primary"
+      variant="accent"
       fullWidth={fullWidth}
       onClick={() => window.open(href, "_blank", "noopener,noreferrer")}
     >

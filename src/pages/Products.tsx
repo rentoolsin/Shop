@@ -183,7 +183,7 @@ export function Products() {
           {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
             <Button
               key={key}
-              variant={sort === key ? "primary" : "ghost"}
+              variant={sort === key ? "accent" : "ghost"}
               fullWidth
               className="justify-start"
               onClick={() => {

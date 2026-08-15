@@ -123,7 +123,7 @@ export function About() {
             </div>
           </div>
           <div className="mt-3.5 flex gap-2">
-            <Button fullWidth onClick={() => navigate("/products")}>
+            <Button variant="accent" fullWidth onClick={() => navigate("/products")}>
               Browse tools
             </Button>
             <Button

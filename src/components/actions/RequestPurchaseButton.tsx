@@ -18,7 +18,7 @@ export function RequestPurchaseButton({
 
   return (
     <Button
-      variant="primary"
+      variant="accent"
       fullWidth={fullWidth}
       className={className}
       onClick={() => navigate("/request-purchase", { state: { productName } })}

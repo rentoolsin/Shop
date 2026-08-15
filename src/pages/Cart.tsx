@@ -155,7 +155,7 @@ export function Cart() {
           </div>
         )}
 
-        <Button fullWidth onClick={handleCheckout}>
+        <Button variant="accent" fullWidth onClick={handleCheckout}>
           Continue to enquiry ({items.reduce((n, i) => n + i.quantity, 0)} item
           {items.reduce((n, i) => n + i.quantity, 0) === 1 ? "" : "s"})
         </Button>

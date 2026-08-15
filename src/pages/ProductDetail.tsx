@@ -507,7 +507,7 @@ export function ProductDetail() {
             onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
             placeholder="How was the tool and the rental experience? (optional)"
           />
-          <Button type="submit" fullWidth disabled={submittingReview}>
+          <Button type="submit" variant="accent" fullWidth disabled={submittingReview}>
             {submittingReview ? "Submitting…" : "Submit review"}
           </Button>
         </form>

@@ -204,7 +204,7 @@ export function Enquire() {
             at {values.mobile}{aboutText}.
           </p>
           <div className="mt-2 flex w-full flex-col gap-2">
-            <Button fullWidth onClick={() => navigate("/products")}>
+            <Button variant="accent" fullWidth onClick={() => navigate("/products")}>
               Browse more tools
             </Button>
             <Button variant="ghost" fullWidth onClick={() => navigate("/")}>
@@ -356,7 +356,7 @@ export function Enquire() {
           placeholder="Anything else RenTools should know (optional)"
         />
 
-        <Button type="submit" fullWidth disabled={submitting}>
+        <Button type="submit" variant="accent" fullWidth disabled={submitting}>
           {submitting ? "Sending…" : "Send enquiry"}
         </Button>
 
