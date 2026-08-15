@@ -12,7 +12,6 @@ import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/Textarea";
 import { StarRatingDisplay, StarRatingPicker } from "../components/ui/StarRating";
 import { useToast } from "../components/ui/Toast";
-import { CallButton } from "../components/actions/CallButton";
 import { EnquiryButton } from "../components/actions/EnquiryButton";
 import { RequestPurchaseButton } from "../components/actions/RequestPurchaseButton";
 import { ImageCarousel } from "../components/products/ImageCarousel";
@@ -20,8 +19,6 @@ import { useProduct, useProducts } from "../hooks/useProducts";
 import { ProductCard } from "../components/products/ProductCard";
 import { formatCurrency } from "../utils/currency";
 import { formatRelativeTime } from "../utils/relative-time";
-import { useSiteSettings } from "../hooks/useSiteSettings";
-import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 import { parseProductDescription } from "../utils/product-features";
 import { useBottomBarHeight } from "../hooks/useBottomBarHeight";
 import { useSavedProducts } from "../hooks/useSavedProducts";
@@ -83,8 +80,6 @@ function buildProductStructuredData(item: ProductDetailData) {
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const product = useProduct(id);
-  const settings = useSiteSettings();
-  const phone = settings.status === "success" ? settings.data.phone : SITE_SETTINGS_DEFAULTS.phone;
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const { isSaved, toggle: toggleSaved } = useSavedProducts();
   const { addItem, totalItems: cartCount } = useCart();
@@ -442,8 +437,8 @@ export function ProductDetail() {
       {/* Sticky above the floating bottom nav, not behind it — `sticky
           bottom-0` alone would pin this to the true bottom of the
           viewport, the exact same space the fixed, higher-z-index nav
-          dock occupies, hiding the two most important buttons on this
-          page (Enquire/Request, Call) underneath it once scrolled. */}
+          dock occupies, hiding the most important button on this
+          page (Enquire/Request) underneath it once scrolled. */}
       <div
         className="sticky z-20 flex gap-2 border-t border-graphite-200 bg-graphite-50/95 p-3 backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95"
         style={{
@@ -463,7 +458,6 @@ export function ProductDetail() {
             fullWidth
           />
         )}
-        <CallButton phone={phone} fullWidth />
       </div>
 
       <BottomSheet

@@ -6,6 +6,12 @@ export interface ProductListItem {
   imageUrl: string | null;
   fromDailyRate: number | null;
   available: boolean;
+  /** Name of the product's category, for the category tag on the card. Null if the join can't resolve it. */
+  categoryName: string | null;
+  /** Average of approved reviews, rounded to 1 decimal. Null when the product has no reviews yet. */
+  rating: number | null;
+  /** Count of approved reviews backing `rating`. */
+  reviewCount: number;
 }
 
 export interface ProductVariantDetail {
@@ -38,6 +44,8 @@ type RawListRow = {
   name: string;
   image_url: string | null;
   product_variants: RawVariant[] | null;
+  categories: { name: string } | { name: string }[] | null;
+  product_reviews: { rating: number }[] | null;
 };
 
 function toListItem(product: RawListRow): ProductListItem {
@@ -47,17 +55,36 @@ function toListItem(product: RawListRow): ProductListItem {
     (v) => v.quantity_total - v.quantity_reserved > 0,
   );
 
+  // Supabase returns an embedded to-one relation as an object, but some
+  // client/codegen versions type (and occasionally send) it as a
+  // single-item array — handle both shapes defensively.
+  const categoryRow = Array.isArray(product.categories)
+    ? product.categories[0]
+    : product.categories;
+
+  const reviews = product.product_reviews ?? [];
+  const reviewCount = reviews.length;
+  const rating = reviewCount
+    ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10) / 10
+    : null;
+
   return {
     id: product.id,
     name: product.name,
     imageUrl: product.image_url,
     fromDailyRate: rates.length ? Math.min(...rates) : null,
     available,
+    categoryName: categoryRow?.name ?? null,
+    rating,
+    reviewCount,
   };
 }
 
 const LIST_SELECT =
-  "id, name, image_url, product_variants(daily_rate, quantity_total, quantity_reserved, is_active)";
+  "id, name, image_url, " +
+  "product_variants(daily_rate, quantity_total, quantity_reserved, is_active), " +
+  "categories(name), " +
+  "product_reviews(rating)";
 
 /** Featured, active products with their lowest active variant rate. */
 export async function fetchFeaturedProducts(): Promise<ProductListItem[]> {
