@@ -27,6 +27,14 @@ const PHONE_RE = /^\+[0-9]{10,13}$/;
 const WHATSAPP_RE = /^[0-9]{10,13}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function isValidLatitude(value: number): boolean {
+  return Number.isFinite(value) && value >= -90 && value <= 90;
+}
+
+function isValidLongitude(value: number): boolean {
+  return Number.isFinite(value) && value >= -180 && value <= 180;
+}
+
 function SettingsSection({
   title,
   description,
@@ -71,6 +79,11 @@ function ContactSettingsForm() {
     setValues((v) => (v ? { ...v, [field]: value } : v));
   };
 
+  const setNumberField = (field: "latitude" | "longitude", raw: string) => {
+    const parsed = raw.trim() === "" ? NaN : Number(raw);
+    setValues((v) => (v ? { ...v, [field]: parsed } : v));
+  };
+
   const validate = (): boolean => {
     const next: typeof errors = {};
     if (!PHONE_RE.test(values.phone.trim())) {
@@ -84,6 +97,12 @@ function ContactSettingsForm() {
     }
     if (!values.address.trim()) {
       next.address = "Enter a business address.";
+    }
+    if (!isValidLatitude(values.latitude)) {
+      next.latitude = "Enter a latitude between -90 and 90, e.g. 11.032556.";
+    }
+    if (!isValidLongitude(values.longitude)) {
+      next.longitude = "Enter a longitude between -180 and 180, e.g. 76.925389.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -134,6 +153,29 @@ function ContactSettingsForm() {
         error={errors.address}
         hint="Shown on the Location page and used for the Maps link."
       />
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          label="Latitude"
+          type="number"
+          step="any"
+          value={Number.isNaN(values.latitude) ? "" : values.latitude}
+          onChange={(e) => setNumberField("latitude", e.target.value)}
+          error={errors.latitude}
+        />
+        <Input
+          label="Longitude"
+          type="number"
+          step="any"
+          value={Number.isNaN(values.longitude) ? "" : values.longitude}
+          onChange={(e) => setNumberField("longitude", e.target.value)}
+          error={errors.longitude}
+        />
+      </div>
+      <p className="-mt-1.5 font-body text-[12px] text-graphite-500">
+        Exact shop coordinates — used for the "how far is the shop" distance check and the Directions
+        link on Home, Contact, and the footer. Tip: right-click the shop on Google Maps and copy the
+        coordinates shown at the top of the menu.
+      </p>
       <Button type="submit" disabled={submitting} fullWidth>
         {submitting ? "Saving…" : "Save changes"}
       </Button>

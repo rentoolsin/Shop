@@ -16,6 +16,11 @@
  * page for each tab, plus add/remove/reorder — without a code change.
  * Falls back to `DEFAULT_BOTTOM_NAV_ITEMS` (the previous hardcoded bar)
  * whenever nothing custom has been saved yet.
+ *
+ * `latitude`/`longitude` (see 0019_site_settings_coordinates.sql) are the
+ * shop's real geographic coordinates — used for the "how far is the shop"
+ * distance check and precise Maps directions link on Home/Contact/Footer,
+ * instead of a free-text address search.
  */
 
 import { DEFAULT_BOTTOM_NAV_ITEMS, type BottomNavItem } from "./bottom-nav";
@@ -25,6 +30,8 @@ export interface SiteSettings {
   whatsapp: string; // digits only, country code included — for wa.me links
   email: string;
   address: string;
+  latitude: number;
+  longitude: number;
   bottomNavItems: BottomNavItem[];
 }
 
@@ -33,5 +40,7 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   whatsapp: "919688755349",
   email: "rentools.in@gmail.com",
   address: "Kovilmedu, Coimbatore, Tamil Nadu, India",
+  latitude: 11.032556,
+  longitude: 76.925389,
   bottomNavItems: DEFAULT_BOTTOM_NAV_ITEMS,
 };

@@ -11,6 +11,7 @@ import { Button } from "../components/ui/Button";
 import { SearchBar } from "../components/ui/SearchBar";
 import { HeroCarousel } from "../components/home/HeroCarousel";
 import { LocationBar } from "../components/home/LocationBar";
+import { ShopLocationCard } from "../components/home/ShopLocationCard";
 import { TrustBar } from "../components/home/TrustBar";
 import { HowItWorksSteps } from "../components/home/HowItWorksSteps";
 import { CallButton } from "../components/actions/CallButton";
@@ -87,7 +88,7 @@ export function Home() {
   // error state for what is, functionally, homepage copy.
   const cms = homepage.status === "success" ? homepage.data.content : HOMEPAGE_SECTION_DEFAULTS;
   const hiddenSections = homepage.status === "success" ? homepage.data.hiddenSections : new Set();
-  const { phone, whatsapp } =
+  const { phone, whatsapp, latitude, longitude } =
     settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
 
   useDocumentMeta({
@@ -292,11 +293,13 @@ export function Home() {
       {!hiddenSections.has("contact_location") && (
         <section className="mb-4 px-4">
           <SectionHeading title="Contact & location" viewAllTo="/contact" />
-          <div className="mt-3 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
-            <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
-              {cms.contact_location.address}
-            </p>
-            <div className="mt-3 flex gap-2">
+          <div className="mt-3 space-y-3">
+            <ShopLocationCard
+              address={cms.contact_location.address}
+              latitude={latitude}
+              longitude={longitude}
+            />
+            <div className="flex gap-2">
               <CallButton phone={phone} fullWidth />
               <WhatsAppButton phone={whatsapp} fullWidth />
             </div>

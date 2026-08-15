@@ -1,8 +1,10 @@
 import { ArrowUpRight, Clock, Mail, MapPin, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHeader } from "../components/layout/PageHeader";
+import { ShopLocationCard } from "../components/home/ShopLocationCard";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
+import { getDirectionsUrl } from "../utils/geo";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 interface MethodCardProps {
@@ -79,11 +81,11 @@ export function Contact() {
   // Best-effort like homepage CMS content: render defaults while loading
   // or on error rather than blocking or showing an error state for what
   // is, functionally, static contact info.
-  const { phone, whatsapp, email, address } =
+  const { phone, whatsapp, email, address, latitude, longitude } =
     settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    "RenTools, " + address,
-  )}`;
+  // Coordinate-based directions link is more accurate than an address
+  // text search — see utils/geo.ts and site_settings.latitude/longitude.
+  const mapsUrl = getDirectionsUrl(latitude, longitude);
   const waHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(
     "Hi RenTools, I'd like to ask about a tool rental.",
   )}`;
@@ -194,9 +196,10 @@ export function Contact() {
             <h2 className="font-display text-[14px] font-semibold text-ink dark:text-ink-inverted">
               RenTools yard
             </h2>
-            <p className="mt-1 font-body text-[13.5px] leading-relaxed text-graphite-500">{address}</p>
           </div>
         </section>
+
+        <ShopLocationCard address={address} latitude={latitude} longitude={longitude} />
 
         {/* Reassurance strip */}
         <section className="grid grid-cols-2 gap-2 rounded border border-graphite-200 bg-graphite-50 px-4 py-3.5 dark:border-graphite-800 dark:bg-graphite-900/50">

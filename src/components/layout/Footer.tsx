@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../../lib/theme";
 import { useSiteSettings } from "../../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../../utils/site-settings";
+import { getDirectionsUrl } from "../../utils/geo";
 
 const EXPLORE_LINKS = [
   { to: "/", label: "Home" },
@@ -29,11 +30,11 @@ export function Footer() {
   const logoSrc = resolved === "dark" ? "/logo-yellow.png" : "/logo-black.png";
 
   const settings = useSiteSettings();
-  const { phone, whatsapp, email, address } =
+  const { phone, whatsapp, email, address, latitude, longitude } =
     settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    "RenTools, " + address,
-  )}`;
+  // Coordinate-based directions link is more accurate than an address
+  // text search — see utils/geo.ts and site_settings.latitude/longitude.
+  const mapsUrl = getDirectionsUrl(latitude, longitude);
 
   return (
     <footer className="mt-10 border-t border-graphite-200 bg-graphite-100/60 dark:border-graphite-800 dark:bg-graphite-900/40">

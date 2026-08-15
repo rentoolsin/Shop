@@ -267,6 +267,11 @@ export interface Database {
           whatsapp: string;
           email: string;
           address: string;
+          // Shop's real coordinates — see 0019_site_settings_coordinates.sql.
+          // Used for the "how far is the shop" distance check and precise
+          // Maps directions links (src/utils/geo.ts).
+          latitude: number;
+          longitude: number;
           // Admin-editable bottom nav config for the customer app — see
           // 0017_bottom_nav_items.sql. Shape validated client-side in
           // src/utils/bottom-nav.ts (parseBottomNavItems), not by the DB.
@@ -279,6 +284,8 @@ export interface Database {
           whatsapp: string;
           email: string;
           address: string;
+          latitude?: number;
+          longitude?: number;
         };
         Update: Partial<Database["public"]["Tables"]["site_settings"]["Row"]>;
         Relationships: [];

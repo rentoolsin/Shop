@@ -15,7 +15,7 @@ import { parseBottomNavItems } from "../utils/bottom-nav";
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   const { data, error } = await supabase
     .from("site_settings")
-    .select("phone, whatsapp, email, address, bottom_nav_items")
+    .select("phone, whatsapp, email, address, latitude, longitude, bottom_nav_items")
     .eq("id", true)
     .maybeSingle();
 
@@ -27,6 +27,8 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
     whatsapp: data.whatsapp,
     email: data.email,
     address: data.address,
+    latitude: data.latitude,
+    longitude: data.longitude,
     bottomNavItems: parseBottomNavItems(data.bottom_nav_items),
   };
 }
