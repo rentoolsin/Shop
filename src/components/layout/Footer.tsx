@@ -42,7 +42,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 space-y-3">
             <Link to="/" className="inline-flex items-center">
-              <img src={logoSrc} alt="RenTools" className="h-9 w-auto" />
+              <img src={logoSrc} alt="RenTools" className="h-11 w-auto sm:h-12" />
             </Link>
             <p className="max-w-[30ch] font-body text-[13px] leading-relaxed text-graphite-500">
               Construction tool &amp; equipment rental in Coimbatore — daily rates, quick
