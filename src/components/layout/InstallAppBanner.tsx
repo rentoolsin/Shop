@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { useInstallPrompt, type InstallAppId } from "../../hooks/useInstallPrompt";
 import { Button } from "../ui/Button";
 
@@ -59,7 +59,7 @@ export function InstallAppBanner({
           aria-label="Dismiss install prompt"
           className="-mr-2 -mt-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors duration-150 ease-app active:bg-graphite-100 active:text-ink dark:active:bg-graphite-800 dark:active:text-ink-inverted"
         >
-          <X className="h-4 w-4" strokeWidth={1.8} />
+          <X className="h-4 w-4" weight="regular" />
         </button>
       </div>
       <div className="mt-3 flex items-center gap-2 pl-[56px]">

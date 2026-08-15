@@ -1,4 +1,4 @@
-import { ArrowUpRight, Loader2, MapPin, Navigation } from "lucide-react";
+import { ArrowUpRight, CircleNotch, MapPin, NavigationArrow } from "@phosphor-icons/react";
 import { useState } from "react";
 import { formatDistance, getDirectionsUrl, getDistanceFromUser, GeoError } from "../../utils/geo";
 
@@ -44,8 +44,8 @@ export function ShopLocationRow({ address, latitude, longitude }: ShopLocationRo
 
   return (
     <div className="flex w-full items-start gap-3 px-3.5 py-2.5">
-      <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center text-accent-500">
-        <MapPin className="h-6 w-6" strokeWidth={2} fill="currentColor" fillOpacity={0.15} />
+      <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent-500">
+        <MapPin className="h-[18px] w-[18px] text-graphite-950" weight="fill" />
       </span>
       <button type="button" onClick={handleCheckDistance} className="min-w-0 flex-1 text-left">
         <p className="font-body text-[13.5px] font-semibold text-ink dark:text-ink-inverted">
@@ -58,13 +58,13 @@ export function ShopLocationRow({ address, latitude, longitude }: ShopLocationRo
           )}
           {distance.status === "loading" && (
             <span className="inline-flex items-center gap-1.5 text-graphite-500">
-              <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
+              <CircleNotch className="h-3 w-3 animate-spin" weight="regular" />
               Checking distance…
             </span>
           )}
           {distance.status === "success" && (
             <span className="inline-flex items-center gap-1.5 text-accent-600 dark:text-accent-400">
-              <Navigation className="h-3 w-3" strokeWidth={2} />
+              <NavigationArrow className="h-3 w-3" weight="regular" />
               {formatDistance(distance.km)} from you
             </span>
           )}
@@ -83,7 +83,7 @@ export function ShopLocationRow({ address, latitude, longitude }: ShopLocationRo
         onClick={(e) => e.stopPropagation()}
         className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
       >
-        <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
+        <ArrowUpRight className="h-4 w-4" weight="regular" />
       </a>
     </div>
   );

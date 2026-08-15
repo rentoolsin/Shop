@@ -1,4 +1,4 @@
-import { MapPin, Plus } from "lucide-react";
+import { MapPin, Plus } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminLocations } from "../../../hooks/useAdminData";
@@ -13,7 +13,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
 
 function LocationIcon() {
-  return <MapPin className="h-6 w-6" strokeWidth={1.5} />;
+  return <MapPin className="h-6 w-6" weight="light" />;
 }
 
 export function LocationsList() {
@@ -44,7 +44,7 @@ export function LocationsList() {
           Locations
         </h1>
         <Link to="/admin/locations/new">
-          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New location</Button>
+          <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New location</Button>
         </Link>
       </div>
       <p className="mb-4 font-body text-[13px] text-graphite-500">
@@ -71,7 +71,7 @@ export function LocationsList() {
           description="Add Coimbatore (or wherever you deliver first) to show it in the customer app."
           action={
             <Link to="/admin/locations/new">
-              <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New location</Button>
+              <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New location</Button>
             </Link>
           }
         />

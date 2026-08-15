@@ -1,4 +1,4 @@
-import { ArrowUpRight, Loader2, MapPin, Navigation } from "lucide-react";
+import { ArrowUpRight, CircleNotch, MapPin, NavigationArrow } from "@phosphor-icons/react";
 import { useState } from "react";
 import { formatDistance, getDirectionsUrl, getDistanceFromUser, GeoError } from "../../utils/geo";
 
@@ -60,8 +60,8 @@ export function ShopLocationCard({ address, latitude, longitude, className = "" 
         aria-label="Check how far the shop is from you"
         className="flex w-full items-start gap-3 p-4 text-left transition-colors duration-150 ease-app active:bg-graphite-50 dark:active:bg-graphite-800"
       >
-        <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center text-accent-500">
-          <MapPin className="h-6 w-6" strokeWidth={2} fill="currentColor" fillOpacity={0.15} />
+        <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-accent-500">
+          <MapPin className="h-[18px] w-[18px] text-graphite-950" weight="fill" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-body text-[14px] text-ink dark:text-ink-inverted">{address}</p>
@@ -71,13 +71,13 @@ export function ShopLocationCard({ address, latitude, longitude, className = "" 
           )}
           {distance.status === "loading" && (
             <p className="mt-1 inline-flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
-              <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
+              <CircleNotch className="h-3 w-3 animate-spin" weight="regular" />
               Checking distance…
             </p>
           )}
           {distance.status === "success" && (
             <p className="mt-1 inline-flex items-center gap-1.5 font-body text-[12.5px] font-semibold text-accent-600 dark:text-accent-400">
-              <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
+              <NavigationArrow className="h-3.5 w-3.5" weight="regular" />
               {formatDistance(distance.km)} from you
             </p>
           )}
@@ -96,7 +96,7 @@ export function ShopLocationCard({ address, latitude, longitude, className = "" 
         className="flex items-center justify-center gap-1.5 border-t border-graphite-200 py-2.5 font-body text-[12.5px] font-medium text-graphite-600 transition-colors duration-150 ease-app active:bg-graphite-50 dark:border-graphite-800 dark:text-graphite-300 dark:active:bg-graphite-800"
       >
         Get directions
-        <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
+        <ArrowUpRight className="h-3.5 w-3.5" weight="regular" />
       </a>
     </div>
   );

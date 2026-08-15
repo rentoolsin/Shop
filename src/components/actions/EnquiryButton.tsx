@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+import { ChatCircle } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/Button";
 
@@ -31,7 +31,7 @@ export function EnquiryButton({
       }
     >
       <span className="inline-flex items-center gap-2">
-        <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
+        <ChatCircle className="h-4 w-4" weight="regular" />
         {label}
       </span>
     </Button>

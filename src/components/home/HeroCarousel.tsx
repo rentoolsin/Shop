@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { HeroSlide } from "../../utils/homepage-content";
@@ -8,9 +8,9 @@ const RESUME_AFTER_INTERACTION_MS = 6000;
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
   return direction === "left" ? (
-    <ChevronLeft width={18} height={18} strokeWidth={1.8} />
+    <CaretLeft width={18} height={18} weight="regular" />
   ) : (
-    <ChevronRight width={18} height={18} strokeWidth={1.8} />
+    <CaretRight width={18} height={18} weight="regular" />
   );
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { WifiOff, AlertCircle } from "lucide-react";
+import { WifiSlash, WarningCircle } from "@phosphor-icons/react";
 import { Button } from "./Button";
 
 interface ErrorStateProps {
@@ -48,9 +48,9 @@ export function ErrorState({ title, description, onRetry }: ErrorStateProps) {
         className="flex h-12 w-12 items-center justify-center rounded-full bg-graphite-100 text-graphite-400 dark:bg-graphite-800 dark:text-graphite-500"
       >
         {online ? (
-          <AlertCircle className="h-5 w-5" strokeWidth={1.8} />
+          <WarningCircle className="h-5 w-5" weight="regular" />
         ) : (
-          <WifiOff className="h-5 w-5" strokeWidth={1.8} />
+          <WifiSlash className="h-5 w-5" weight="regular" />
         )}
       </span>
       <h3 className="font-display text-[16px] font-semibold text-ink dark:text-ink-inverted">

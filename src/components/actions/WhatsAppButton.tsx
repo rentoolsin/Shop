@@ -1,5 +1,5 @@
-import { MessageCircle } from "lucide-react";
 import { Button } from "../ui/Button";
+import { WhatsAppIcon } from "../icons/WhatsAppIcon";
 
 interface WhatsAppButtonProps {
   phone: string; // digits only, country code included, e.g. "91XXXXXXXXXX"
@@ -23,7 +23,7 @@ export function WhatsAppButton({
       onClick={() => window.open(href, "_blank", "noopener,noreferrer")}
     >
       <span className="inline-flex items-center gap-2">
-        <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
+        <WhatsAppIcon className="h-4 w-4" />
         {label}
       </span>
     </Button>

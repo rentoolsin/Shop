@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useCart } from "../../hooks/useCart";
 import { useSiteSettings } from "../../hooks/useSiteSettings";
 import { BOTTOM_NAV_ICONS, DEFAULT_BOTTOM_NAV_ITEMS, type BottomNavItem } from "../../utils/bottom-nav";
 
@@ -16,6 +17,7 @@ import { BOTTOM_NAV_ICONS, DEFAULT_BOTTOM_NAV_ITEMS, type BottomNavItem } from "
 
 export function BottomNavigation() {
   const settings = useSiteSettings();
+  const { totalItems: cartCount } = useCart();
   const items: BottomNavItem[] =
     settings.status === "success" && settings.data.bottomNavItems.length > 0
       ? settings.data.bottomNavItems
@@ -34,6 +36,12 @@ export function BottomNavigation() {
         {items.map(({ id, label, icon, path }) => {
           const Icon = BOTTOM_NAV_ICONS[icon];
           const end = path === "/";
+          // Live cart-item count, badged onto whichever tab points at the
+          // cart — mirrors the same badge shown on the header cart icon
+          // (Products/ProductDetail) so the count is visible no matter
+          // which cart entry point the shopper is looking at.
+          const showCartBadge = icon === "cart" && cartCount > 0;
+          const badgeLabel = cartCount > 99 ? "99+" : cartCount;
           return (
             <NavLink
               key={id}
@@ -44,13 +52,23 @@ export function BottomNavigation() {
               {({ isActive }) =>
                 isActive ? (
                   <>
-                    <span
-                      className={[
-                        "flex h-11 w-11 -translate-y-3 items-center justify-center rounded-full bg-gradient-to-b from-accent-400 to-accent-500 transition-transform duration-300 ease-app",
-                        "shadow-[0_6px_16px_-4px_rgba(240,168,27,0.65)] scale-105 group-active:scale-90",
-                      ].join(" ")}
-                    >
-                      <Icon className="h-5 w-5 text-graphite-950" strokeWidth={2} />
+                    <span className="relative">
+                      <span
+                        className={[
+                          "flex h-11 w-11 -translate-y-3 items-center justify-center rounded-full bg-gradient-to-b from-accent-400 to-accent-500 transition-transform duration-300 ease-app",
+                          "shadow-[0_6px_16px_-4px_rgba(240,168,27,0.65)] scale-105 group-active:scale-90",
+                        ].join(" ")}
+                      >
+                        <Icon className="h-5 w-5 text-graphite-950" weight="bold" />
+                      </span>
+                      {showCartBadge && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -right-0.5 -top-3.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-graphite-900 px-1 font-body text-[10px] font-bold leading-none text-white ring-2 ring-white dark:bg-white dark:text-graphite-900 dark:ring-graphite-900"
+                        >
+                          {badgeLabel}
+                        </span>
+                      )}
                     </span>
                     <span className="-mt-2 font-body text-[11px] font-semibold leading-none text-ink transition-colors duration-200 dark:text-ink-inverted">
                       {label}
@@ -58,12 +76,21 @@ export function BottomNavigation() {
                   </>
                 ) : (
                   <>
-                    <span className="flex h-6 w-6 items-center justify-center transition-transform duration-200 ease-app group-active:scale-90">
-                      <Icon
-                        className="h-[21px] w-[21px] text-graphite-400"
-                        strokeWidth={1.7}
-                        fill="none"
-                      />
+                    <span className="relative">
+                      <span className="flex h-6 w-6 items-center justify-center transition-transform duration-200 ease-app group-active:scale-90">
+                        <Icon
+                          className="h-[21px] w-[21px] text-graphite-400"
+                          weight="regular"
+                        />
+                      </span>
+                      {showCartBadge && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -right-1 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[9.5px] font-bold leading-none text-white ring-2 ring-white dark:ring-graphite-900"
+                        >
+                          {badgeLabel}
+                        </span>
+                      )}
                     </span>
                     <span className="font-body text-[11px] leading-none text-graphite-500 transition-colors duration-200 dark:text-graphite-400">
                       {label}

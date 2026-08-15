@@ -7,38 +7,38 @@
 // component names and `size` prop regardless of which icon set backs them.
 
 import {
-  ClipboardList,
-  Home,
-  LayoutGrid,
+  ClipboardText,
+  House,
+  SquaresFour,
   Users,
   Warehouse,
   Wrench,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 interface IconProps {
   size?: number;
 }
 
 export function HomeIcon({ size = 18 }: IconProps) {
-  return <Home size={size} strokeWidth={1.6} />;
+  return <House size={size} weight="light" />;
 }
 
 export function RequestsIcon({ size = 18 }: IconProps) {
-  return <ClipboardList size={size} strokeWidth={1.6} />;
+  return <ClipboardText size={size} weight="light" />;
 }
 
 export function RentalsIcon({ size = 18 }: IconProps) {
-  return <Warehouse size={size} strokeWidth={1.6} />;
+  return <Warehouse size={size} weight="light" />;
 }
 
 export function CustomersIcon({ size = 18 }: IconProps) {
-  return <Users size={size} strokeWidth={1.6} />;
+  return <Users size={size} weight="light" />;
 }
 
 export function ProductsIcon({ size = 18 }: IconProps) {
-  return <Wrench size={size} strokeWidth={1.6} />;
+  return <Wrench size={size} weight="light" />;
 }
 
 export function MoreIcon({ size = 18 }: IconProps) {
-  return <LayoutGrid size={size} strokeWidth={1.6} />;
+  return <SquaresFour size={size} weight="light" />;
 }

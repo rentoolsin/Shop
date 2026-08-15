@@ -1,4 +1,4 @@
-import { ArrowUpDown, Heart, ShoppingCart } from "lucide-react";
+import { ArrowsDownUp, Heart, ShoppingCart } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -79,7 +79,7 @@ export function Products() {
               aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
               className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
             >
-              <ShoppingCart className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              <ShoppingCart className="h-[18px] w-[18px]" weight="regular" />
               {cartCount > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
                   {cartCount > 99 ? "99+" : cartCount}
@@ -91,7 +91,7 @@ export function Products() {
               aria-label={`Saved tools${savedIds.length > 0 ? ` (${savedIds.length})` : ""}`}
               className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
             >
-              <Heart className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              <Heart className="h-[18px] w-[18px]" weight="regular" />
               {savedIds.length > 0 && (
                 <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-accent-500" />
               )}
@@ -100,7 +100,7 @@ export function Products() {
               onClick={() => setSortOpen(true)}
               className="flex h-10 items-center gap-1.5 rounded px-3 font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
             >
-              <ArrowUpDown className="h-4 w-4" strokeWidth={1.6} />
+              <ArrowsDownUp className="h-4 w-4" weight="light" />
               Sort
             </button>
           </div>

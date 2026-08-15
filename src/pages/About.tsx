@@ -1,4 +1,4 @@
-import { CheckCircle2, MessageCircle, Wrench } from "lucide-react";
+import { CheckCircle, ChatCircle, Wrench } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/ui/Button";
@@ -76,7 +76,7 @@ export function About() {
           <div className="mt-3 space-y-2.5 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
             {cms.why_rentools.points.map((point) => (
               <div key={point} className="flex items-start gap-2.5">
-                <CheckCircle2 className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-accent-500" strokeWidth={1.8} />
+                <CheckCircle className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-accent-500" weight="regular" />
                 <p className="font-body text-[14px] leading-snug text-ink dark:text-ink-inverted">{point}</p>
               </div>
             ))}
@@ -112,7 +112,7 @@ export function About() {
         {/* CTA */}
         <section className="rounded border border-graphite-200 bg-graphite-50 p-4 dark:border-graphite-800 dark:bg-graphite-900/50">
           <div className="flex items-start gap-2.5">
-            <Wrench className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-500" strokeWidth={1.8} />
+            <Wrench className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-500" weight="regular" />
             <div>
               <h2 className="font-display text-[14.5px] font-semibold text-ink dark:text-ink-inverted">
                 Need a tool for your site?
@@ -132,7 +132,7 @@ export function About() {
               onClick={() => navigate("/contact")}
             >
               <span className="inline-flex items-center gap-1.5">
-                <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
+                <ChatCircle className="h-4 w-4" weight="regular" />
                 Contact
               </span>
             </Button>

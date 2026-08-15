@@ -1,10 +1,10 @@
-import { ClipboardCheck, MessageSquare, Search, Truck, type LucideIcon } from "lucide-react";
+import { Checks, ChatText, MagnifyingGlass, Truck, type Icon } from "@phosphor-icons/react";
 import type { HowItWorksStep } from "../../utils/homepage-content";
 
 // Fixed icon-per-position mapping (CMS only stores title/body text, not an
 // icon choice) — falls back to the last icon if a step list somehow grows
 // past four entries, rather than rendering nothing.
-const STEP_ICONS: LucideIcon[] = [Search, MessageSquare, ClipboardCheck, Truck];
+const STEP_ICONS: Icon[] = [MagnifyingGlass, ChatText, Checks, Truck];
 
 interface HowItWorksStepsProps {
   steps: HowItWorksStep[];
@@ -31,7 +31,7 @@ export function HowItWorksSteps({ steps }: HowItWorksStepsProps) {
               />
             )}
             <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-graphite-100 shadow-card dark:bg-graphite-800/80">
-              <Icon className="h-5 w-5 text-ink dark:text-ink-inverted" strokeWidth={1.8} />
+              <Icon className="h-5 w-5 text-ink dark:text-ink-inverted" weight="regular" />
             </span>
             <span className="mt-2 font-mono text-[12px] font-bold text-accent-500">
               {String(index + 1).padStart(2, "0")}

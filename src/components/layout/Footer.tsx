@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Envelope, MapPin, Phone } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../lib/theme";
 import { useSiteSettings } from "../../hooks/useSiteSettings";
@@ -104,14 +104,14 @@ export function Footer() {
             href={`tel:${phone}`}
             className="flex items-center gap-2 font-body text-[13.5px] text-ink transition-colors hover:text-accent-600 dark:text-ink-inverted dark:hover:text-accent-400"
           >
-            <Phone className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
+            <Phone className="h-4 w-4 flex-shrink-0 text-graphite-400" weight="regular" />
             {phone}
           </a>
           <a
             href={`mailto:${email}`}
             className="flex items-center gap-2 font-body text-[13.5px] text-ink transition-colors hover:text-accent-600 dark:text-ink-inverted dark:hover:text-accent-400"
           >
-            <Mail className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
+            <Envelope className="h-4 w-4 flex-shrink-0 text-graphite-400" weight="regular" />
             {email}
           </a>
           <a
@@ -120,7 +120,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="flex items-start gap-2 font-body text-[13.5px] text-ink transition-colors hover:text-accent-600 dark:text-ink-inverted dark:hover:text-accent-400"
           >
-            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
+            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-graphite-400" weight="regular" />
             {address}
           </a>
         </div>

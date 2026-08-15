@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { Heart, Star } from "@phosphor-icons/react";
 import { Card } from "../ui/Card";
-import { Button } from "../ui/Button";
+import { QuantityStepper } from "../ui/QuantityStepper";
 import { useToast } from "../ui/Toast";
 import { useCart } from "../../hooks/useCart";
 import { useSavedProducts } from "../../hooks/useSavedProducts";
@@ -133,7 +133,7 @@ export function ProductCard({
       )}
       {rating != null && (
         <span className="inline-flex items-center gap-1 font-body text-[11px] font-medium text-graphite-600 dark:text-graphite-300">
-          <Star className="h-3 w-3 fill-accent-500 text-accent-500" strokeWidth={1.8} />
+          <Star className="h-3 w-3 fill-accent-500 text-accent-500" weight="regular" />
           {rating.toFixed(1)}
           {reviewCount > 0 && (
             <span className="text-graphite-400 dark:text-graphite-500">({reviewCount})</span>
@@ -164,62 +164,57 @@ export function ProductCard({
         saved ? "text-accent-500" : "text-graphite-500 dark:text-graphite-300",
       ].join(" ")}
     >
-      <Heart className="h-3.5 w-3.5" fill={saved ? "currentColor" : "none"} strokeWidth={1.8} />
+      <Heart className="h-3.5 w-3.5" weight={saved ? "fill" : "regular"} />
     </button>
   );
 
   const quantityStepper = (
-    <div className="flex items-center gap-0.5 rounded-full border border-graphite-200 dark:border-graphite-800">
-      <button
-        onClick={(e) => {
-          stop(e);
-          setQty((q) => Math.max(1, q - 1));
-        }}
-        aria-label="Decrease quantity"
-        className="flex h-7 w-7 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app active:scale-90 dark:text-ink-inverted"
-      >
-        <Minus className="h-3 w-3" strokeWidth={2} />
-      </button>
-      <span className="w-5 text-center font-body text-[12px] font-medium text-ink dark:text-ink-inverted">
-        {qty}
-      </span>
-      <button
-        onClick={(e) => {
-          stop(e);
-          setQty((q) => q + 1);
-        }}
-        aria-label="Increase quantity"
-        className="flex h-7 w-7 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app active:scale-90 dark:text-ink-inverted"
-      >
-        <Plus className="h-3 w-3" strokeWidth={2} />
-      </button>
-    </div>
+    <QuantityStepper
+      size="xs"
+      quantity={qty}
+      onDecrease={(e) => {
+        stop(e);
+        setQty((q) => Math.max(1, q - 1));
+      }}
+      onIncrease={(e) => {
+        stop(e);
+        setQty((q) => q + 1);
+      }}
+    />
   );
 
-  const addToEnquiryButton = (
-    <Button
-      variant="accent"
-      size="sm"
-      fullWidth
-      disabled={!available}
-      className="!h-9 text-[12.5px]"
-      onClick={(e) => {
-        stop(e);
-        addItem(
-          { productId: id, productName: name, dailyRate: fromDailyRate },
-          qty,
-        );
-        showToast(`Added ${qty} × ${name} to cart`, "success", {
-          action: { label: "View cart", onClick: () => navigate("/cart") },
-        });
-        setQty(1);
-      }}
-    >
-      <span className="inline-flex items-center gap-1.5">
-        <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.8} />
-        Add to cart
-      </span>
-    </Button>
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    stop(e);
+    addItem(
+      { productId: id, productName: name, dailyRate: fromDailyRate, originalDailyRate: originalFromDailyRate },
+      qty,
+    );
+    showToast(`Added ${qty} × ${name} to cart`, "success", {
+      action: { label: "View cart", onClick: () => navigate("/cart") },
+    });
+    setQty(1);
+  };
+
+  // Stepper + Add button as ONE bordered control — a single outer pill
+  // (not two separate elements with a gap between them) so the orange
+  // "Add" segment sits flush against the pill's own right edge and
+  // shares its corner radius, matching the reference design. The
+  // stepper's mini bordered buttons sit inside on the left; the Add
+  // button is the only flexible part and fills (and stretches to) the
+  // rest of the pill, so it never overflows the card on narrow layouts.
+  const cartControls = (
+    <div className="flex h-9 min-w-0 items-center overflow-hidden rounded border border-graphite-200 bg-white dark:border-graphite-700 dark:bg-graphite-900">
+      <div className="flex flex-shrink-0 items-center pl-1 pr-1">{quantityStepper}</div>
+      <button
+        type="button"
+        disabled={!available}
+        aria-label={`Add ${name} to cart`}
+        onClick={handleAddToCart}
+        className="flex h-full flex-1 items-center justify-center overflow-hidden bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600 disabled:pointer-events-none disabled:opacity-40"
+      >
+        Add
+      </button>
+    </div>
   );
 
   const image = (
@@ -266,7 +261,7 @@ export function ProductCard({
               saved ? "text-accent-500" : "text-graphite-400",
             ].join(" ")}
           >
-            <Heart className="h-4 w-4" fill={saved ? "currentColor" : "none"} strokeWidth={1.8} />
+            <Heart className="h-4 w-4" weight={saved ? "fill" : "regular"} />
           </button>
         </Card>
       </Link>
@@ -294,11 +289,7 @@ export function ProductCard({
             </span>
             {priceLine}
             {saveBadge}
-            <div className="flex items-center justify-between">
-              <span className="font-body text-[11px] text-graphite-500">Qty</span>
-              {quantityStepper}
-            </div>
-            {addToEnquiryButton}
+            {cartControls}
           </div>
         </Card>
       </Link>
@@ -321,11 +312,7 @@ export function ProductCard({
           </span>
           {priceLine}
           {saveBadge}
-          <div className="flex items-center justify-between">
-            <span className="font-body text-[11px] text-graphite-500">Qty</span>
-            {quantityStepper}
-          </div>
-          {addToEnquiryButton}
+          {cartControls}
         </div>
       </Card>
     </Link>

@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import {
-  BarChart3,
-  ChevronRight as ChevronRightIcon,
-  ClipboardList,
-  LayoutGrid,
-  LayoutTemplate,
+  ChartBar,
+  CaretRight as ChevronRightIcon,
+  ClipboardText,
+  SquaresFour,
+  Layout,
   MapPin,
-  Settings as SettingsIcon,
-} from "lucide-react";
+  Gear as SettingsIcon,
+} from "@phosphor-icons/react";
 
 export interface AdminMoreItem {
   to: string;
@@ -17,7 +17,7 @@ export interface AdminMoreItem {
   icon: ReactNode;
 }
 
-const iconProps = { className: "h-[18px] w-[18px]", strokeWidth: 1.6 } as const;
+const iconProps = { className: "h-[18px] w-[18px]", weight: "light" } as const;
 
 /**
  * The destinations tucked away behind the "More" tab on mobile — same set
@@ -31,13 +31,13 @@ export const ADMIN_MORE_ITEMS: AdminMoreItem[] = [
     to: "/admin/purchase-requests",
     label: "Purchase Requests",
     description: "Customer buy requests",
-    icon: <ClipboardList {...iconProps} />,
+    icon: <ClipboardText {...iconProps} />,
   },
   {
     to: "/admin/categories",
     label: "Categories",
     description: "Product categories",
-    icon: <LayoutGrid {...iconProps} />,
+    icon: <SquaresFour {...iconProps} />,
   },
   {
     to: "/admin/locations",
@@ -49,13 +49,13 @@ export const ADMIN_MORE_ITEMS: AdminMoreItem[] = [
     to: "/admin/reports",
     label: "Reports",
     description: "Rentals & revenue",
-    icon: <BarChart3 {...iconProps} />,
+    icon: <ChartBar {...iconProps} />,
   },
   {
     to: "/admin/homepage",
     label: "Homepage",
     description: "Customer app content",
-    icon: <LayoutTemplate {...iconProps} />,
+    icon: <Layout {...iconProps} />,
   },
   {
     to: "/admin/settings",
@@ -66,7 +66,7 @@ export const ADMIN_MORE_ITEMS: AdminMoreItem[] = [
 ];
 
 function ChevronRight() {
-  return <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-graphite-300" strokeWidth={1.6} aria-hidden="true" />;
+  return <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-graphite-300" weight="light" aria-hidden="true" />;
 }
 
 /** A single "More" destination row — used both in the full More page list and the quick-pick sheet. */

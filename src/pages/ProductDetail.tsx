@@ -1,4 +1,4 @@
-import { Check, Heart, Minus, Plus, ShieldCheck, ShoppingCart, Truck } from "lucide-react";
+import { Check, Heart, ShieldCheck, ShoppingCart, Truck } from "@phosphor-icons/react";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -8,6 +8,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { BottomSheet } from "../components/ui/BottomSheet";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { QuantityStepper } from "../components/ui/QuantityStepper";
 import { Textarea } from "../components/ui/Textarea";
 import { StarRatingDisplay, StarRatingPicker } from "../components/ui/StarRating";
 import { useToast } from "../components/ui/Toast";
@@ -29,7 +30,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import type { ProductDetail as ProductDetailData } from "../services/products.service";
 
 function HeartIcon({ filled }: { filled: boolean }) {
-  return <Heart fill={filled ? "currentColor" : "none"} strokeWidth={1.8} className="h-5 w-5" />;
+  return <Heart weight={filled ? "fill" : "regular"} className="h-5 w-5" />;
 }
 
 interface ReviewFormValues {
@@ -43,7 +44,7 @@ const EMPTY_REVIEW_FORM: ReviewFormValues = { name: "", rating: 0, comment: "" }
 function CheckIcon() {
   return (
     <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-accent-500">
-      <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+      <Check className="h-2.5 w-2.5 text-white" weight="bold" />
     </span>
   );
 }
@@ -155,6 +156,7 @@ export function ProductDetail() {
         productName: item.name,
         variantLabel: activeVariant?.label,
         dailyRate: activeVariant?.dailyRate ?? null,
+        originalDailyRate: activeVariant?.originalDailyRate ?? null,
       },
       cartQty,
     );
@@ -205,7 +207,7 @@ export function ProductDetail() {
               aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
               className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
             >
-              <ShoppingCart className="h-5 w-5" strokeWidth={1.8} />
+              <ShoppingCart className="h-5 w-5" weight="regular" />
               {cartCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
                   {cartCount > 99 ? "99+" : cartCount}
@@ -285,29 +287,15 @@ export function ProductDetail() {
             )}
 
             {!outOfStock && (
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex items-center gap-1 rounded-full border border-graphite-200 dark:border-graphite-800">
-                  <button
-                    onClick={() => setCartQty((q) => Math.max(1, q - 1))}
-                    aria-label="Decrease quantity"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app active:scale-90 dark:text-ink-inverted"
-                  >
-                    <Minus className="h-3.5 w-3.5" strokeWidth={2} />
-                  </button>
-                  <span className="w-6 text-center font-body text-[13px] font-medium text-ink dark:text-ink-inverted">
-                    {cartQty}
-                  </span>
-                  <button
-                    onClick={() => setCartQty((q) => q + 1)}
-                    aria-label="Increase quantity"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app active:scale-90 dark:text-ink-inverted"
-                  >
-                    <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-                  </button>
-                </div>
+              <div className="mt-3 flex items-center gap-3">
+                <QuantityStepper
+                  quantity={cartQty}
+                  onDecrease={() => setCartQty((q) => Math.max(1, q - 1))}
+                  onIncrease={() => setCartQty((q) => q + 1)}
+                />
                 <Button variant="accent" className="flex-1" onClick={handleAddToCart}>
                   <span className="inline-flex items-center gap-2">
-                    <ShoppingCart className="h-4 w-4" strokeWidth={1.8} />
+                    <ShoppingCart className="h-4 w-4" weight="regular" />
                     Add to cart
                   </span>
                 </Button>
@@ -321,13 +309,13 @@ export function ProductDetail() {
             business practice rather than a specific promised figure. */}
         <div className="mt-4 grid grid-cols-2 gap-2 rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-700/40 dark:bg-accent-500/10">
           <div className="flex items-center gap-2">
-            <Truck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" strokeWidth={1.8} />
+            <Truck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" weight="regular" />
             <span className="font-body text-[11.5px] leading-tight text-graphite-700 dark:text-graphite-300">
               Pickup or delivery available
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" strokeWidth={1.8} />
+            <ShieldCheck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" weight="regular" />
             <span className="font-body text-[11.5px] leading-tight text-graphite-700 dark:text-graphite-300">
               Deposit refunded on return
             </span>

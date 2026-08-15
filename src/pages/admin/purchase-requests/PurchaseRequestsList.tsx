@@ -1,4 +1,4 @@
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardText, Plus } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminPurchaseRequests } from "../../../hooks/useAdminData";
@@ -28,7 +28,7 @@ const PRIORITY_TONE: Record<PurchaseRequestPriority, "neutral" | "warning" | "da
 };
 
 function CalendarIcon() {
-  return <ClipboardList className="h-6 w-6" strokeWidth={1.5} />;
+  return <ClipboardText className="h-6 w-6" weight="light" />;
 }
 
 export function PurchaseRequestsList() {
@@ -65,7 +65,7 @@ export function PurchaseRequestsList() {
           Purchase Requests
         </h1>
         <Link to="/admin/purchase-requests/new">
-          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New request</Button>
+          <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New request</Button>
         </Link>
       </div>
 
@@ -116,7 +116,7 @@ export function PurchaseRequestsList() {
           action={
             !query && statusFilter === "all" ? (
               <Link to="/admin/purchase-requests/new">
-                <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New request</Button>
+                <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New request</Button>
               </Link>
             ) : undefined
           }

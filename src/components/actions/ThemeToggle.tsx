@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "@phosphor-icons/react";
 import { useTheme } from "../../lib/theme";
 
 const CYCLE = ["system", "light", "dark"] as const;
@@ -31,9 +31,9 @@ export function ThemeToggle() {
       title={LABEL[preference]}
       className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white text-graphite-600 shadow-card ring-1 ring-graphite-200 transition-all duration-150 ease-app active:scale-90 dark:bg-graphite-800 dark:text-ink-inverted dark:ring-graphite-700"
     >
-      {preference === "system" && <Monitor className="h-[18px] w-[18px]" strokeWidth={1.6} />}
-      {preference === "light" && <Sun className="h-[18px] w-[18px]" strokeWidth={1.6} />}
-      {preference === "dark" && <Moon className="h-[18px] w-[18px]" strokeWidth={1.6} />}
+      {preference === "system" && <Monitor className="h-[18px] w-[18px]" weight="light" />}
+      {preference === "light" && <Sun className="h-[18px] w-[18px]" weight="light" />}
+      {preference === "dark" && <Moon className="h-[18px] w-[18px]" weight="light" />}
     </button>
   );
 }

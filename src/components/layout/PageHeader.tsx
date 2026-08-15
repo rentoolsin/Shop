@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import { CaretLeft } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -20,7 +20,7 @@ export function PageHeader({ title, action, showBack = true }: PageHeaderProps) 
             aria-label="Go back"
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink transition-all duration-150 ease-app hover:bg-graphite-100 active:scale-90 dark:text-ink-inverted dark:hover:bg-graphite-800"
           >
-            <ChevronLeft className="h-5 w-5" strokeWidth={2} />
+            <CaretLeft className="h-5 w-5" weight="regular" />
           </button>
         )}
         <h1 className="truncate font-display text-[16px] font-semibold tracking-[-0.01em] text-ink dark:text-ink-inverted">

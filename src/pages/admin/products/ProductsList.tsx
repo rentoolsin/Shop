@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, Plus, Wrench } from "lucide-react";
+import { DotsThreeVertical, PencilSimple, Plus, Wrench } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminProducts, useAdminCategories } from "../../../hooks/useAdminData";
@@ -17,15 +17,15 @@ import { Pagination } from "../../../components/ui/Pagination";
 import { useToast } from "../../../components/ui/Toast";
 
 function BoxIcon() {
-  return <Wrench className="h-6 w-6" strokeWidth={1.5} />;
+  return <Wrench className="h-6 w-6" weight="light" />;
 }
 
 function PencilIcon() {
-  return <Pencil className="h-4 w-4" strokeWidth={1.5} />;
+  return <PencilSimple className="h-4 w-4" weight="light" />;
 }
 
 function MoreIcon() {
-  return <MoreVertical className="h-4 w-4" strokeWidth={1.8} />;
+  return <DotsThreeVertical className="h-4 w-4" weight="regular" />;
 }
 
 export function ProductsList() {
@@ -89,7 +89,7 @@ export function ProductsList() {
           Products
         </h1>
         <Link to="/admin/products/new">
-          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New product</Button>
+          <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New product</Button>
         </Link>
       </div>
 
@@ -140,7 +140,7 @@ export function ProductsList() {
           description="Add your first product to start renting it out."
           action={
             <Link to="/admin/products/new">
-              <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New product</Button>
+              <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New product</Button>
             </Link>
           }
         />

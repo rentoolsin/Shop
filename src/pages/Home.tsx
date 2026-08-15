@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, PackageSearch, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, CaretRight, Package, SlidersHorizontal } from "@phosphor-icons/react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MobileHeader } from "../components/layout/MobileHeader";
@@ -43,7 +43,7 @@ function SectionHeading({
           className="inline-flex items-center gap-0.5 font-body text-[12.5px] font-medium text-graphite-500 hover:text-ink dark:hover:text-ink-inverted"
         >
           View all
-          <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+          <CaretRight className="h-3.5 w-3.5" weight="regular" />
         </Link>
       )}
     </div>
@@ -146,7 +146,7 @@ export function Home() {
                     aria-label="Filters"
                     className="-mr-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
                   >
-                    <SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />
+                    <SlidersHorizontal className="h-4 w-4" weight="regular" />
                   </button>
                 }
               />
@@ -161,7 +161,7 @@ export function Home() {
               >
                 <span className="inline-flex items-center justify-center gap-1.5">
                   Browse tools
-                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+                  <ArrowRight className="h-3.5 w-3.5" weight="regular" />
                 </span>
               </Button>
               <Button
@@ -260,7 +260,7 @@ export function Home() {
         <div className="relative overflow-hidden rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-accent-500/10 text-accent-600 dark:text-accent-400">
-              <PackageSearch className="h-5 w-5" strokeWidth={1.8} />
+              <Package className="h-5 w-5" weight="regular" />
             </span>
             <div className="min-w-0">
               <h2 className="font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">

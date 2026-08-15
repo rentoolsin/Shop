@@ -1,4 +1,4 @@
-import { LayoutGrid, Plus } from "lucide-react";
+import { SquaresFour, Plus } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminCategories } from "../../../hooks/useAdminData";
@@ -13,7 +13,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
 
 function CategoryIcon() {
-  return <LayoutGrid className="h-6 w-6" strokeWidth={1.5} />;
+  return <SquaresFour className="h-6 w-6" weight="light" />;
 }
 
 export function CategoriesList() {
@@ -47,7 +47,7 @@ export function CategoriesList() {
           Categories
         </h1>
         <Link to="/admin/categories/new">
-          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New category</Button>
+          <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New category</Button>
         </Link>
       </div>
 
@@ -70,7 +70,7 @@ export function CategoriesList() {
           description="Create your first category to start organizing products."
           action={
             <Link to="/admin/categories/new">
-              <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New category</Button>
+              <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New category</Button>
             </Link>
           }
         />

@@ -1,4 +1,4 @@
-import { Plus, Users } from "lucide-react";
+import { Plus, Users } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminCustomers } from "../../../hooks/useAdminData";
@@ -17,7 +17,7 @@ import { useToast } from "../../../components/ui/Toast";
 const DEBOUNCE_MS = 300;
 
 function CustomerIcon() {
-  return <Users className="h-6 w-6" strokeWidth={1.5} />;
+  return <Users className="h-6 w-6" weight="light" />;
 }
 
 export function CustomersList() {
@@ -63,7 +63,7 @@ export function CustomersList() {
           Customers
         </h1>
         <Link to="/admin/customers/new">
-          <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New customer</Button>
+          <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New customer</Button>
         </Link>
       </div>
 
@@ -100,7 +100,7 @@ export function CustomersList() {
           action={
             !debounced ? (
               <Link to="/admin/customers/new">
-                <Button size="sm"><Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />New customer</Button>
+                <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New customer</Button>
               </Link>
             ) : undefined
           }

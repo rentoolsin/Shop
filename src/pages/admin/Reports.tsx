@@ -1,4 +1,4 @@
-import { BarChart3 } from "lucide-react";
+import { ChartBar } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { useAdminRentals, useAdminProductInventory } from "../../hooks/useAdminData";
 import { formatCurrency } from "../../utils/currency";
@@ -17,7 +17,7 @@ import { StatCard } from "../../components/ui/StatCard";
 import { Card } from "../../components/ui/Card";
 
 function ChartIcon() {
-  return <BarChart3 className="h-6 w-6" strokeWidth={1.5} />;
+  return <ChartBar className="h-6 w-6" weight="light" />;
 }
 
 interface ProductBreakdownRow {

@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react";
+import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 interface SearchBarProps
@@ -13,12 +13,12 @@ interface SearchBarProps
 }
 
 function SearchIcon() {
-  return <Search strokeWidth={1.6} aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400" />;
+  return <MagnifyingGlass weight="light" aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-graphite-400" />;
 }
 
 /**
  * Canonical search field used across every list page (Rentals, Products, Enquiries,
- * Purchase Requests, Customers) and the customer-facing Home/Search pages.
+ * Purchase Requests, Customers) and the customer-facing Home/MagnifyingGlass pages.
  *
  * `w-full` + `sm:flex-1` (rather than a bare `flex-1`) keeps this correctly sized at
  * h-11 whether it sits alone, or beside a filter `Select` in a `flex-col sm:flex-row`
@@ -62,7 +62,7 @@ export function SearchBar({
           aria-label="Clear search"
           className="-mr-1.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
         >
-          <X className="h-3.5 w-3.5" strokeWidth={1.8} />
+          <X className="h-3.5 w-3.5" weight="regular" />
         </button>
       )}
     </div>

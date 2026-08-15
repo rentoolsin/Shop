@@ -1,4 +1,4 @@
-import { MessageSquareText } from "lucide-react";
+import { ChatText } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminEnquiries } from "../../../hooks/useAdminData";
@@ -19,7 +19,7 @@ import { STATUS_LABEL, STATUS_TONE } from "../../../utils/enquiry-status";
 const DEBOUNCE_MS = 300;
 
 function EnquiryIcon() {
-  return <MessageSquareText className="h-6 w-6" strokeWidth={1.5} />;
+  return <ChatText className="h-6 w-6" weight="light" />;
 }
 
 export function EnquiriesList() {

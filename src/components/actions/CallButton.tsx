@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { Phone } from "@phosphor-icons/react";
 import { Button } from "../ui/Button";
 
 interface CallButtonProps {
@@ -19,7 +19,7 @@ export function CallButton({ phone, label = "Call", fullWidth, className = "" }:
       }}
     >
       <span className="inline-flex items-center gap-2">
-        <Phone className="h-4 w-4" strokeWidth={1.8} />
+        <Phone className="h-4 w-4" weight="regular" />
         {label}
       </span>
     </Button>

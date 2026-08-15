@@ -1,4 +1,4 @@
-import { Calendar, ChevronRight, Plus, RefreshCw } from "lucide-react";
+import { Calendar, CaretRight, Plus, ArrowsClockwise } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminRentals } from "../../../hooks/useAdminData";
@@ -49,25 +49,25 @@ const STATUS_TONE: Record<RentalDisplayStatus, "neutral" | "success" | "warning"
 };
 
 function CalendarIcon({ className = "h-6 w-6" }: { className?: string }) {
-  return <Calendar className={className} strokeWidth={1.5} />;
+  return <Calendar className={className} weight="light" />;
 }
 
 function PlusIcon() {
-  return <Plus className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />;
+  return <Plus className="h-4 w-4" weight="regular" aria-hidden="true" />;
 }
 
 function RefreshIcon({ spinning }: { spinning?: boolean }) {
   return (
-    <RefreshCw
+    <ArrowsClockwise
       className={["h-4 w-4", spinning ? "animate-spin" : ""].join(" ")}
-      strokeWidth={1.6}
+      weight="light"
       aria-hidden="true"
     />
   );
 }
 
 function ChevronRightIcon() {
-  return <ChevronRight className="h-4 w-4 flex-shrink-0 text-graphite-300" strokeWidth={1.6} aria-hidden="true" />;
+  return <CaretRight className="h-4 w-4 flex-shrink-0 text-graphite-300" weight="light" aria-hidden="true" />;
 }
 
 /** Friendly display reference for a rental — derived from the real record id, never invented. */

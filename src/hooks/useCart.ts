@@ -14,6 +14,8 @@ export interface CartItem {
   /** Snapshot at the time it was added — a later price change on the
    *  product shouldn't silently change what's already in the cart. */
   dailyRate: number | null;
+  /** Admin-set "was" rate snapshot, same convention as ProductCard/ProductDetail — shown struck through with a "Save ₹X/day" badge. Null = no discount. */
+  originalDailyRate?: number | null;
   quantity: number;
 }
 

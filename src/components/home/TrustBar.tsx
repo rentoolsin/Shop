@@ -1,4 +1,4 @@
-import { IndianRupee, MapPin, Phone, ShieldCheck } from "lucide-react";
+import { CurrencyInr, MapPin, Phone, ShieldCheck } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
 interface TrustItem {
@@ -7,11 +7,11 @@ interface TrustItem {
   body: string;
 }
 
-const iconProps = { className: "h-[18px] w-[18px] text-white", strokeWidth: 1.8 } as const;
+const iconProps = { className: "h-[18px] w-[18px] text-white", weight: "regular" } as const;
 
 const DEFAULT_ITEMS: TrustItem[] = [
   { icon: <ShieldCheck {...iconProps} />, title: "Checked Equipment", body: "Quality checked before every rental" },
-  { icon: <IndianRupee {...iconProps} />, title: "Transparent Pricing", body: "No hidden charges, what you see is what you pay" },
+  { icon: <CurrencyInr {...iconProps} />, title: "Transparent Pricing", body: "No hidden charges, what you see is what you pay" },
   { icon: <Phone {...iconProps} />, title: "Direct Support", body: "Call or WhatsApp, we're here to help" },
   { icon: <MapPin {...iconProps} />, title: "Local Availability", body: "Quick delivery or pickup from nearby" },
 ];

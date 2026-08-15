@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from "lucide-react";
+import { Check, CaretDown } from "@phosphor-icons/react";
 import {
   Children,
   isValidElement,
@@ -50,16 +50,16 @@ function extractOptions(children: ReactNode): OptionData[] {
 
 function ChevronIcon({ open }: { open: boolean }) {
   return (
-    <ChevronDown
+    <CaretDown
       aria-hidden="true"
-      strokeWidth={1.6}
+      weight="light"
       className={["h-4 w-4 flex-shrink-0 text-graphite-400 transition-transform", open ? "rotate-180" : ""].join(" ")}
     />
   );
 }
 
 function CheckIcon() {
-  return <Check aria-hidden="true" strokeWidth={1.8} className="h-4 w-4 flex-shrink-0 text-ink dark:text-ink-inverted" />;
+  return <Check aria-hidden="true" weight="regular" className="h-4 w-4 flex-shrink-0 text-ink dark:text-ink-inverted" />;
 }
 
 /**

@@ -21,51 +21,51 @@
  */
 
 import {
-  Home,
-  Search,
-  Send,
+  House,
+  MagnifyingGlass,
+  PaperPlaneTilt,
   Wrench,
   Phone,
   ShoppingCart,
   Heart,
   Info,
-  Mail,
+  Envelope,
   MapPin,
   Package,
   Tag,
   Star,
-  Grid,
+  GridNine,
   List,
   User,
   Bell,
   Calendar,
   FileText,
-  HelpCircle,
-  type LucideIcon,
-} from "lucide-react";
+  Question,
+  type Icon,
+} from "@phosphor-icons/react";
 
 export const BOTTOM_NAV_ICONS = {
-  home: Home,
-  search: Search,
-  send: Send,
+  home: House,
+  search: MagnifyingGlass,
+  send: PaperPlaneTilt,
   wrench: Wrench,
   phone: Phone,
   cart: ShoppingCart,
   heart: Heart,
   info: Info,
-  mail: Mail,
+  mail: Envelope,
   "map-pin": MapPin,
   package: Package,
   tag: Tag,
   star: Star,
-  grid: Grid,
+  grid: GridNine,
   list: List,
   user: User,
   bell: Bell,
   calendar: Calendar,
   "file-text": FileText,
-  help: HelpCircle,
-} satisfies Record<string, LucideIcon>;
+  help: Question,
+} satisfies Record<string, Icon>;
 
 export type BottomNavIconName = keyof typeof BOTTOM_NAV_ICONS;
 

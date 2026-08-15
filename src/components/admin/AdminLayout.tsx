@@ -1,4 +1,4 @@
-import { ChevronLeft, ClipboardList, HelpCircle, LayoutTemplate, LogOut, MapPin, Settings as SettingsIcon, BarChart3 } from "lucide-react";
+import { CaretLeft, ClipboardText, Question, Layout, SignOut, MapPin, Gear as SettingsIcon, ChartBar } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
@@ -21,7 +21,7 @@ const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[]
   {
     to: "/admin/purchase-requests",
     label: "Purchase Requests",
-    icon: <ClipboardList className="h-[18px] w-[18px]" strokeWidth={1.6} />,
+    icon: <ClipboardText className="h-[18px] w-[18px]" weight="light" />,
   },
   {
     to: "/admin/rentals",
@@ -46,36 +46,36 @@ const NAV_ITEMS: { to: string; label: string; end?: boolean; icon: ReactNode }[]
   {
     to: "/admin/locations",
     label: "Locations",
-    icon: <MapPin className="h-[18px] w-[18px]" strokeWidth={1.6} />,
+    icon: <MapPin className="h-[18px] w-[18px]" weight="light" />,
   },
   {
     to: "/admin/reports",
     label: "Reports",
-    icon: <BarChart3 className="h-[18px] w-[18px]" strokeWidth={1.6} />,
+    icon: <ChartBar className="h-[18px] w-[18px]" weight="light" />,
   },
   {
     to: "/admin/homepage",
     label: "Homepage",
-    icon: <LayoutTemplate className="h-[18px] w-[18px]" strokeWidth={1.6} />,
+    icon: <Layout className="h-[18px] w-[18px]" weight="light" />,
   },
   {
     to: "/admin/settings",
     label: "Settings",
-    icon: <SettingsIcon className="h-[18px] w-[18px]" strokeWidth={1.6} />,
+    icon: <SettingsIcon className="h-[18px] w-[18px]" weight="light" />,
   },
 ];
 
 function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   return (
-    <ChevronLeft
+    <CaretLeft
       className={["h-4 w-4 transition-transform duration-150 ease-app", collapsed ? "rotate-180" : ""].join(" ")}
-      strokeWidth={1.7}
+      weight="regular"
     />
   );
 }
 
 function HelpIcon() {
-  return <HelpCircle className="h-[18px] w-[18px]" strokeWidth={1.6} />;
+  return <Question className="h-[18px] w-[18px]" weight="light" />;
 }
 
 export function AdminLayout() {
@@ -205,7 +205,7 @@ export function AdminLayout() {
               onClick={handleSignOut}
               className="mx-auto mt-2 flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
             >
-              <LogOut className="h-[18px] w-[18px]" strokeWidth={1.6} />
+              <SignOut className="h-[18px] w-[18px]" weight="light" />
             </button>
           )}
         </div>

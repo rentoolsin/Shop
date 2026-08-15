@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { Button } from "./Button";
 import { useToast } from "./Toast";
@@ -116,7 +116,7 @@ export function ImageGalleryInput({
                 aria-label="Remove photo"
                 className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-graphite-900 text-graphite-25 shadow-card dark:bg-white dark:text-graphite-950"
               >
-                <X className="h-3 w-3" strokeWidth={2} />
+                <X className="h-3 w-3" weight="regular" />
               </button>
             </div>
           ))}

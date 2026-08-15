@@ -1,4 +1,4 @@
-import { LayoutTemplate } from "lucide-react";
+import { Layout } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { useAdminHomepageSections } from "../../../hooks/useAdminData";
 import { HOMEPAGE_SECTION_LABEL } from "../../../utils/homepage-content";
@@ -9,7 +9,7 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 
 function HomepageIcon() {
-  return <LayoutTemplate className="h-6 w-6" strokeWidth={1.5} />;
+  return <Layout className="h-6 w-6" weight="light" />;
 }
 
 export function HomepageSectionsList() {

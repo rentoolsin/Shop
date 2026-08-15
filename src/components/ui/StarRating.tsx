@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star } from "@phosphor-icons/react";
 import { useState } from "react";
 
 interface StarRatingDisplayProps {
@@ -24,14 +24,14 @@ export function StarRatingDisplay({ value, size = "sm", className = "" }: StarRa
         const fillPercent = Math.max(0, Math.min(1, clamped - i)) * 100;
         return (
           <span key={i} className="relative inline-block">
-            <Star className={[SIZE_CLASS[size], "text-graphite-300 dark:text-graphite-700"].join(" ")} strokeWidth={1.8} />
+            <Star className={[SIZE_CLASS[size], "text-graphite-300 dark:text-graphite-700"].join(" ")} weight="regular" />
             <span
               className="absolute inset-0 overflow-hidden"
               style={{ width: `${fillPercent}%` }}
             >
               <Star
                 className={[SIZE_CLASS[size], "fill-accent-500 text-accent-500"].join(" ")}
-                strokeWidth={1.8}
+                weight="regular"
               />
             </span>
           </span>
@@ -79,7 +79,7 @@ export function StarRatingPicker({ value, onChange, error }: StarRatingPickerPro
                 "h-6 w-6",
                 star <= shown ? "fill-accent-500 text-accent-500" : "text-graphite-300 dark:text-graphite-700",
               ].join(" ")}
-              strokeWidth={1.8}
+              weight="regular"
             />
           </button>
         ))}

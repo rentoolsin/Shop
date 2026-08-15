@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash } from "@phosphor-icons/react";
 import { useAdminSiteSettings } from "../../hooks/useAdminData";
 import { updateSiteSettings } from "../../services/admin-site-settings.service";
 import { useTheme } from "../../lib/theme";
@@ -213,7 +213,7 @@ function BottomNavItemRow({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-graphite-100 text-graphite-600 dark:bg-graphite-800 dark:text-graphite-300">
-            <Icon size={16} strokeWidth={1.8} />
+            <Icon size={16} weight="regular" />
           </span>
           <span className="font-body text-[12px] font-medium text-graphite-500">
             Tab {index + 1}
@@ -245,7 +245,7 @@ function BottomNavItemRow({
             onClick={onRemove}
             className="flex h-8 w-8 items-center justify-center rounded text-state-danger-text hover:bg-graphite-100 disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-graphite-800"
           >
-            <Trash2 size={16} />
+            <Trash size={16} />
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Clock, X } from "lucide-react";
+import { Clock, X } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -114,7 +114,7 @@ export function Search() {
                     onClick={() => setInput(term)}
                     className="flex h-11 items-center gap-2.5 rounded px-1 text-left transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
                   >
-                    <Clock className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.7} />
+                    <Clock className="h-4 w-4 flex-shrink-0 text-graphite-400" weight="regular" />
                     <span className="flex-1 truncate font-body text-[14px] text-ink dark:text-ink-inverted">
                       {term}
                     </span>
@@ -128,7 +128,7 @@ export function Search() {
                         });
                       }}
                       className="h-3.5 w-3.5 flex-shrink-0 text-graphite-300"
-                      strokeWidth={1.8}
+                      weight="regular"
                     />
                   </button>
                 ))}

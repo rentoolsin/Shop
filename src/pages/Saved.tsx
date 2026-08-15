@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Heart } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { ProductCard } from "../components/products/ProductCard";
@@ -29,7 +29,7 @@ export function Saved() {
       {ids.length === 0 && (
         <div className="px-4 pt-4">
           <EmptyState
-            icon={<Heart className="h-5 w-5" strokeWidth={1.8} />}
+            icon={<Heart className="h-5 w-5" weight="regular" />}
             title="Nothing saved yet"
             description="Tap the heart on any tool to keep it here for later."
             action={
