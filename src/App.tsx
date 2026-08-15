@@ -13,6 +13,7 @@ import { Products } from "./pages/Products";
 import { ProductDetail } from "./pages/ProductDetail";
 import { CategoryDetail } from "./pages/CategoryDetail";
 import { Search } from "./pages/Search";
+import { Saved } from "./pages/Saved";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { Enquire } from "./pages/Enquire";
@@ -117,6 +118,7 @@ function CustomerApp() {
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/categories/:id" element={<CategoryDetail />} />
               <Route path="/search" element={<Search />} />
+              <Route path="/saved" element={<Saved />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/enquire" element={<Enquire />} />

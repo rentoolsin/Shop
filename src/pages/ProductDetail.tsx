@@ -1,4 +1,4 @@
-import { Check, Heart } from "lucide-react";
+import { Check, Heart, ShieldCheck, Truck } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -10,12 +10,14 @@ import { CallButton } from "../components/actions/CallButton";
 import { EnquiryButton } from "../components/actions/EnquiryButton";
 import { RequestPurchaseButton } from "../components/actions/RequestPurchaseButton";
 import { ImageCarousel } from "../components/products/ImageCarousel";
-import { useProduct } from "../hooks/useProducts";
+import { useProduct, useProducts } from "../hooks/useProducts";
+import { ProductCard } from "../components/products/ProductCard";
 import { formatCurrency } from "../utils/currency";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
 import { parseProductDescription } from "../utils/product-features";
 import { useBottomBarHeight } from "../hooks/useBottomBarHeight";
+import { useSavedProducts } from "../hooks/useSavedProducts";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 // Aliased — this file's own component is also named ProductDetail.
 import type { ProductDetail as ProductDetailData } from "../services/products.service";
@@ -66,9 +68,13 @@ export function ProductDetail() {
   const settings = useSiteSettings();
   const phone = settings.status === "success" ? settings.data.phone : SITE_SETTINGS_DEFAULTS.phone;
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const { isSaved, toggle: toggleSaved } = useSavedProducts();
   const bottomBarHeight = useBottomBarHeight();
   const loadedProduct = product.status === "success" ? product.data : null;
+  // Same-category picks, shown once the product itself has loaded — a
+  // rental app dead-ends hard at "unavailable" or "that's not quite it";
+  // this keeps the visit going instead of bouncing back to search.
+  const related = useProducts({ categoryId: loadedProduct?.categoryId });
 
   useDocumentMeta({
     title: loadedProduct?.name ?? "Tool",
@@ -126,16 +132,16 @@ export function ProductDetail() {
         title={item.name}
         action={
           <button
-            onClick={() => setSaved((v) => !v)}
-            aria-label={saved ? "Remove from saved" : "Save this tool"}
+            onClick={() => toggleSaved(item.id)}
+            aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
             className={[
               "mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-app active:scale-90",
-              saved
+              isSaved(item.id)
                 ? "text-accent-500 hover:bg-graphite-100 dark:hover:bg-graphite-800"
                 : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
             ].join(" ")}
           >
-            <HeartIcon filled={saved} />
+            <HeartIcon filled={isSaved(item.id)} />
           </button>
         }
       />
@@ -187,6 +193,24 @@ export function ProductDetail() {
           </div>
         )}
 
+        {/* Rental policy reassurance — generic across all tools (no
+            per-tool deposit/delivery data exists yet), phrased as general
+            business practice rather than a specific promised figure. */}
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg border border-graphite-200 bg-graphite-50 px-3.5 py-3 dark:border-graphite-800 dark:bg-graphite-900/50">
+          <div className="flex items-center gap-2">
+            <Truck className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
+            <span className="font-body text-[11.5px] leading-tight text-graphite-500">
+              Pickup or delivery available
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
+            <span className="font-body text-[11.5px] leading-tight text-graphite-500">
+              Deposit refunded on return
+            </span>
+          </div>
+        </div>
+
         {(intro || highlights.length > 0) && (
           <div className="mt-5">
             <h3 className="font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
@@ -216,6 +240,27 @@ export function ProductDetail() {
         )}
       </div>
 
+      {loadedProduct && related.status === "success" && (
+        <>
+          {(() => {
+            const picks = related.data.filter((p) => p.id !== loadedProduct.id).slice(0, 8);
+            if (picks.length === 0) return null;
+            return (
+              <div className="mb-4">
+                <h3 className="px-4 font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                  You might also need
+                </h3>
+                <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {picks.map((p) => (
+                    <ProductCard key={p.id} {...p} variant="featured" />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </>
+      )}
+
       {/* Sticky above the floating bottom nav, not behind it — `sticky
           bottom-0` alone would pin this to the true bottom of the
           viewport, the exact same space the fixed, higher-z-index nav
@@ -233,7 +278,12 @@ export function ProductDetail() {
         {outOfStock ? (
           <RequestPurchaseButton productName={item.name} fullWidth />
         ) : (
-          <EnquiryButton productId={item.id} productName={item.name} fullWidth />
+          <EnquiryButton
+            productId={item.id}
+            productName={item.name}
+            dailyRate={activeVariant?.dailyRate}
+            fullWidth
+          />
         )}
         <CallButton phone={phone} fullWidth />
       </div>

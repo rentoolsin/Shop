@@ -3,6 +3,12 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Button } from "../components/ui/Button";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
+const QUICK_LINKS = [
+  { to: "/products", label: "Browse tools" },
+  { to: "/search", label: "Search" },
+  { to: "/contact", label: "Contact us" },
+];
+
 export function NotFound() {
   // A client-rendered SPA can't return a real HTTP 404 status here — the
   // server always responds 200 for the SPA fallback (see vercel.json) — so
@@ -24,6 +30,14 @@ export function NotFound() {
           </Link>
         }
       />
+
+      <div className="mx-auto mt-2 flex max-w-[280px] justify-center gap-2 px-4">
+        {QUICK_LINKS.map((link) => (
+          <Link key={link.to} to={link.to} className="spec-tag">
+            {link.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

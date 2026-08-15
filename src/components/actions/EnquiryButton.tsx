@@ -5,6 +5,7 @@ import { Button } from "../ui/Button";
 interface EnquiryButtonProps {
   productId?: string;
   productName?: string;
+  dailyRate?: number;
   fullWidth?: boolean;
   label?: string;
   className?: string;
@@ -13,6 +14,7 @@ interface EnquiryButtonProps {
 export function EnquiryButton({
   productId,
   productName,
+  dailyRate,
   fullWidth,
   label = "Enquiry",
   className = "",
@@ -25,7 +27,7 @@ export function EnquiryButton({
       fullWidth={fullWidth}
       className={className}
       onClick={() =>
-        navigate("/enquire", { state: { productId, productName } })
+        navigate("/enquire", { state: { productId, productName, dailyRate } })
       }
     >
       <span className="inline-flex items-center gap-2">

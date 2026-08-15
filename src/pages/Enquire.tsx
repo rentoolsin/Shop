@@ -6,11 +6,13 @@ import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { submitEnquiry } from "../services/enquiries.service";
+import { formatCurrency } from "../utils/currency";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 interface LocationState {
   productId?: string;
   productName?: string;
+  dailyRate?: number;
 }
 
 interface FormValues {
@@ -79,6 +81,18 @@ export function Enquire() {
   const setField = (field: keyof FormValues, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
   };
+
+  // Live cost estimate — only shown when we actually know the rate (came
+  // through from ProductDetail) and both quantity/days are valid numbers.
+  const quantityNum = Number(values.quantity);
+  const daysNum = Number(values.numberOfDays);
+  const estimateValid =
+    typeof state.dailyRate === "number" &&
+    values.quantity !== "" &&
+    values.numberOfDays !== "" &&
+    quantityNum > 0 &&
+    daysNum > 0;
+  const estimatedTotal = estimateValid ? state.dailyRate! * quantityNum * daysNum : null;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -211,6 +225,17 @@ export function Enquire() {
           />
         </div>
 
+        {estimatedTotal !== null && (
+          <div className="flex items-center justify-between rounded-lg border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
+            <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
+              Estimated total ({quantityNum} × {daysNum} day{daysNum === 1 ? "" : "s"})
+            </span>
+            <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
+              {formatCurrency(estimatedTotal)}
+            </span>
+          </div>
+        )}
+
         <Input
           label="Required date"
           name="requiredDate"
@@ -240,6 +265,11 @@ export function Enquire() {
         <Button type="submit" fullWidth disabled={submitting}>
           {submitting ? "Sending…" : "Send enquiry"}
         </Button>
+
+        <p className="text-center font-body text-[11.5px] leading-snug text-graphite-400">
+          A refundable security deposit may apply, confirmed when RenTools calls to
+          confirm your enquiry.
+        </p>
       </form>
     </div>
   );
