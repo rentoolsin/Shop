@@ -221,7 +221,7 @@ export function Enquire() {
       <PageHeader title="Enquire" />
       <form onSubmit={handleSubmit} className="space-y-4 p-4" noValidate>
         {!isCartMode && state.productName && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-graphite-200 px-3.5 py-2.5 dark:border-graphite-800">
+          <div className="flex items-center justify-between gap-2 rounded border border-graphite-200 px-3.5 py-2.5 dark:border-graphite-800">
             <span className="spec-tag spec-tag--accent">{state.productName}</span>
             {typeof state.dailyRate === "number" && (
               <span className="flex-shrink-0 font-body text-[13px] font-semibold text-ink dark:text-ink-inverted">
@@ -232,7 +232,7 @@ export function Enquire() {
         )}
 
         {isCartMode && (
-          <div className="space-y-2 rounded-lg border border-graphite-200 p-3.5 dark:border-graphite-800">
+          <div className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
             <span className="font-body text-[13px] font-medium text-graphite-500">
               {state.cartItems!.length} item{state.cartItems!.length === 1 ? "" : "s"}
             </span>
@@ -318,7 +318,7 @@ export function Enquire() {
         )}
 
         {estimatedTotal !== null && (
-          <div className="flex items-center justify-between rounded-lg border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
+          <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
               {isCartMode
                 ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`

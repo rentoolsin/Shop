@@ -27,7 +27,7 @@ export function AdminMore() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-graphite-100 font-body text-[14px] font-medium text-state-danger-text dark:bg-graphite-800 dark:text-state-danger-text-dark"
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded bg-graphite-100 font-body text-[14px] font-medium text-state-danger-text dark:bg-graphite-800 dark:text-state-danger-text-dark"
         >
           Sign out
         </button>

@@ -15,7 +15,7 @@ export function EmptyState({ title, description, action, icon, size = "md", clas
   return (
     <div
       className={[
-        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-graphite-200 bg-white text-center dark:border-graphite-800 dark:bg-graphite-900",
+        "flex flex-col items-center justify-center gap-3 rounded border border-dashed border-graphite-200 bg-white text-center dark:border-graphite-800 dark:bg-graphite-900",
         size === "lg" ? "px-6 py-14" : "px-6 py-16",
         className,
       ].join(" ")}

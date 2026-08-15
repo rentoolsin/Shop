@@ -73,7 +73,7 @@ export function Cart() {
         {items.map((item, index) => (
           <div
             key={item.productId}
-            className="rounded-lg border border-graphite-200 p-3.5 dark:border-graphite-800"
+            className="rounded border border-graphite-200 p-3.5 dark:border-graphite-800"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -145,7 +145,7 @@ export function Cart() {
         </div>
 
         {grandTotal !== null && (
-          <div className="flex items-center justify-between rounded-lg border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
+          <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
               Estimated total ({daysNum} day{daysNum === 1 ? "" : "s"})
             </span>

@@ -167,7 +167,7 @@ function BottomNavItemRow({
   const Icon = BOTTOM_NAV_ICONS[item.icon];
 
   return (
-    <div className="rounded-lg border border-graphite-200 p-3 dark:border-graphite-800">
+    <div className="rounded border border-graphite-200 p-3 dark:border-graphite-800">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-graphite-100 text-graphite-600 dark:bg-graphite-800 dark:text-graphite-300">

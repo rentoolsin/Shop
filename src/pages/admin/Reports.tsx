@@ -129,7 +129,7 @@ export function Reports() {
       {rangeValid && isLoading && (
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+            <Skeleton key={i} className="h-20 w-full rounded" />
           ))}
         </div>
       )}

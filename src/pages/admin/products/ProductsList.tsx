@@ -176,7 +176,7 @@ export function ProductsList() {
                 <Link
                   to={`/admin/products/${product.id}/edit`}
                   aria-label={`Edit ${product.name}`}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                  className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
                 >
                   <PencilIcon />
                 </Link>
@@ -185,7 +185,7 @@ export function ProductsList() {
                     type="button"
                     aria-label={`More actions for ${product.name}`}
                     onClick={() => setOpenMenuId((id) => (id === product.id ? null : product.id))}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                    className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
                   >
                     <MoreIcon />
                   </button>
@@ -197,7 +197,7 @@ export function ProductsList() {
                         className="fixed inset-0 z-10 cursor-default"
                         onClick={() => setOpenMenuId(null)}
                       />
-                      <div className="absolute right-0 top-10 z-20 w-36 overflow-hidden rounded-lg border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
+                      <div className="absolute right-0 top-10 z-20 w-36 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
                         <button
                           type="button"
                           onClick={() => {

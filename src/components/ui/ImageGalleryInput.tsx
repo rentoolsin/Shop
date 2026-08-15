@@ -108,7 +108,7 @@ export function ImageGalleryInput({
               <img
                 src={img.imageUrl}
                 alt=""
-                className="h-16 w-16 flex-shrink-0 rounded-lg border border-graphite-200 object-cover dark:border-graphite-800"
+                className="h-16 w-16 flex-shrink-0 rounded border border-graphite-200 object-cover dark:border-graphite-800"
               />
               <button
                 type="button"

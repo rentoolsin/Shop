@@ -30,7 +30,7 @@ export function HowItWorksSteps({ steps }: HowItWorksStepsProps) {
                 className="absolute left-[calc(50%+26px)] right-[calc(-50%+26px)] top-6 border-t-2 border-dotted border-graphite-300 dark:border-graphite-700"
               />
             )}
-            <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-graphite-100 shadow-card dark:bg-graphite-800/80">
+            <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-graphite-100 shadow-card dark:bg-graphite-800/80">
               <Icon className="h-5 w-5 text-ink dark:text-ink-inverted" strokeWidth={1.8} />
             </span>
             <span className="mt-2 font-mono text-[12px] font-bold text-accent-500">

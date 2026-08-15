@@ -140,7 +140,7 @@ export function Select({
   const base = pill
     ? baseFieldClass(!!error)
         .replace("h-11", "h-12")
-        .replace("rounded-lg", "rounded-full")
+        .replace("rounded", "rounded-full")
         .replace("px-3", "px-4")
     : baseFieldClass(!!error);
 
@@ -173,7 +173,7 @@ export function Select({
             role="listbox"
             tabIndex={-1}
             aria-activedescendant={fieldId && options[activeIndex] ? `${fieldId}-opt-${activeIndex}` : undefined}
-            className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-graphite-200 bg-white p-1 shadow-raised outline-none dark:border-graphite-800 dark:bg-graphite-900"
+            className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded border border-graphite-200 bg-white p-1 shadow-raised outline-none dark:border-graphite-800 dark:bg-graphite-900"
           >
             {options.map((option, index) => {
               const isSelected = index === selectedIndex;

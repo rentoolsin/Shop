@@ -61,14 +61,14 @@ export function ImageInput({ label, value, onChange, folder, hint, error }: Imag
         </span>
       )}
 
-      <div className="mb-2 inline-flex rounded-lg border border-graphite-200 p-0.5 dark:border-graphite-800">
+      <div className="mb-2 inline-flex rounded border border-graphite-200 p-0.5 dark:border-graphite-800">
         {(["upload", "url"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
             className={[
-              "rounded-md px-3 py-1 font-body text-[12.5px] font-medium transition-colors duration-150 ease-app",
+              "rounded px-3 py-1 font-body text-[12.5px] font-medium transition-colors duration-150 ease-app",
               mode === m
                 ? "bg-graphite-900 text-graphite-25 dark:bg-white dark:text-graphite-950"
                 : "text-graphite-500 hover:text-ink dark:hover:text-ink-inverted",
@@ -84,7 +84,7 @@ export function ImageInput({ label, value, onChange, folder, hint, error }: Imag
           <img
             src={value}
             alt=""
-            className="h-11 w-11 flex-shrink-0 rounded-lg border border-graphite-200 object-cover dark:border-graphite-800"
+            className="h-11 w-11 flex-shrink-0 rounded border border-graphite-200 object-cover dark:border-graphite-800"
           />
         )}
 

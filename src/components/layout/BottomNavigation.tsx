@@ -25,7 +25,7 @@ export function BottomNavigation() {
     <nav
       aria-label="Primary"
       className={[
-        "rounded-t-3xl border-t border-graphite-200/80 bg-white/90 pb-safe-b backdrop-blur-xl",
+        "rounded-t border-t border-graphite-200/80 bg-white/90 pb-safe-b backdrop-blur-xl",
         "shadow-[0_-8px_24px_-12px_rgb(0_0_0_/_0.12)]",
         "dark:border-graphite-800/80 dark:bg-graphite-900/90",
       ].join(" ")}

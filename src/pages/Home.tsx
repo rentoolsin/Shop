@@ -145,7 +145,7 @@ export function Home() {
                 value={query}
                 onChange={setQuery}
                 placeholder="Search tools & equipment…"
-                containerClassName="h-12 rounded-full"
+                containerClassName="h-12"
                 trailing={
                   <button
                     type="button"
@@ -165,7 +165,6 @@ export function Home() {
                 size="sm"
                 fullWidth
                 onClick={() => navigate("/products")}
-                className="rounded-full"
               >
                 <span className="inline-flex items-center justify-center gap-1.5">
                   Browse tools
@@ -177,7 +176,6 @@ export function Home() {
                 size="sm"
                 fullWidth
                 onClick={() => navigate("/request-purchase")}
-                className="rounded-full"
               >
                 Request purchase
               </Button>
@@ -194,7 +192,7 @@ export function Home() {
             <HorizontalScroller>
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex w-24 flex-shrink-0 flex-col items-center gap-2">
-                  <Skeleton className="h-16 w-16 rounded-lg" />
+                  <Skeleton className="h-16 w-16 rounded" />
                   <Skeleton className="h-3 w-14" />
                 </div>
               ))}
@@ -234,7 +232,7 @@ export function Home() {
             <HorizontalScroller>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="w-40 flex-shrink-0">
-                  <Skeleton className="aspect-square w-full rounded-t-lg" />
+                  <Skeleton className="aspect-square w-full rounded-t" />
                   <Skeleton className="mt-1 h-4 w-full" />
                 </div>
               ))}
@@ -285,7 +283,7 @@ export function Home() {
 
       {/* Enquiry CTA */}
       <section className="mb-7 px-4">
-        <div className="rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+        <div className="rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
           <h2 className="font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">
             Need a tool for your site?
           </h2>
@@ -302,7 +300,7 @@ export function Home() {
       {!hiddenSections.has("contact_location") && (
         <section className="mb-4 px-4">
           <SectionHeading title="Contact & location" viewAllTo="/contact" />
-          <div className="mt-3 rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+          <div className="mt-3 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
             <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
               {cms.contact_location.address}
             </p>

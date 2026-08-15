@@ -111,7 +111,7 @@ export function ProductCard({
       >
         <span
           className={[
-            "rotate-[-8deg] rounded-sm bg-graphite-950/85 font-display font-bold uppercase tracking-wide text-white shadow-sm",
+            "rotate-[-8deg] rounded bg-graphite-950/85 font-display font-bold uppercase tracking-wide text-white shadow-sm",
             size === "lg" ? "px-3 py-1 text-[13px]" : "px-1.5 py-0.5 text-[8px] tracking-tight",
           ].join(" ")}
         >
@@ -127,7 +127,7 @@ export function ProductCard({
   const metaRow = (categoryName || rating != null) && (
     <div className="flex flex-wrap items-center gap-1.5">
       {categoryName && (
-        <span className="inline-flex items-center rounded-full bg-accent-100 px-2 py-0.5 font-body text-[11px] font-semibold text-accent-700 dark:bg-accent-500/15 dark:text-accent-400">
+        <span className="inline-flex items-center font-body text-[11px] font-semibold text-accent-600 dark:text-accent-400">
           {categoryName}
         </span>
       )}
@@ -242,8 +242,8 @@ export function ProductCard({
   if (variant === "horizontal") {
     return (
       <Link to={`/products/${id}`}>
-        <Card interactive className="flex items-center gap-3 overflow-hidden rounded-xl p-2">
-          <span className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+        <Card interactive className="flex items-center gap-3 overflow-hidden rounded p-2">
+          <span className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded">
             {image}
             {outOfStockOverlay("sm")}
           </span>
@@ -281,7 +281,7 @@ export function ProductCard({
     // misaligned/overlapping. Let the grid column control the width instead.
     return (
       <Link to={`/products/${id}`} className="block w-full">
-        <Card interactive className="flex flex-col overflow-hidden rounded-xl">
+        <Card interactive className="flex flex-col overflow-hidden rounded">
           <span className="relative aspect-square w-full">
             {image}
             {heartButton}
@@ -308,7 +308,7 @@ export function ProductCard({
   // featured (default)
   return (
     <Link to={`/products/${id}`} className="w-40 flex-shrink-0">
-      <Card interactive className="flex flex-col overflow-hidden rounded-xl">
+      <Card interactive className="flex flex-col overflow-hidden rounded">
         <span className="relative aspect-square w-full">
           {image}
           {heartButton}

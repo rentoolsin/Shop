@@ -139,7 +139,7 @@ export function Products() {
         <div className="grid grid-cols-2 gap-3 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
-              <Skeleton className="aspect-square w-full rounded-t-lg" />
+              <Skeleton className="aspect-square w-full rounded-t" />
               <Skeleton className="mt-1 h-4 w-full" />
             </div>
           ))}

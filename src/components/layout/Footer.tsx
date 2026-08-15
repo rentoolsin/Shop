@@ -52,7 +52,7 @@ export function Footer() {
               href={`https://wa.me/${whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent-500 px-3.5 py-2 font-body text-[12.5px] font-semibold text-graphite-950 shadow-[0_2px_8px_-2px_rgba(240,168,27,0.55)] transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded bg-accent-500 px-3.5 py-2 font-body text-[12.5px] font-semibold text-graphite-950 shadow-[0_2px_8px_-2px_rgba(240,168,27,0.55)] transition-all active:scale-95"
             >
               Chat on WhatsApp
             </a>

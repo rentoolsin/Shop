@@ -20,7 +20,7 @@ function MethodCard({ icon, label, value, href, external, tone = "default" }: Me
       href={href}
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       className={[
-        "group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-4",
+        "group relative flex flex-col justify-between overflow-hidden rounded border p-4",
         "transition-all duration-200 ease-app active:scale-[0.97]",
         tone === "accent"
           ? "border-transparent bg-gradient-to-br from-accent-500 to-accent-600 text-graphite-950"
@@ -94,7 +94,7 @@ export function Contact() {
 
       <div className="space-y-5 p-4">
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-graphite-950 to-graphite-800 px-5 py-7 dark:to-black">
+        <section className="relative overflow-hidden rounded bg-gradient-to-br from-graphite-950 to-graphite-800 px-5 py-7 dark:to-black">
           {/* Decorative glow */}
           <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-accent-500/20 blur-3xl" />
           <div className="relative">
@@ -111,7 +111,7 @@ export function Contact() {
             <div className="mt-5 flex gap-2">
               <a
                 href={`tel:${phone}`}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 font-body text-[13.5px] font-semibold text-white backdrop-blur-sm transition-all active:scale-95"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded border border-white/15 bg-white/10 px-4 py-3 font-body text-[13.5px] font-semibold text-white backdrop-blur-sm transition-all active:scale-95"
               >
                 <Phone className="h-4 w-4" strokeWidth={1.8} />
                 Call
@@ -120,7 +120,7 @@ export function Contact() {
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent-500 px-4 py-3 font-body text-[13.5px] font-semibold text-graphite-950 shadow-[0_4px_14px_-2px_rgba(240,168,27,0.5)] transition-all active:scale-95"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded bg-accent-500 px-4 py-3 font-body text-[13.5px] font-semibold text-graphite-950 shadow-[0_4px_14px_-2px_rgba(240,168,27,0.5)] transition-all active:scale-95"
               >
                 <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
                 WhatsApp
@@ -161,7 +161,7 @@ export function Contact() {
         </section>
 
         {/* Visit us / map */}
-        <section className="overflow-hidden rounded-2xl border border-graphite-200 bg-white dark:border-graphite-800 dark:bg-graphite-900">
+        <section className="overflow-hidden rounded border border-graphite-200 bg-white dark:border-graphite-800 dark:bg-graphite-900">
           <a
             href={mapsUrl}
             target="_blank"
@@ -199,7 +199,7 @@ export function Contact() {
         </section>
 
         {/* Reassurance strip */}
-        <section className="grid grid-cols-2 gap-2 rounded-2xl border border-graphite-200 bg-graphite-50 px-4 py-3.5 dark:border-graphite-800 dark:bg-graphite-900/50">
+        <section className="grid grid-cols-2 gap-2 rounded border border-graphite-200 bg-graphite-50 px-4 py-3.5 dark:border-graphite-800 dark:bg-graphite-900/50">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
             <span className="font-body text-[11.5px] text-graphite-500">Local, Coimbatore-based</span>

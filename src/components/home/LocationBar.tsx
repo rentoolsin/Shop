@@ -8,7 +8,7 @@ import { ChevronDown, MapPin } from "lucide-react";
  */
 export function LocationBar() {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 shadow-card dark:border-graphite-800 dark:bg-graphite-900/80">
+    <div className="flex items-center gap-3 rounded border border-graphite-200 bg-white px-3.5 py-2.5 shadow-card dark:border-graphite-800 dark:bg-graphite-900/80">
       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center text-accent-500">
         <MapPin className="h-6 w-6" strokeWidth={1.8} fill="currentColor" />
       </span>

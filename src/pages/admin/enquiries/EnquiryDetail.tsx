@@ -135,7 +135,7 @@ export function EnquiryDetail() {
         <StatusBadge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />
       </div>
 
-      <div className="space-y-3 rounded-lg border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+      <div className="space-y-3 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
         <Detail label="Product" value={e.productName ?? e.requestedProductText ?? "Not specified"} />
         {e.quantity && <Detail label="Quantity" value={String(e.quantity)} />}
         {e.requiredDate && <Detail label="Required from" value={e.requiredDate} />}

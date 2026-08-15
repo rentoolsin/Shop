@@ -38,7 +38,7 @@ export function SearchBar({
   return (
     <div
       className={[
-        "flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-graphite-200 bg-white px-3 shadow-card",
+        "flex h-11 w-full min-w-0 items-center gap-2 rounded border border-graphite-200 bg-white px-3 shadow-card",
         "dark:border-graphite-800 dark:bg-graphite-900",
         "sm:w-auto sm:flex-1",
         containerClassName,

@@ -11,7 +11,7 @@ export function CategoryCard({ id, name, imageUrl }: CategoryCardProps) {
     <Link
       to={`/categories/${id}`}
       className={[
-        "flex w-[104px] flex-shrink-0 flex-col overflow-hidden rounded-xl bg-graphite-100/70",
+        "flex w-[104px] flex-shrink-0 flex-col overflow-hidden rounded bg-graphite-100/70",
         "shadow-card transition-transform duration-150 ease-app active:scale-[0.98]",
         "dark:bg-graphite-900",
       ].join(" ")}

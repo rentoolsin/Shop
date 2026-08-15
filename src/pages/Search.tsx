@@ -112,7 +112,7 @@ export function Search() {
                   <button
                     key={term}
                     onClick={() => setInput(term)}
-                    className="flex h-11 items-center gap-2.5 rounded-lg px-1 text-left transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
+                    className="flex h-11 items-center gap-2.5 rounded px-1 text-left transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
                   >
                     <Clock className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.7} />
                     <span className="flex-1 truncate font-body text-[14px] text-ink dark:text-ink-inverted">
@@ -163,7 +163,7 @@ export function Search() {
       {debounced && products.status === "loading" && (
         <div className="grid grid-cols-2 gap-3 p-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square w-full rounded-lg" />
+            <Skeleton key={i} className="aspect-square w-full rounded" />
           ))}
         </div>
       )}

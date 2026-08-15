@@ -38,13 +38,13 @@ export function InstallAppBanner({
       role="region"
       aria-label="Install app"
       className={[
-        "animate-sheet-in mx-3 mb-3 rounded-lg border border-graphite-200 bg-white p-3.5 shadow-raised",
+        "animate-sheet-in mx-3 mb-3 rounded border border-graphite-200 bg-white p-3.5 shadow-raised",
         "dark:border-graphite-800 dark:bg-graphite-900",
         className,
       ].join(" ")}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-graphite-900 font-display text-[16px] font-bold text-graphite-25 dark:bg-white dark:text-graphite-950">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded bg-graphite-900 font-display text-[16px] font-bold text-graphite-25 dark:bg-white dark:text-graphite-950">
           {badgeLetter}
         </div>
         <div className="min-w-0 flex-1 pt-0.5">

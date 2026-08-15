@@ -309,7 +309,7 @@ export function ProductDetail() {
         {/* Rental policy reassurance — generic across all tools (no
             per-tool deposit/delivery data exists yet), phrased as general
             business practice rather than a specific promised figure. */}
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg border border-graphite-200 bg-graphite-50 px-3.5 py-3 dark:border-graphite-800 dark:bg-graphite-900/50">
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded border border-graphite-200 bg-graphite-50 px-3.5 py-3 dark:border-graphite-800 dark:bg-graphite-900/50">
           <div className="flex items-center gap-2">
             <Truck className="h-4 w-4 flex-shrink-0 text-graphite-400" strokeWidth={1.8} />
             <span className="font-body text-[11.5px] leading-tight text-graphite-500">

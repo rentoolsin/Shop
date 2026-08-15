@@ -101,17 +101,17 @@ export function Dashboard() {
         {dueTodayCount !== null ? (
           <StatCard label="Due today" value={dueTodayCount} to="/admin/rentals" tone="warning" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {overdueCount !== null ? (
           <StatCard label="Overdue" value={overdueCount} to="/admin/rentals" tone="danger" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {newEnquiryCount !== null ? (
           <StatCard label="New enquiries" value={newEnquiryCount} to="/admin/enquiries" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {openPurchaseRequestCount !== null ? (
           <StatCard
@@ -120,7 +120,7 @@ export function Dashboard() {
             to="/admin/purchase-requests"
           />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
       </div>
 
@@ -129,7 +129,7 @@ export function Dashboard() {
         {activeRentalCount !== null ? (
           <StatCard label="Active rentals" value={activeRentalCount} to="/admin/rentals" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {outstandingBalance !== null ? (
           <StatCard
@@ -138,12 +138,12 @@ export function Dashboard() {
             to="/admin/rentals"
           />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {monthly !== null ? (
           <StatCard label="Rentals this month" value={monthly.count} to="/admin/reports" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {monthly !== null ? (
           <StatCard
@@ -152,7 +152,7 @@ export function Dashboard() {
             to="/admin/reports"
           />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
       </div>
 
@@ -161,17 +161,17 @@ export function Dashboard() {
         {customers.status === "success" ? (
           <StatCard label="Customers" value={customers.data.length} to="/admin/customers" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {products.status === "success" ? (
           <StatCard label="Products" value={products.data.length} to="/admin/products" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
         {categories.status === "success" ? (
           <StatCard label="Categories" value={categories.data.length} to="/admin/categories" />
         ) : (
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-20 w-full rounded" />
         )}
       </div>
 

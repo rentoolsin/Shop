@@ -26,7 +26,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
           aria-labelledby={title ? "sheet-title" : undefined}
           tabIndex={-1}
           className={[
-            "max-h-[85vh] overflow-y-auto rounded-t-lg border-t border-graphite-200 bg-white outline-none",
+            "max-h-[85vh] overflow-y-auto rounded-t border-t border-graphite-200 bg-white outline-none",
             "pb-safe-b dark:border-graphite-800 dark:bg-graphite-900",
             "animate-sheet-in",
           ].join(" ")}

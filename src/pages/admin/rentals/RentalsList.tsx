@@ -219,7 +219,7 @@ export function RentalsList() {
       </div>
 
       {/* Rentals / Sync statuses segmented row */}
-      <div className="mb-4 flex items-center gap-1 rounded-lg bg-graphite-100 p-1 dark:bg-graphite-800">
+      <div className="mb-4 flex items-center gap-1 rounded bg-graphite-100 p-1 dark:bg-graphite-800">
         <span className="flex h-11 flex-1 items-center justify-center gap-2 rounded bg-white font-body text-[13.5px] font-semibold text-ink shadow-card dark:bg-graphite-900 dark:text-ink-inverted">
           <CalendarIcon className="h-4 w-4" />
           Rentals
@@ -307,7 +307,7 @@ export function RentalsList() {
               return (
                 <Card key={rental.id} className="overflow-hidden p-3">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-graphite-100 dark:bg-graphite-800">
+                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800">
                       {rental.productImageUrl ? (
                         <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
                       ) : (

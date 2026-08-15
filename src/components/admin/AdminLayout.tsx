@@ -131,7 +131,7 @@ export function AdminLayout() {
               title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 [
-                  "flex h-11 items-center gap-2.5 rounded-lg font-body text-[13.5px] font-medium transition-colors duration-150 ease-app",
+                  "flex h-11 items-center gap-2.5 rounded font-body text-[13.5px] font-medium transition-colors duration-150 ease-app",
                   collapsed ? "justify-center px-0" : "px-3",
                   isActive
                     ? "bg-graphite-900 text-white dark:bg-white dark:text-graphite-900"
@@ -151,7 +151,7 @@ export function AdminLayout() {
               type="button"
               aria-label="Expand navigation"
               onClick={() => setCollapsed(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+              className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
             >
               <CollapseIcon collapsed={false} />
             </button>
@@ -164,7 +164,7 @@ export function AdminLayout() {
             onClick={handleHelp}
             title="Need help?"
             className={[
-              "flex h-11 w-full items-center gap-2 rounded-lg bg-graphite-100 font-body text-[13px] font-medium text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-700",
+              "flex h-11 w-full items-center gap-2 rounded bg-graphite-100 font-body text-[13px] font-medium text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-700",
               collapsed ? "justify-center px-0" : "px-3",
             ].join(" ")}
           >
@@ -198,7 +198,7 @@ export function AdminLayout() {
               type="button"
               aria-label="Sign out"
               onClick={handleSignOut}
-              className="mx-auto mt-2 flex h-9 w-9 items-center justify-center rounded-lg text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+              className="mx-auto mt-2 flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
             >
               <LogOut className="h-[18px] w-[18px]" strokeWidth={1.6} />
             </button>

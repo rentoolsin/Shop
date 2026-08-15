@@ -12,7 +12,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 function StatChip({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex-1 rounded-2xl border border-graphite-200 bg-white px-3 py-3.5 text-center dark:border-graphite-800 dark:bg-graphite-900">
+    <div className="flex-1 rounded border border-graphite-200 bg-white px-3 py-3.5 text-center dark:border-graphite-800 dark:bg-graphite-900">
       <p className="font-display text-[18px] font-semibold text-ink dark:text-ink-inverted">{value}</p>
       <p className="mt-0.5 font-body text-[11px] leading-tight text-graphite-500">{label}</p>
     </div>
@@ -44,10 +44,10 @@ export function About() {
 
       <div className="space-y-6 p-4">
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-graphite-950 to-graphite-800 px-5 py-7 dark:to-black">
+        <section className="relative overflow-hidden rounded bg-gradient-to-br from-graphite-950 to-graphite-800 px-5 py-7 dark:to-black">
           <div className="pointer-events-none absolute -left-10 -top-16 h-48 w-48 rounded-full bg-accent-500/20 blur-3xl" />
           <div className="relative">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-500 shadow-[0_4px_14px_-2px_rgba(240,168,27,0.5)]">
+            <span className="flex h-12 w-12 items-center justify-center rounded bg-accent-500 shadow-[0_4px_14px_-2px_rgba(240,168,27,0.5)]">
               <img src="/rentools-mark.png" alt="" className="h-7 w-7" />
             </span>
             <h1 className="mt-4 font-display text-[22px] font-semibold leading-tight text-white">
@@ -73,7 +73,7 @@ export function About() {
           <h2 className="font-display text-[13px] font-semibold uppercase tracking-[0.04em] text-graphite-500">
             Why RenTools
           </h2>
-          <div className="mt-3 space-y-2.5 rounded-2xl border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+          <div className="mt-3 space-y-2.5 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
             {cms.why_rentools.points.map((point) => (
               <div key={point} className="flex items-start gap-2.5">
                 <CheckCircle2 className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-accent-500" strokeWidth={1.8} />
@@ -110,7 +110,7 @@ export function About() {
         </section>
 
         {/* CTA */}
-        <section className="rounded-2xl border border-graphite-200 bg-graphite-50 p-4 dark:border-graphite-800 dark:bg-graphite-900/50">
+        <section className="rounded border border-graphite-200 bg-graphite-50 p-4 dark:border-graphite-800 dark:bg-graphite-900/50">
           <div className="flex items-start gap-2.5">
             <Wrench className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-500" strokeWidth={1.8} />
             <div>

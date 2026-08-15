@@ -28,7 +28,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         aria-labelledby="modal-title"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-lg border border-graphite-200 bg-white p-5 shadow-raised outline-none dark:border-graphite-800 dark:bg-graphite-900"
+        className="w-full max-w-sm rounded border border-graphite-200 bg-white p-5 shadow-raised outline-none dark:border-graphite-800 dark:bg-graphite-900"
       >
         <div className="mb-3 flex items-center justify-between">
           <h2

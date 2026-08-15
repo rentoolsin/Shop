@@ -105,7 +105,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
     >
       <div
         ref={trackRef}
-        className="flex snap-x snap-mandatory overflow-x-auto rounded-lg [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory overflow-x-auto rounded [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((slide, index) => {
           const content = (
@@ -118,7 +118,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 loading={index === 0 ? "eager" : "lazy"}
               />
               {slide.caption && (
-                <span className="absolute bottom-3 left-3 max-w-[80%] rounded-sm bg-graphite-950/70 px-2.5 py-1.5 font-body text-[13px] font-medium leading-snug text-white backdrop-blur-0">
+                <span className="absolute bottom-3 left-3 max-w-[80%] rounded bg-graphite-950/70 px-2.5 py-1.5 font-body text-[13px] font-medium leading-snug text-white backdrop-blur-0">
                   {slide.caption}
                 </span>
               )}

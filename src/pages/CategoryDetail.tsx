@@ -34,7 +34,7 @@ export function CategoryDetail() {
       {/* Hero — mirrors the icon-circle language from CategoryCard, blown up,
           plus a live count so the page reads as more than a bare grid. */}
       <section className="flex items-center gap-3.5 border-b border-graphite-200/70 px-4 py-4 dark:border-graphite-800/70">
-        <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent-50 dark:bg-graphite-800">
+        <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-accent-50 dark:bg-graphite-800">
           {category?.imageUrl ? (
             <img src={category.imageUrl} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -73,7 +73,7 @@ export function CategoryDetail() {
         <div className="grid grid-cols-2 gap-3 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
-              <Skeleton className="aspect-square w-full rounded-t-lg" />
+              <Skeleton className="aspect-square w-full rounded-t" />
               <Skeleton className="mt-1 h-4 w-full" />
             </div>
           ))}
@@ -94,7 +94,7 @@ export function CategoryDetail() {
             action={
               <Link
                 to="/products"
-                className="inline-flex h-10 items-center rounded-lg border border-graphite-300 px-4 font-body text-[13px] font-medium text-ink transition-colors active:bg-graphite-100 dark:border-graphite-700 dark:text-ink-inverted dark:active:bg-graphite-800"
+                className="inline-flex h-10 items-center rounded border border-graphite-300 px-4 font-body text-[13px] font-medium text-ink transition-colors active:bg-graphite-100 dark:border-graphite-700 dark:text-ink-inverted dark:active:bg-graphite-800"
               >
                 Browse all tools
               </Link>

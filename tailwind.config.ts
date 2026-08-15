@@ -85,8 +85,8 @@ export default {
       },
       borderRadius: {
         sm: "6px",
-        DEFAULT: "10px",
-        lg: "14px",
+        DEFAULT: "6px",
+        lg: "6px",
         // intentionally no "2xl+" blobby radii — restraint per design direction
       },
       boxShadow: {
