@@ -56,6 +56,20 @@ export function ProductCard({
     </span>
   );
 
+  // "Save ₹X/day" badge — only when there's an admin-set original rate
+  // that's actually higher than the current rate (never shown for a
+  // strikethrough that isn't really a discount).
+  const savingsAmount =
+    originalFromDailyRate != null && fromDailyRate != null && originalFromDailyRate > fromDailyRate
+      ? originalFromDailyRate - fromDailyRate
+      : null;
+
+  const saveBadge = savingsAmount != null && (
+    <span className="inline-flex w-fit items-center rounded-full bg-state-success/15 px-2 py-0.5 font-body text-[10.5px] font-bold text-state-success-text dark:bg-state-success/20 dark:text-state-success-text-dark">
+      Save {formatCurrency(savingsAmount)}/day
+    </span>
+  );
+
   const priceTag = (
     <span className="inline-flex items-center gap-1.5">
       <span className={`spec-tag ${available ? "spec-tag--accent" : ""}`}>
@@ -113,7 +127,7 @@ export function ProductCard({
   const metaRow = (categoryName || rating != null) && (
     <div className="flex flex-wrap items-center gap-1.5">
       {categoryName && (
-        <span className="inline-flex items-center rounded-full bg-graphite-100 px-2 py-0.5 font-body text-[11px] font-medium text-graphite-600 dark:bg-graphite-800 dark:text-graphite-300">
+        <span className="inline-flex items-center rounded-full bg-accent-100 px-2 py-0.5 font-body text-[11px] font-semibold text-accent-700 dark:bg-accent-500/15 dark:text-accent-400">
           {categoryName}
         </span>
       )}
@@ -184,11 +198,11 @@ export function ProductCard({
 
   const addToEnquiryButton = (
     <Button
-      variant="outline"
+      variant="accent"
       size="sm"
       fullWidth
       disabled={!available}
-      className="!h-9 border-accent-400 text-[12.5px] text-accent-600 hover:bg-accent-50 dark:border-accent-500 dark:text-accent-400 dark:hover:bg-graphite-800"
+      className="!h-9 text-[12.5px]"
       onClick={(e) => {
         stop(e);
         addItem(
@@ -279,6 +293,7 @@ export function ProductCard({
               {name}
             </span>
             {priceLine}
+            {saveBadge}
             <div className="flex items-center justify-between">
               <span className="font-body text-[11px] text-graphite-500">Qty</span>
               {quantityStepper}
@@ -305,6 +320,7 @@ export function ProductCard({
             {name}
           </span>
           {priceLine}
+          {saveBadge}
           <div className="flex items-center justify-between">
             <span className="font-body text-[11px] text-graphite-500">Qty</span>
             {quantityStepper}

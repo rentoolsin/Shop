@@ -103,8 +103,8 @@ export const HOMEPAGE_SECTION_LABEL: Record<HomepageSectionKey, string> = {
 /** What the page shows when a section has no published CMS override. */
 export const HOMEPAGE_SECTION_DEFAULTS: HomepageSectionContentMap = {
   hero: {
-    heading: "Hello, Builder! 👋",
-    subheading: "What are you building today?",
+    heading: "Hello, Builder!",
+    subheading: "What do you need for your site today?",
     slides: [],
   },
   why_rentools: {
@@ -116,10 +116,10 @@ export const HOMEPAGE_SECTION_DEFAULTS: HomepageSectionContentMap = {
   },
   how_it_works: {
     steps: [
-      { title: "Browse", body: "Look through tools and equipment by category." },
-      { title: "Enquire", body: "Send an enquiry or call us about what you need." },
-      { title: "Connect", body: "RenTools confirms availability and rate with you." },
-      { title: "Arrange rental", body: "Pick up or arrange delivery to your site." },
+      { title: "Browse", body: "Explore tools by category" },
+      { title: "Enquire", body: "Tell us what you need" },
+      { title: "Confirm", body: "We confirm availability" },
+      { title: "Rent", body: "Pickup or delivery to your site" },
     ],
   },
   contact_location: {

@@ -267,6 +267,10 @@ export interface Database {
           whatsapp: string;
           email: string;
           address: string;
+          // Admin-editable bottom nav config for the customer app — see
+          // 0017_bottom_nav_items.sql. Shape validated client-side in
+          // src/utils/bottom-nav.ts (parseBottomNavItems), not by the DB.
+          bottom_nav_items: unknown[] | null;
           updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["site_settings"]["Row"]> & {

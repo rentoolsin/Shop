@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 interface SearchBarProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className" | "onChange" | "value"> {
@@ -8,6 +8,8 @@ interface SearchBarProps
   onClear?: () => void;
   /** Extra classes for the outer field wrapper — e.g. layout hints from the parent row. */
   containerClassName?: string;
+  /** Optional trailing control (e.g. a filters icon button) rendered at the end of the field. */
+  trailing?: ReactNode;
 }
 
 function SearchIcon() {
@@ -29,6 +31,7 @@ export function SearchBar({
   onClear,
   placeholder,
   containerClassName = "",
+  trailing,
   id,
   ...rest
 }: SearchBarProps) {

@@ -4,9 +4,12 @@ import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { PageTransition } from "./components/layout/PageTransition";
 import { Footer } from "./components/layout/Footer";
+import { FloatingWhatsApp } from "./components/actions/FloatingWhatsApp";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
 import { useReportBottomBarHeight, useBottomBarHeight } from "./hooks/useBottomBarHeight";
+import { useSiteSettings } from "./hooks/useSiteSettings";
+import { SITE_SETTINGS_DEFAULTS } from "./utils/site-settings";
 import { LoadingState } from "./components/ui/LoadingState";
 import { Home } from "./pages/Home";
 import { Products } from "./pages/Products";
@@ -95,6 +98,8 @@ function CustomerApp() {
   const bottomBarRef = useRef<HTMLDivElement>(null);
   useReportBottomBarHeight(bottomBarRef);
   const bottomBarHeight = useBottomBarHeight();
+  const settings = useSiteSettings();
+  const { whatsapp } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
 
   return (
     <div className="app-shell">
@@ -131,6 +136,16 @@ function CustomerApp() {
         </PageTransition>
         <Footer />
       </main>
+      {/* Rendered here — a sibling of <main>, outside PageTransition —
+          rather than inside a page component. PageTransition's route
+          animation applies a `transform` to its wrapper, and thanks to
+          `animation-fill-mode: both` that transform value never fully
+          clears afterwards, which creates a new containing block for any
+          `position: fixed` descendant. A floating action button nested
+          inside that wrapper would scroll away with the page instead of
+          staying pinned to the viewport, so it lives out here, and shows
+          on every route instead of only the homepage. */}
+      <FloatingWhatsApp phone={whatsapp} />
       <div ref={bottomBarRef} className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app">
         <InstallAppBanner />
         <BottomNavigation />

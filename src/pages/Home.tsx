@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MobileHeader } from "../components/layout/MobileHeader";
@@ -10,10 +10,11 @@ import { ErrorState } from "../components/ui/ErrorState";
 import { Button } from "../components/ui/Button";
 import { SearchBar } from "../components/ui/SearchBar";
 import { HeroCarousel } from "../components/home/HeroCarousel";
+import { LocationBar } from "../components/home/LocationBar";
 import { TrustBar } from "../components/home/TrustBar";
+import { HowItWorksSteps } from "../components/home/HowItWorksSteps";
 import { CallButton } from "../components/actions/CallButton";
 import { WhatsAppButton } from "../components/actions/WhatsAppButton";
-import { FloatingWhatsApp } from "../components/actions/FloatingWhatsApp";
 import { useCategories } from "../hooks/useCategories";
 import { useFeaturedProducts } from "../hooks/useProducts";
 import { useHomepageContent } from "../hooks/useHomepageContent";
@@ -45,6 +46,23 @@ function SectionHeading({
         </Link>
       )}
     </div>
+  );
+}
+
+// Echoes the reference design's accent-colored "site" callout inside the
+// hero subheading, without hard-coding the copy — falls back to plain text
+// if an admin edits the subheading to no longer contain the word.
+function HighlightSite({ text }: { text: string }) {
+  const match = text.match(/\bsite\b/i);
+  if (!match || match.index === undefined) return <>{text}</>;
+  const start = match.index;
+  const end = start + match[0].length;
+  return (
+    <>
+      {text.slice(0, start)}
+      <span className="text-accent-500">{text.slice(start, end)}</span>
+      {text.slice(end)}
+    </>
   );
 }
 
@@ -89,19 +107,35 @@ export function Home() {
 
       {/* Hero */}
       {!hiddenSections.has("hero") && (
-        <section className="pb-6 pt-5">
+        <section className="pb-6 pt-4">
+          <div className="px-4">
+            <LocationBar />
+          </div>
+
           {cms.hero.slides && cms.hero.slides.length > 0 && (
-            <div className="mb-4 px-4">
+            <div className="mb-4 mt-4 px-4">
               <HeroCarousel slides={cms.hero.slides} />
             </div>
           )}
 
-          <div className="px-4">
-            <h1 className="font-display text-[24px] font-extrabold leading-tight text-ink dark:text-ink-inverted">
-              {cms.hero.heading}
-            </h1>
-            <p className="mt-2 font-body text-[14px] text-graphite-500">{cms.hero.subheading}</p>
+          <div className="mt-5 flex items-start justify-between gap-3 px-4">
+            <div className="min-w-0 flex-1 pt-1">
+              <h1 className="font-display text-[24px] font-extrabold leading-tight text-ink dark:text-ink-inverted">
+                {cms.hero.heading}
+              </h1>
+              <p className="mt-2 font-body text-[14.5px] leading-snug text-graphite-500">
+                <HighlightSite text={cms.hero.subheading} />
+              </p>
+            </div>
+            <img
+              src="/hero-equipment.png"
+              alt=""
+              aria-hidden="true"
+              className="w-[132px] flex-shrink-0 select-none sm:w-[150px]"
+            />
+          </div>
 
+          <div className="px-4">
             <form onSubmit={handleSearchSubmit} className="mt-4">
               <label htmlFor="home-search" className="sr-only">
                 Search tools
@@ -110,23 +144,43 @@ export function Home() {
                 id="home-search"
                 value={query}
                 onChange={setQuery}
-                placeholder="Search ladders, cutters, motors…"
+                placeholder="Search tools & equipment…"
                 containerClassName="h-12 rounded-full"
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => navigate("/search")}
+                    aria-label="Filters"
+                    className="-mr-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors active:bg-graphite-100 dark:active:bg-graphite-800"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />
+                  </button>
+                }
               />
             </form>
 
             <div className="mt-3 flex gap-2">
               <Button
                 variant="accent"
-                onClick={() => navigate("/enquire")}
-                className="flex-1 rounded-full"
+                size="sm"
+                fullWidth
+                onClick={() => navigate("/products")}
+                className="rounded-full"
               >
-                <span className="inline-flex items-center gap-1.5">
-                  Enquire now
-                  <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  Browse tools
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
                 </span>
               </Button>
-              <CallButton phone={phone} label="Call" className="rounded-full" />
+              <Button
+                variant="outline"
+                size="sm"
+                fullWidth
+                onClick={() => navigate("/request-purchase")}
+                className="rounded-full"
+              >
+                Request purchase
+              </Button>
             </div>
           </div>
         </section>
@@ -209,32 +263,23 @@ export function Home() {
         </div>
       </section>
 
-      {/* Why RenTools — shown as a compact trust/feature bar */}
+      {/* Why RenTools — shown as a compact trust/feature grid */}
       {!hiddenSections.has("why_rentools") && (
-        <section className="mb-7 px-4">
-          <TrustBar />
+        <section className="mb-7">
+          <SectionHeading title="Why RenTools" />
+          <div className="mt-4 px-4">
+            <TrustBar />
+          </div>
         </section>
       )}
 
       {/* How it works */}
       {!hiddenSections.has("how_it_works") && (
-        <section className="mb-7 px-4">
+        <section className="mb-7">
           <SectionHeading title="How it works" />
-          <ol className="mt-3 space-y-3">
-            {cms.how_it_works.steps.map((step, index) => (
-              <li key={step.title} className="flex gap-3">
-                <span className="spec-tag h-6 w-6 flex-shrink-0 items-center justify-center p-0 font-mono text-[12px]">
-                  {index + 1}
-                </span>
-                <div>
-                  <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                    {step.title}
-                  </p>
-                  <p className="font-body text-[13px] text-graphite-500">{step.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-4 px-4">
+            <HowItWorksSteps steps={cms.how_it_works.steps} />
+          </div>
         </section>
       )}
 
@@ -268,8 +313,6 @@ export function Home() {
           </div>
         </section>
       )}
-
-      <FloatingWhatsApp phone={whatsapp} />
     </div>
   );
 }
