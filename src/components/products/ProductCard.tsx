@@ -99,6 +99,16 @@ export function ProductCard({
     </span>
   );
 
+  // Stacked under the price on narrow cards (mobile), but on desktop
+  // (md+, where the card has more horizontal room) it sits inline right
+  // next to the struck-through original price instead.
+  const priceRow = (
+    <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-center md:gap-1.5">
+      {priceLine}
+      {saveBadge}
+    </div>
+  );
+
   // Grayscale the image and stamp "Out of stock" boldly across it — this
   // needs to be unmissable at a glance, since it's the one thing that
   // should stop someone from tapping "Add to enquiry". Smaller badge for
@@ -210,7 +220,10 @@ export function ProductCard({
       onClick={handleRequestTool}
       className="flex h-9 w-full items-center justify-center overflow-hidden rounded border border-graphite-200 bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600 dark:border-graphite-700"
     >
-      Request
+      {/* Desktop cards have the room to spell this out; mobile keeps the
+          short label so it never wraps/overflows the narrow pill. */}
+      <span className="md:hidden">Request</span>
+      <span className="hidden md:inline">Request tool</span>
     </button>
   );
 
@@ -231,7 +244,8 @@ export function ProductCard({
         className="flex h-full flex-1 items-center justify-center gap-1 overflow-hidden bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600"
       >
         <ShoppingCart className="h-3.5 w-3.5 flex-shrink-0" weight="bold" />
-        Add
+        <span className="md:hidden">Add</span>
+        <span className="hidden md:inline">Add to cart</span>
       </button>
     </div>
   );
@@ -308,8 +322,7 @@ export function ProductCard({
             <span className="line-clamp-2 font-body text-[13px] font-medium leading-snug text-ink dark:text-ink-inverted">
               {name}
             </span>
-            {priceLine}
-            {saveBadge}
+            {priceRow}
             {cartControls}
           </div>
         </Card>
@@ -331,8 +344,7 @@ export function ProductCard({
           <span className="truncate font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
             {name}
           </span>
-          {priceLine}
-          {saveBadge}
+          {priceRow}
           {cartControls}
         </div>
       </Card>

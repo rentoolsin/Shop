@@ -545,7 +545,7 @@ export function RentalsList() {
             {pageItems.map((rental) => {
               const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
               return (
-                <Card key={rental.id} className="overflow-hidden p-3">
+                <Card key={rental.id} className="p-3">
                   <div className="flex items-start gap-3">
                     <button
                       type="button"

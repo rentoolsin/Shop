@@ -82,7 +82,7 @@ export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const product = useProduct(id);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
-  const { isSaved, toggle: toggleSaved } = useSavedProducts();
+  const { ids: savedIds, isSaved, toggle: toggleSaved } = useSavedProducts();
   const { addItem, totalItems: cartCount } = useCart();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -233,42 +233,60 @@ export function ProductDetail() {
       <PageHeader
         title={item.name}
         action={
-          <Link
-            to="/cart"
-            aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
-            className="relative mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
-          >
-            <ShoppingCart className="h-5 w-5" weight="regular" />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            )}
-          </Link>
+          <div className="mr-1 flex flex-shrink-0 items-center">
+            <Link
+              to="/cart"
+              aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+            >
+              <ShoppingCart className="h-5 w-5" weight="regular" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Link>
+            {/* Wishlist — separate from the per-product save toggle below;
+                this just jumps to the saved-tools page, same as the cart
+                icon jumps to the cart page. */}
+            <Link
+              to="/saved"
+              aria-label={`Saved tools${savedIds.length > 0 ? ` (${savedIds.length})` : ""}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+            >
+              <Heart className="h-5 w-5" weight="regular" />
+              {savedIds.length > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-accent-500" />
+              )}
+            </Link>
+          </div>
         }
       />
 
-      <ImageCarousel images={galleryImages} alt={item.name} outOfStock={outOfStock} />
+      <div className="relative">
+        <ImageCarousel images={galleryImages} alt={item.name} outOfStock={outOfStock} />
+        {/* Save-this-tool toggle, pinned to the top-right corner of the
+            product image itself rather than sitting in the text block
+            below it. */}
+        <button
+          onClick={() => toggleSaved(item.id)}
+          aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
+          aria-pressed={isSaved(item.id)}
+          className={[
+            "absolute right-3 top-3 z-20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border shadow-raised backdrop-blur-sm transition-all duration-150 ease-app active:scale-90",
+            isSaved(item.id)
+              ? "border-accent-200 bg-white/90 text-accent-500 dark:border-accent-500/30 dark:bg-graphite-900/80"
+              : "border-graphite-200/70 bg-white/90 text-graphite-500 hover:bg-white dark:border-graphite-800/70 dark:bg-graphite-900/80 dark:text-graphite-300",
+          ].join(" ")}
+        >
+          <HeartIcon filled={isSaved(item.id)} />
+        </button>
+      </div>
 
       <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
-            {item.name}
-          </h2>
-          <button
-            onClick={() => toggleSaved(item.id)}
-            aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
-            aria-pressed={isSaved(item.id)}
-            className={[
-              "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-150 ease-app active:scale-90",
-              isSaved(item.id)
-                ? "border-accent-200 bg-accent-50 text-accent-500 dark:border-accent-500/30 dark:bg-accent-500/10"
-                : "border-graphite-200 text-graphite-500 hover:bg-graphite-100 dark:border-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-800",
-            ].join(" ")}
-          >
-            <HeartIcon filled={isSaved(item.id)} />
-          </button>
-        </div>
+        <h2 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
+          {item.name}
+        </h2>
 
         {item.variants.length === 0 && (
           <p className="mt-4 font-body text-[13px] text-graphite-500">
@@ -512,8 +530,23 @@ export function ProductDetail() {
         <DesktopContainer className="py-10">
           <div className="grid grid-cols-2 gap-14">
             {/* Gallery */}
-            <div className="overflow-hidden rounded-lg">
+            <div className="relative overflow-hidden rounded-lg">
               <ImageCarousel images={galleryImages} alt={item.name} outOfStock={outOfStock} />
+              {/* Save-this-tool toggle, pinned to the top-right corner of
+                  the product image itself. */}
+              <button
+                onClick={() => toggleSaved(item.id)}
+                aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
+                aria-pressed={isSaved(item.id)}
+                className={[
+                  "absolute right-4 top-4 z-20 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border shadow-raised backdrop-blur-sm transition-all duration-150 ease-app hover:scale-105",
+                  isSaved(item.id)
+                    ? "border-accent-200 bg-white/90 text-accent-500 dark:border-accent-500/30 dark:bg-graphite-900/80"
+                    : "border-graphite-200/70 bg-white/90 text-graphite-500 hover:bg-white dark:border-graphite-800/70 dark:bg-graphite-900/80 dark:text-graphite-300",
+                ].join(" ")}
+              >
+                <HeartIcon filled={isSaved(item.id)} />
+              </button>
             </div>
 
             {/* Purchase panel */}
@@ -522,19 +555,6 @@ export function ProductDetail() {
                 <h1 className="font-display text-[26px] font-bold leading-tight text-ink dark:text-ink-inverted">
                   {item.name}
                 </h1>
-                <button
-                  onClick={() => toggleSaved(item.id)}
-                  aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
-                  aria-pressed={isSaved(item.id)}
-                  className={[
-                    "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-150 ease-app hover:scale-105",
-                    isSaved(item.id)
-                      ? "border-accent-200 bg-accent-50 text-accent-500 dark:border-accent-500/30 dark:bg-accent-500/10"
-                      : "border-graphite-200 text-graphite-500 hover:bg-graphite-100 dark:border-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-800",
-                  ].join(" ")}
-                >
-                  <HeartIcon filled={isSaved(item.id)} />
-                </button>
               </div>
 
               {item.variants.length === 0 && (
