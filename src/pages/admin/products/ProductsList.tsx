@@ -110,12 +110,19 @@ export function ProductsList() {
     [reordered[index], reordered[swapWith]] = [reordered[swapWith], reordered[index]];
 
     // Renumber sequentially and only push rows whose sort_order actually
-    // changes. Most products share sort_order 0 until the first reorder,
-    // so this also resolves that tie for the whole list, not just the pair
-    // being swapped — see updateProductsSortOrder's docstring.
+    // changes. Must compare each row's new position against *that row's
+    // own* previous sort_order (p.sortOrder) — not against whatever value
+    // used to sit at that array index. Once sort_order values are unique,
+    // a swap makes both rows' new values equal the old value that used to
+    // occupy their new slot, so an index-based comparison filters out both
+    // real changes and no update ever reaches the database. Most products
+    // share sort_order 0 until the first reorder, so this also resolves
+    // that tie for the whole list, not just the pair being swapped — see
+    // updateProductsSortOrder's docstring.
     const changes = reordered
-      .map((p, i) => ({ id: p.id, sortOrder: i }))
-      .filter((change, i) => change.sortOrder !== allItems[i].sortOrder);
+      .map((p, i) => ({ id: p.id, sortOrder: i, prevSortOrder: p.sortOrder }))
+      .filter((change) => change.sortOrder !== change.prevSortOrder)
+      .map(({ id, sortOrder }) => ({ id, sortOrder }));
     if (changes.length === 0) return;
 
     setReorderingId(id);

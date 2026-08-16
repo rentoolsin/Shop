@@ -1,8 +1,9 @@
-import { ClipboardText, Plus, CaretRight } from "@phosphor-icons/react";
+import { ClipboardText, Plus, CaretRight, PencilSimple, Trash } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAdminPurchaseRequests } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
+import { deletePurchaseRequest } from "../../../services/admin-purchase-requests.service";
 import type {
   AdminPurchaseRequest,
   PurchaseRequestPriority,
@@ -17,6 +18,8 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { Pagination } from "../../../components/ui/Pagination";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
+import { useToast } from "../../../components/ui/Toast";
 import { STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL } from "../../../utils/purchase-request-status";
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from "../../../components/ui/Table";
 
@@ -32,11 +35,44 @@ function CalendarIcon() {
   return <ClipboardText className="h-6 w-6" weight="light" />;
 }
 
+/** Small icon-only button for row-level actions (edit / delete). */
+function RowIconButton({
+  label,
+  onClick,
+  variant = "ghost",
+  children,
+}: {
+  label: string;
+  onClick: (e: React.MouseEvent) => void;
+  variant?: "ghost" | "danger";
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={[
+        "inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded transition-colors duration-150 ease-app",
+        variant === "danger"
+          ? "text-graphite-400 hover:bg-state-danger/10 hover:text-state-danger-text dark:hover:text-state-danger-text-dark"
+          : "text-graphite-400 hover:bg-graphite-100 hover:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted",
+      ].join(" ")}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function PurchaseRequestsList() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | PurchaseRequestStatus>("all");
+  const [deleteTarget, setDeleteTarget] = useState<AdminPurchaseRequest | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setQuery(input), DEBOUNCE_MS);
@@ -59,6 +95,21 @@ export function PurchaseRequestsList() {
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(rows, {
     resetKey: `${query}-${statusFilter}`,
   });
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deletePurchaseRequest(deleteTarget.id);
+      showToast("Purchase request deleted.", "success");
+      setDeleteTarget(null);
+      requests.refetch();
+    } catch {
+      showToast("Couldn't delete this request. Try again.", "danger");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div>
@@ -130,18 +181,23 @@ export function PurchaseRequestsList() {
           {/* Mobile: stacked cards */}
           <div className="space-y-2 md:hidden">
             {pageItems.map((request) => (
-              <Link key={request.id} to={`/admin/purchase-requests/${request.id}`}>
-                <Card interactive className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                        {request.productRequested}
-                      </p>
-                      <p className="font-mono text-[12px] text-graphite-400">
-                        {request.customerName ?? request.requesterName ?? request.mobile ?? "No contact on file"}
-                      </p>
-                    </div>
-                    <div className="flex flex-shrink-0 flex-col items-end gap-1">
+              <Card
+                key={request.id}
+                interactive
+                className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700"
+                onClick={() => navigate(`/admin/purchase-requests/${request.id}`)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                      {request.productRequested}
+                    </p>
+                    <p className="font-mono text-[12px] text-graphite-400">
+                      {request.customerName ?? request.requesterName ?? request.mobile ?? "No contact on file"}
+                    </p>
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-1">
+                    <div className="flex flex-col items-end gap-1">
                       <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
                       {request.priority !== "normal" && (
                         <StatusBadge
@@ -150,14 +206,33 @@ export function PurchaseRequestsList() {
                         />
                       )}
                     </div>
+                    <Link
+                      to={`/admin/purchase-requests/${request.id}/edit`}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Edit purchase request"
+                      title="Edit purchase request"
+                      className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-graphite-400 transition-colors duration-150 ease-app hover:bg-graphite-100 hover:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
+                    >
+                      <PencilSimple className="h-4 w-4" weight="light" />
+                    </Link>
+                    <RowIconButton
+                      label="Delete purchase request"
+                      variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(request);
+                      }}
+                    >
+                      <Trash className="h-4 w-4" weight="light" />
+                    </RowIconButton>
                   </div>
-                  {request.quantity && (
-                    <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                      Qty {request.quantity}
-                    </p>
-                  )}
-                </Card>
-              </Link>
+                </div>
+                {request.quantity && (
+                  <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
+                    Qty {request.quantity}
+                  </p>
+                )}
+              </Card>
             ))}
           </div>
 
@@ -170,7 +245,7 @@ export function PurchaseRequestsList() {
                 <TableHeaderCell>Qty</TableHeaderCell>
                 <TableHeaderCell>Priority</TableHeaderCell>
                 <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell aria-label="Open" />
+                <TableHeaderCell aria-label="Actions" className="w-24" />
               </TableHead>
               <TableBody>
                 {pageItems.map((request) => (
@@ -199,8 +274,29 @@ export function PurchaseRequestsList() {
                     <TableCell>
                       <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
                     </TableCell>
-                    <TableCell className="w-8">
-                      <CaretRight className="h-4 w-4 text-graphite-300" weight="light" aria-hidden="true" />
+                    <TableCell className="w-24">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <Link
+                          to={`/admin/purchase-requests/${request.id}/edit`}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Edit purchase request"
+                          title="Edit purchase request"
+                          className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-graphite-400 transition-colors duration-150 ease-app hover:bg-graphite-100 hover:text-ink dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
+                        >
+                          <PencilSimple className="h-4 w-4" weight="light" />
+                        </Link>
+                        <RowIconButton
+                          label="Delete purchase request"
+                          variant="danger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(request);
+                          }}
+                        >
+                          <Trash className="h-4 w-4" weight="light" />
+                        </RowIconButton>
+                        <CaretRight className="h-4 w-4 text-graphite-300" weight="light" aria-hidden="true" />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -225,6 +321,19 @@ export function PurchaseRequestsList() {
           </Button>
         </p>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete purchase request?"
+        description={
+          deleteTarget
+            ? `The request for "${deleteTarget.productRequested}" will be permanently removed.`
+            : undefined
+        }
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }
