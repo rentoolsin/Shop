@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAdminProduct, useAdminCategories } from "../../../hooks/useAdminData";
 import {
@@ -52,6 +52,7 @@ export function ProductForm() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (existing.status === "success" && existing.data) {
@@ -60,6 +61,12 @@ export function ProductForm() {
       setSlugTouched(true);
     }
   }, [existing.status, existing.data]);
+
+  // New product (not editing an existing one): put the cursor in Name
+  // as soon as the page is ready, same as the customer form.
+  useEffect(() => {
+    if (!isEdit) nameRef.current?.focus();
+  }, [isEdit]);
 
   if (isEdit && existing.status === "loading") return <LoadingState label="Loading product…" />;
   if (isEdit && existing.status === "error") {
@@ -144,7 +151,7 @@ export function ProductForm() {
         {isEdit ? "Edit product" : "New product"}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <Input label="Name" value={values.name} onChange={(e) => handleNameChange(e.target.value)} error={errors.name} />
+        <Input ref={nameRef} label="Name" value={values.name} onChange={(e) => handleNameChange(e.target.value)} error={errors.name} />
         <Input
           label="Slug"
           value={values.slug}

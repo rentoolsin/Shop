@@ -177,6 +177,7 @@ export function RentalForm({
             onChange={setCustomer}
             initialQuery={initialCustomerQuery}
             initialName={initialCustomerName}
+            autoFocus
           />
           {errors.customer && (
             <span className="mt-1 block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{errors.customer}</span>

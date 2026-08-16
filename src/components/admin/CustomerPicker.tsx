@@ -24,6 +24,8 @@ interface CustomerPickerProps {
   initialQuery?: string;
   /** Pre-fills the name field if the admin ends up creating a new customer. */
   initialName?: string;
+  /** Puts the cursor in the mobile search box as soon as it mounts (no-op once a customer is already selected). */
+  autoFocus?: boolean;
 }
 
 /**
@@ -32,7 +34,13 @@ interface CustomerPickerProps {
  * Kept generic (not rental-specific) — reused as-is for enquiry → rental
  * conversion (see EnquiryDetail.tsx) via `initialQuery`/`initialName`.
  */
-export function CustomerPicker({ value, onChange, initialQuery, initialName }: CustomerPickerProps) {
+export function CustomerPicker({
+  value,
+  onChange,
+  initialQuery,
+  initialName,
+  autoFocus,
+}: CustomerPickerProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [debounced, setDebounced] = useState(initialQuery ?? "");
   const [results, setResults] = useState<AdminCustomer[]>([]);
@@ -153,6 +161,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by mobile number"
         hint={!creating ? "Type a few digits to find an existing customer." : undefined}
+        autoFocus={autoFocus}
       />
 
       {searching && (
