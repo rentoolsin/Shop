@@ -1,4 +1,4 @@
-import { Calendar, CaretRight, Plus, ArrowsClockwise } from "@phosphor-icons/react";
+import { Calendar, Plus, ArrowsClockwise, PencilSimple, DotsThreeVertical, CheckCircle } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminRentals, useAdminRentalPayments } from "../../../hooks/useAdminData";
@@ -37,6 +37,7 @@ import { Input } from "../../../components/ui/Input";
 import { Select } from "../../../components/ui/Select";
 import { Pagination } from "../../../components/ui/Pagination";
 import { useToast } from "../../../components/ui/Toast";
+import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from "../../../components/ui/Table";
 
 const STATUS_LABEL: Record<RentalDisplayStatus, string> = {
   active: "Active",
@@ -72,8 +73,16 @@ function RefreshIcon({ spinning }: { spinning?: boolean }) {
   );
 }
 
-function ChevronRightIcon() {
-  return <CaretRight className="h-4 w-4 flex-shrink-0 text-graphite-300" weight="light" aria-hidden="true" />;
+function PencilIcon() {
+  return <PencilSimple className="h-4 w-4" weight="light" aria-hidden="true" />;
+}
+
+function MoreIcon() {
+  return <DotsThreeVertical className="h-4 w-4" weight="regular" aria-hidden="true" />;
+}
+
+function CheckCircleIcon() {
+  return <CheckCircle className="h-4 w-4" weight="light" aria-hidden="true" />;
 }
 
 /** Friendly display reference for a rental — derived from the real record id, never invented. */
@@ -96,6 +105,10 @@ export function RentalsList() {
   const [savingExtend, setSavingExtend] = useState(false);
 
   const [returning, setReturning] = useState<Row | null>(null);
+  const [returnAmount, setReturnAmount] = useState("");
+  const [returnMethod, setReturnMethod] = useState<PaymentMethod>("cash");
+  const [returnNotes, setReturnNotes] = useState("");
+  const [returnError, setReturnError] = useState<string | null>(null);
   const [savingReturn, setSavingReturn] = useState(false);
 
   const [cancelling, setCancelling] = useState<Row | null>(null);
@@ -126,6 +139,11 @@ export function RentalsList() {
 
   const [syncing, setSyncing] = useState(false);
 
+  // Overflow ("...") menu on each mobile card — same pattern as ProductsList,
+  // so the less-common per-row actions (Extend, Cancel, Delete) don't need
+  // their own always-visible buttons.
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
   const data = useMemo(() => (rentals.status === "success" ? rentals.data : []), [rentals]);
 
   const rows: Row[] = useMemo(() => {
@@ -153,11 +171,37 @@ export function RentalsList() {
     return fresh ? { ...fresh, displayStatus: deriveDisplayStatus(fresh.status, fresh.returnDate) } : viewing;
   }, [viewing, data]);
 
+  // `advance` is a single running total that can also be edited directly
+  // (Edit/Extend forms, as a deliberate manual override — see
+  // 0020_rental_payments.sql). The itemized list below only reflects
+  // amounts logged through "Record a payment", so the two can legitimately
+  // differ (e.g. an advance taken before this feature existed, or a manual
+  // correction). Surface that gap instead of leaving the balance math
+  // silently unexplained against what's listed.
+  const unitemizedAdvance = useMemo(() => {
+    if (!viewingLive || payments.status !== "success") return 0;
+    const itemized = payments.data.reduce((sum, p) => sum + p.amount, 0);
+    const gap = Math.round((viewingLive.advance - itemized) * 100) / 100;
+    return gap > 0 ? gap : 0;
+  }, [viewingLive, payments]);
+
   const startExtend = (row: Row) => {
     setExtending(row);
     setExtendReturnDate(row.returnDate);
     setExtendAdvance(row.advance);
     setExtendError(null);
+  };
+
+  // Pre-fill with the outstanding balance so the common case — customer
+  // settles up in full when they bring the tool back — is just "confirm",
+  // while still letting the admin change or zero it out for partial /
+  // no-payment returns.
+  const startReturn = (row: Row) => {
+    setReturning(row);
+    setReturnAmount(row.balance > 0 ? String(row.balance) : "");
+    setReturnMethod("cash");
+    setReturnNotes("");
+    setReturnError(null);
   };
 
   const extendTotals = extending
@@ -197,18 +241,48 @@ export function RentalsList() {
   };
 
   const handleReturnConfirm = async () => {
-    if (!returning) return;
+    if (!returning || savingReturn) return;
+    const trimmed = returnAmount.trim();
+    const amount = trimmed === "" ? 0 : Number(trimmed);
+    if (Number.isNaN(amount) || amount < 0) {
+      setReturnError("Enter a valid amount, or leave it blank if nothing was collected.");
+      return;
+    }
+    setReturnError(null);
     setSavingReturn(true);
     try {
       await returnRental(returning.id);
-      showToast("Rental marked as returned.", "success");
-      setReturning(null);
-      rentals.refetch();
     } catch {
-      showToast("Couldn't update this rental. Try again.", "danger");
-    } finally {
+      setReturnError("Couldn't mark this rental as returned. Try again.");
       setSavingReturn(false);
+      return;
     }
+    if (amount > 0) {
+      try {
+        await recordRentalPayment({
+          rentalId: returning.id,
+          amount,
+          paymentDate: new Date().toISOString().slice(0, 10),
+          method: returnMethod,
+          notes: returnNotes.trim() || "Collected at return",
+        });
+        showToast(`Rental marked returned — ${formatCurrency(amount)} recorded.`, "success");
+      } catch {
+        // Status update already succeeded — don't tell the admin the whole
+        // action failed, or they may retry "Mark returned" on an already-
+        // returned rental. Surface the payment failure on its own so they
+        // know to add it manually instead.
+        showToast(
+          "Rental marked as returned, but the payment couldn't be recorded — add it from the rental's details.",
+          "danger",
+        );
+      }
+    } else {
+      showToast("Rental marked as returned.", "success");
+    }
+    setReturning(null);
+    rentals.refetch();
+    setSavingReturn(false);
   };
 
   const handleCancelConfirm = async () => {
@@ -466,35 +540,44 @@ export function RentalsList() {
             </span>
           </div>
 
-          <div className="space-y-3">
+          {/* Mobile / tablet: stacked cards */}
+          <div className="space-y-3 md:hidden">
             {pageItems.map((rental) => {
               const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
               return (
                 <Card key={rental.id} className="overflow-hidden p-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3">
                     <button
                       type="button"
                       onClick={() => setViewing(rental)}
                       aria-label={`View details for ${rental.productName}`}
-                      className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800"
+                      className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800"
                     >
                       {rental.productImageUrl ? (
                         <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <span className="font-display text-[16px] text-graphite-400">
+                        <span className="font-display text-[14px] text-graphite-400">
                           {rental.productName.charAt(0)}
                         </span>
                       )}
                     </button>
 
                     <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setViewing(rental)}
-                        className="block truncate text-left font-display text-[14.5px] font-bold uppercase tracking-tight text-ink hover:underline dark:text-ink-inverted"
-                      >
-                        {rental.productName}
-                      </button>
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setViewing(rental)}
+                          className="block min-w-0 truncate text-left font-display text-[14px] font-bold uppercase tracking-tight text-ink hover:underline dark:text-ink-inverted"
+                        >
+                          {rental.productName}
+                        </button>
+                        <span className="flex-shrink-0">
+                          <StatusBadge
+                            label={STATUS_LABEL[rental.displayStatus]}
+                            tone={STATUS_TONE[rental.displayStatus]}
+                          />
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setViewing(rental)}
@@ -502,22 +585,18 @@ export function RentalsList() {
                       >
                         {rentalReference(rental.id)}
                       </button>
-                      <p className="mt-0.5 flex items-center gap-1 font-body text-[12px] text-graphite-500">
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        {rental.startDate} → {rental.returnDate}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
-                      <StatusBadge
-                        label={STATUS_LABEL[rental.displayStatus]}
-                        tone={STATUS_TONE[rental.displayStatus]}
-                      />
-                      <ChevronRightIcon />
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between border-t border-graphite-100 pt-3 font-mono text-[12.5px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
+                  {/* Full card width now — no longer squeezed by the header
+                      row's status/chevron column, which is what was
+                      wrapping the date range mid-word on narrow phones. */}
+                  <p className="mt-2 flex items-center gap-1 font-body text-[12px] text-graphite-500">
+                    <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                    {rental.startDate} → {rental.returnDate}
+                  </p>
+
+                  <div className="mt-2 flex items-center justify-between border-t border-graphite-100 pt-2.5 font-mono text-[12.5px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
                     <span className="truncate text-graphite-500">
                       {rental.customerName} · {rental.customerMobile}
                     </span>
@@ -526,41 +605,184 @@ export function RentalsList() {
                     </span>
                   </div>
 
-                  {actionable && (
-                    <div className="mt-3 flex flex-wrap gap-2 border-t border-graphite-100 pt-3 dark:border-graphite-800">
-                      <Button variant="secondary" size="sm" onClick={() => startExtend(rental)}>
-                        Extend
-                      </Button>
-                      <Button variant="secondary" size="sm" onClick={() => setReturning(rental)}>
+                  {/* Same compact "primary actions + overflow menu" language
+                      as ProductsList: at most one contextual primary
+                      button, an always-present Edit icon, and everything
+                      else (Extend, Cancel, Delete) tucked behind "...". */}
+                  <div className="mt-2.5 flex items-center justify-end gap-1 border-t border-graphite-100 pt-2.5 dark:border-graphite-800">
+                    {actionable && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => startReturn(rental)}
+                        className="mr-auto"
+                      >
+                        <CheckCircleIcon />
                         Mark returned
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-state-danger-text dark:text-state-danger-text-dark"
-                        onClick={() => setCancelling(rental)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex flex-wrap gap-2 border-t border-graphite-100 pt-3 dark:border-graphite-800">
-                    <Button variant="secondary" size="sm" onClick={() => startEdit(rental)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-state-danger-text dark:text-state-danger-text-dark"
-                      onClick={() => setDeleting(rental)}
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => startEdit(rental)}
+                      aria-label={`Edit rental for ${rental.customerName}`}
+                      className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
                     >
-                      Delete
-                    </Button>
+                      <PencilIcon />
+                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        aria-label={`More actions for ${rental.customerName}'s rental`}
+                        onClick={() => setOpenMenuId((id) => (id === rental.id ? null : rental.id))}
+                        className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                      >
+                        <MoreIcon />
+                      </button>
+                      {openMenuId === rental.id && (
+                        <>
+                          <button
+                            type="button"
+                            aria-label="Close menu"
+                            className="fixed inset-0 z-10 cursor-default"
+                            onClick={() => setOpenMenuId(null)}
+                          />
+                          <div className="absolute right-0 top-10 z-20 w-40 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
+                            {actionable && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  startExtend(rental);
+                                }}
+                                className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+                              >
+                                Extend
+                              </button>
+                            )}
+                            {actionable && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setCancelling(rental);
+                                }}
+                                className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
+                              >
+                                Cancel rental
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setDeleting(rental);
+                              }}
+                              className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </Card>
               );
             })}
+          </div>
+
+          {/* Desktop: dense table — same data, no per-card chrome so a full
+              page of rentals reads at a glance instead of scrolling through
+              stacked phone-width cards. */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHead>
+                <TableHeaderCell>Product</TableHeaderCell>
+                <TableHeaderCell>Customer</TableHeaderCell>
+                <TableHeaderCell>Dates</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Balance</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableHead>
+              <TableBody>
+                {pageItems.map((rental) => {
+                  const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
+                  return (
+                    <TableRow key={rental.id}>
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={() => setViewing(rental)}
+                          className="flex min-w-0 items-center gap-3 text-left"
+                        >
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800">
+                            {rental.productImageUrl ? (
+                              <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="font-display text-[13px] text-graphite-400">
+                                {rental.productName.charAt(0)}
+                              </span>
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-display text-[13px] font-bold uppercase tracking-tight text-ink hover:underline dark:text-ink-inverted">
+                              {rental.productName}
+                            </span>
+                            <span className="block font-mono text-[11px] text-graphite-400">
+                              {rentalReference(rental.id)}
+                              {rental.variantLabel ? ` · ${rental.variantLabel}` : ""}
+                            </span>
+                          </span>
+                        </button>
+                      </TableCell>
+                      <TableCell>
+                        <span className="block text-ink dark:text-ink-inverted">{rental.customerName}</span>
+                        <span className="block font-mono text-[11.5px] text-graphite-400">{rental.customerMobile}</span>
+                      </TableCell>
+                      <TableCell className="font-mono text-[12px] text-graphite-500 whitespace-nowrap">
+                        {rental.startDate} → {rental.returnDate}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          label={STATUS_LABEL[rental.displayStatus]}
+                          tone={STATUS_TONE[rental.displayStatus]}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right font-mono whitespace-nowrap">
+                        <span className={rental.balance > 0 ? "font-semibold" : "text-graphite-500"}>
+                          {formatCurrency(rental.balance)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-wrap items-center justify-end gap-1.5">
+                          {actionable && (
+                            <>
+                              <Button variant="ghost" size="sm" onClick={() => startExtend(rental)}>
+                                Extend
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => startReturn(rental)}>
+                                Return
+                              </Button>
+                            </>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => startEdit(rental)}>
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-state-danger-text dark:text-state-danger-text-dark"
+                            onClick={() => (actionable ? setCancelling(rental) : setDeleting(rental))}
+                          >
+                            {actionable ? "Cancel" : "Delete"}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         </>
       )}
@@ -575,7 +797,7 @@ export function RentalsList() {
         />
       )}
 
-      <Modal open={!!extending} onClose={() => setExtending(null)} title="Extend rental">
+      <Modal open={!!extending} onClose={() => setExtending(null)} title="Extend rental" size="md">
         {extending && (
           <div className="space-y-3">
             <p className="font-body text-[13px] text-graphite-500">
@@ -593,7 +815,7 @@ export function RentalsList() {
               min={0}
               value={extendAdvance}
               onChange={(e) => setExtendAdvance(Number(e.target.value))}
-              hint="Update this if the customer paid more advance at extension."
+              hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
             />
             {extendTotals && (
               <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
@@ -622,7 +844,7 @@ export function RentalsList() {
         )}
       </Modal>
 
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit rental">
+      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit rental" size="md">
         {editing && (
           <div className="space-y-3">
             <p className="font-body text-[13px] text-graphite-500">
@@ -665,6 +887,7 @@ export function RentalsList() {
               min={0}
               value={editAdvance}
               onChange={(e) => setEditAdvance(Number(e.target.value))}
+              hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
             />
             {editTotals && (
               <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
@@ -693,7 +916,7 @@ export function RentalsList() {
         )}
       </Modal>
 
-      <Modal open={!!viewing} onClose={() => setViewing(null)} title="Rental details">
+      <Modal open={!!viewing} onClose={() => setViewing(null)} title="Rental details" size="lg">
         {viewingLive && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -718,60 +941,72 @@ export function RentalsList() {
               </div>
             </div>
 
-            <div className="space-y-1.5 rounded border border-graphite-200 p-3 font-body text-[13px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Customer</span>
-                <span>{viewingLive.customerName}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Mobile</span>
-                <span className="font-mono">{viewingLive.customerMobile}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Size / variant</span>
-                <span>{viewingLive.variantLabel || "—"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Quantity</span>
-                <span>{viewingLive.quantity}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Start date</span>
-                <span>{viewingLive.startDate}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Return date</span>
-                <span>{viewingLive.returnDate}</span>
-              </div>
-              {viewingLive.actualReturnDate && (
+            {/* Info + totals sit stacked on phones, side by side from md: up —
+                the "lg" modal width gives them room to breathe instead of
+                one long single column of rows. */}
+            <div className="space-y-4 md:grid md:grid-cols-2 md:items-start md:gap-3 md:space-y-0">
+              <div className="space-y-1.5 rounded border border-graphite-200 p-3 font-body text-[13px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
-                  <span className="text-graphite-500">Actually returned</span>
-                  <span>{viewingLive.actualReturnDate}</span>
+                  <span className="text-graphite-500">Customer</span>
+                  <span>{viewingLive.customerName}</span>
                 </div>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-graphite-500">Daily rate</span>
-                <span>{formatCurrency(viewingLive.dailyRate)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Mobile</span>
+                  <span className="font-mono">{viewingLive.customerMobile}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Size / variant</span>
+                  <span>{viewingLive.variantLabel || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Quantity</span>
+                  <span>{viewingLive.quantity}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Start date</span>
+                  <span>{viewingLive.startDate}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Return date</span>
+                  <span>{viewingLive.returnDate}</span>
+                </div>
+                {viewingLive.actualReturnDate && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-graphite-500">Actually returned</span>
+                    <span>{viewingLive.actualReturnDate}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Daily rate</span>
+                  <span>{formatCurrency(viewingLive.dailyRate)}</span>
+                </div>
               </div>
-            </div>
 
-            <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
-              <div className="flex items-center justify-between">
-                <span>Total rental</span>
-                <span>{formatCurrency(viewingLive.totalRental)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Advance / paid so far</span>
-                <span>{formatCurrency(viewingLive.advance)}</span>
-              </div>
-              <div className="mt-1 flex items-center justify-between font-semibold">
-                <span>Balance due</span>
-                <span>{formatCurrency(viewingLive.balance)}</span>
+              <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+                <div className="flex items-center justify-between">
+                  <span>Total rental</span>
+                  <span>{formatCurrency(viewingLive.totalRental)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Advance / paid so far</span>
+                  <span>{formatCurrency(viewingLive.advance)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between font-semibold">
+                  <span>Balance due</span>
+                  <span>{formatCurrency(viewingLive.balance)}</span>
+                </div>
               </div>
             </div>
 
             <div className="space-y-2 border-t border-graphite-200 pt-4 dark:border-graphite-800">
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
+
+              {unitemizedAdvance > 0 && (
+                <p className="rounded border border-graphite-200 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-graphite-800 dark:bg-graphite-800/60 dark:text-graphite-400">
+                  {formatCurrency(unitemizedAdvance)} of the advance isn't itemized below — likely entered directly
+                  via Edit/Extend rather than "Record a payment".
+                </p>
+              )}
 
               {payments.status === "loading" && (
                 <div className="space-y-1.5">
@@ -816,7 +1051,7 @@ export function RentalsList() {
 
               <div className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800">
                 <p className="font-body text-[12px] font-medium text-graphite-500">Record a payment</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <Input
                     label="Amount (₹)"
                     type="number"
@@ -830,24 +1065,28 @@ export function RentalsList() {
                     value={payDate}
                     onChange={(e) => setPayDate(e.target.value)}
                   />
+                  <div className="col-span-2 md:col-span-1">
+                    <Select
+                      label="Method"
+                      value={payMethod}
+                      onChange={(e) => setPayMethod(e.target.value as PaymentMethod)}
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="upi">UPI</option>
+                      <option value="card">Card</option>
+                      <option value="bank_transfer">Bank transfer</option>
+                      <option value="other">Other</option>
+                    </Select>
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                    <Input
+                      label="Note (optional)"
+                      value={payNotes}
+                      onChange={(e) => setPayNotes(e.target.value)}
+                      placeholder="e.g. Paid after return"
+                    />
+                  </div>
                 </div>
-                <Select
-                  label="Method"
-                  value={payMethod}
-                  onChange={(e) => setPayMethod(e.target.value as PaymentMethod)}
-                >
-                  <option value="cash">Cash</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
-                  <option value="bank_transfer">Bank transfer</option>
-                  <option value="other">Other</option>
-                </Select>
-                <Input
-                  label="Note (optional)"
-                  value={payNotes}
-                  onChange={(e) => setPayNotes(e.target.value)}
-                  placeholder="e.g. Paid after return"
-                />
                 {payError && (
                   <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{payError}</p>
                 )}
@@ -900,19 +1139,62 @@ export function RentalsList() {
         loading={savingDelete}
       />
 
-      <ConfirmDialog
-        open={!!returning}
-        title="Mark as returned?"
-        description={
-          returning
-            ? `${returning.productName} (${returning.variantLabel}) from ${returning.customerName} will be marked returned today and its stock released.`
-            : undefined
-        }
-        confirmLabel="Mark returned"
-        onConfirm={handleReturnConfirm}
-        onCancel={() => setReturning(null)}
-        loading={savingReturn}
-      />
+      <Modal open={!!returning} onClose={() => setReturning(null)} title="Mark as returned" size="md">
+        {returning && (
+          <div className="space-y-3">
+            <p className="font-body text-[13px] text-graphite-500">
+              {returning.productName} ({returning.variantLabel}) from {returning.customerName} — stock will be
+              released and today's date recorded as the return date.
+            </p>
+
+            <div className="flex items-center justify-between rounded border border-graphite-300 bg-graphite-100 px-3 py-2 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+              <span>Balance due</span>
+              <span className="font-semibold">{formatCurrency(returning.balance)}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Amount collected now (₹)"
+                type="number"
+                min={0}
+                value={returnAmount}
+                onChange={(e) => setReturnAmount(e.target.value)}
+                hint="Leave blank or 0 if nothing was paid at return."
+              />
+              <Select
+                label="Method"
+                value={returnMethod}
+                onChange={(e) => setReturnMethod(e.target.value as PaymentMethod)}
+              >
+                <option value="cash">Cash</option>
+                <option value="upi">UPI</option>
+                <option value="card">Card</option>
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="other">Other</option>
+              </Select>
+            </div>
+            <Input
+              label="Note (optional)"
+              value={returnNotes}
+              onChange={(e) => setReturnNotes(e.target.value)}
+              placeholder="e.g. Paid in full at return"
+            />
+
+            {returnError && (
+              <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{returnError}</p>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="secondary" fullWidth onClick={() => setReturning(null)} disabled={savingReturn}>
+                Cancel
+              </Button>
+              <Button fullWidth onClick={handleReturnConfirm} disabled={savingReturn}>
+                {savingReturn ? "Saving…" : "Mark returned"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <ConfirmDialog
         open={!!cancelling}
