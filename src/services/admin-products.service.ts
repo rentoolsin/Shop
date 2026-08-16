@@ -307,6 +307,18 @@ export async function updateProductsSortOrder(updates: ProductOrderUpdate[]): Pr
   if (failed?.error) throw failed.error;
 }
 
+/**
+ * Moves a product to a different category — used by the products board's
+ * drag-between-columns interaction. A focused single-column update rather
+ * than routing through `updateProduct`'s full save RPC, since a board drag
+ * only ever changes `category_id` (and, alongside it, `sort_order` via
+ * `updateProductsSortOrder`), never the rest of the product's fields.
+ */
+export async function updateProductCategory(id: string, categoryId: string): Promise<void> {
+  const { error } = await supabase.from("products").update({ category_id: categoryId }).eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteVariant(variantId: string): Promise<void> {
   const { error } = await supabase.from("product_variants").delete().eq("id", variantId);
   if (error) throw error;

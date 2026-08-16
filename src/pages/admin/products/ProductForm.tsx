@@ -89,8 +89,17 @@ export function ProductForm() {
     }));
   };
 
+  // New variants start as a copy of the last one instead of a blank row —
+  // most products' variants only differ by a couple of fields (e.g. size
+  // and rate), so prefilling from whatever was just entered means the admin
+  // edits two fields instead of retyping five. `id: null` is what marks it
+  // as a new row to save, same as emptyVariant().
   const addVariant = () => {
-    setValues((v) => ({ ...v, variants: [...v.variants, emptyVariant()] }));
+    setValues((v) => {
+      const last = v.variants[v.variants.length - 1];
+      const next: AdminVariant = last ? { ...last, id: null } : emptyVariant();
+      return { ...v, variants: [...v.variants, next] };
+    });
   };
 
   const removeVariant = (index: number) => {
@@ -150,7 +159,7 @@ export function ProductForm() {
       <h1 className="mb-4 font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
         {isEdit ? "Edit product" : "New product"}
       </h1>
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-4 pb-4" noValidate>
         <Input ref={nameRef} label="Name" value={values.name} onChange={(e) => handleNameChange(e.target.value)} error={errors.name} />
         <Input
           label="Slug"
@@ -276,7 +285,11 @@ export function ProductForm() {
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
+        {/* Sticky so Cancel/Save stay reachable while scrolling a long
+            variants list — sits above the mobile bottom tab bar (bottom-16)
+            and flush with the bottom of the viewport once that bar is
+            hidden at md+. */}
+        <div className="sticky bottom-16 z-10 -mx-4 flex gap-2 border-t border-graphite-200 bg-white/95 px-4 py-3 pb-safe-b backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95 sm:-mx-6 sm:px-6 md:bottom-0 lg:-mx-8 lg:px-8">
           <Button variant="secondary" fullWidth type="button" onClick={() => navigate("/admin/products")}>
             Cancel
           </Button>

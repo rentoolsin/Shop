@@ -3,8 +3,11 @@ import {
   CaretUp,
   DotsSixVertical,
   DotsThreeVertical,
+  ListBullets,
   PencilSimple,
   Plus,
+  SquaresFour,
+  Trash,
   Wrench,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +19,7 @@ import {
   updateProductsSortOrder,
   type AdminProductListItem,
 } from "../../../services/admin-products.service";
+import { ProductsBoard } from "./ProductsBoard";
 import { formatCurrency } from "../../../utils/currency";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
@@ -40,6 +44,10 @@ function PencilIcon() {
 
 function MoreIcon() {
   return <DotsThreeVertical className="h-4 w-4" weight="regular" />;
+}
+
+function TrashIcon() {
+  return <Trash className="h-4 w-4" weight="light" />;
 }
 
 // Long-press must clearly beat an ordinary tap/scroll gesture before a drag
@@ -133,6 +141,7 @@ export function ProductsList() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [view, setView] = useState<"list" | "board">("list");
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOrderIds, setDragOrderIds] = useState<string[] | null>(null);
@@ -357,13 +366,47 @@ export function ProductsList() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
           Products
         </h1>
-        <Link to="/admin/products/new">
-          <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New product</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex overflow-hidden rounded-lg border border-graphite-200 dark:border-graphite-800">
+            <button
+              type="button"
+              aria-pressed={view === "list"}
+              aria-label="List view"
+              onClick={() => setView("list")}
+              className={[
+                "flex items-center gap-1.5 px-3 py-1.5 font-body text-[13px] font-medium transition-colors duration-150",
+                view === "list"
+                  ? "bg-ink text-ink-inverted dark:bg-ink-inverted dark:text-ink"
+                  : "text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800",
+              ].join(" ")}
+            >
+              <ListBullets className="h-4 w-4" weight={view === "list" ? "fill" : "regular"} aria-hidden="true" />
+              <span className="hidden sm:inline">List</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === "board"}
+              aria-label="Board view"
+              onClick={() => setView("board")}
+              className={[
+                "flex items-center gap-1.5 border-l border-graphite-200 px-3 py-1.5 font-body text-[13px] font-medium transition-colors duration-150 dark:border-graphite-800",
+                view === "board"
+                  ? "bg-ink text-ink-inverted dark:bg-ink-inverted dark:text-ink"
+                  : "text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800",
+              ].join(" ")}
+            >
+              <SquaresFour className="h-4 w-4" weight={view === "board" ? "fill" : "regular"} aria-hidden="true" />
+              <span className="hidden sm:inline">Board</span>
+            </button>
+          </div>
+          <Link to="/admin/products/new">
+            <Button size="sm"><Plus className="h-4 w-4" weight="regular" aria-hidden="true" />New product</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
@@ -373,16 +416,18 @@ export function ProductsList() {
           placeholder="Search by name or category"
           aria-label="Search by name or category"
         />
-        <Select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="sm:w-44"
-        >
-          <option value="all">All categories</option>
-          {categoryList.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </Select>
+        {view === "list" && (
+          <Select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="sm:w-44"
+          >
+            <option value="all">All categories</option>
+            {categoryList.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
+        )}
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
@@ -394,10 +439,23 @@ export function ProductsList() {
         </Select>
       </div>
 
-      {!naturalOrder && products.status === "success" && allItems.length > 0 && (
+      {view === "list" && !naturalOrder && products.status === "success" && allItems.length > 0 && (
         <p className="mb-3 font-body text-[12px] text-graphite-400">
           Clear the search and filters to reorder products — this is also the order they'll appear in on the home page.
         </p>
+      )}
+
+      {view === "board" && products.status === "success" && allItems.length > 0 && (
+        <ProductsBoard
+          allItems={allItems}
+          categoryList={categoryList}
+          search={search}
+          statusFilter={statusFilter}
+          onRefetch={products.refetch}
+          showToast={showToast}
+          onDelete={(productId, name) => setPendingDelete({ id: productId, name })}
+          onView={(productId) => setViewingId(productId)}
+        />
       )}
 
       {products.status === "loading" && (
@@ -425,7 +483,7 @@ export function ProductsList() {
         />
       )}
 
-      {products.status === "success" && allItems.length > 0 && items.length === 0 && (
+      {view === "list" && products.status === "success" && allItems.length > 0 && items.length === 0 && (
         <EmptyState
           icon={<BoxIcon />}
           title="No products matched"
@@ -433,7 +491,7 @@ export function ProductsList() {
         />
       )}
 
-      {products.status === "success" && items.length > 0 && (
+      {view === "list" && products.status === "success" && items.length > 0 && (
         <div className="space-y-2 sm:hidden">
           {displayItems.map((product, i) => (
             <Card
@@ -491,44 +549,22 @@ export function ProductsList() {
                     variant{product.variantCount === 1 ? "" : "s"}
                   </p>
                 </div>
-                <div className="relative flex-shrink-0">
-                  <button
-                    type="button"
-                    aria-label={`More actions for ${product.name}`}
-                    onClick={() => setOpenMenuId((id) => (id === product.id ? null : product.id))}
+                <div className="flex flex-shrink-0 items-center gap-1">
+                  <Link
+                    to={`/admin/products/${product.id}/edit`}
+                    aria-label={`Edit ${product.name}`}
                     className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
                   >
-                    <MoreIcon />
+                    <PencilIcon />
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${product.name}`}
+                    onClick={() => setPendingDelete({ id: product.id, name: product.name })}
+                    className="flex h-9 w-9 items-center justify-center rounded text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
+                  >
+                    <TrashIcon />
                   </button>
-                  {openMenuId === product.id && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Close menu"
-                        className="fixed inset-0 z-10 cursor-default"
-                        onClick={() => setOpenMenuId(null)}
-                      />
-                      <div className="absolute right-0 top-10 z-20 w-36 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
-                        <Link
-                          to={`/admin/products/${product.id}/edit`}
-                          onClick={() => setOpenMenuId(null)}
-                          className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpenMenuId(null);
-                            setPendingDelete({ id: product.id, name: product.name });
-                          }}
-                          className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-8">
@@ -543,7 +579,7 @@ export function ProductsList() {
         </div>
       )}
 
-      {products.status === "success" && items.length > 0 && (
+      {view === "list" && products.status === "success" && items.length > 0 && (
         <Card className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[860px] border-collapse">
             <thead>
@@ -699,13 +735,15 @@ export function ProductsList() {
         </Card>
       )}
 
-      <Pagination
-        page={page}
-        pageCount={pageCount}
-        onPageChange={setPage}
-        totalCount={totalCount}
-        pageSize={pageSize}
-      />
+      {view === "list" && (
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          onPageChange={setPage}
+          totalCount={totalCount}
+          pageSize={pageSize}
+        />
+      )}
 
       <ConfirmDialog
         open={!!pendingDelete}
