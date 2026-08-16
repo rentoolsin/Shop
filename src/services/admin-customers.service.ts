@@ -4,6 +4,7 @@ export interface AdminCustomer {
   id: string;
   name: string;
   mobile: string;
+  altMobile: string | null;
   address: string | null;
   createdAt: string;
 }
@@ -11,6 +12,7 @@ export interface AdminCustomer {
 export interface CustomerFormValues {
   name: string;
   mobile: string;
+  altMobile: string;
   address: string;
 }
 
@@ -18,6 +20,7 @@ function toAdminCustomer(row: {
   id: string;
   name: string;
   mobile: string;
+  alt_mobile: string | null;
   address: string | null;
   created_at: string;
 }): AdminCustomer {
@@ -25,6 +28,7 @@ function toAdminCustomer(row: {
     id: row.id,
     name: row.name,
     mobile: row.mobile,
+    altMobile: row.alt_mobile,
     address: row.address,
     createdAt: row.created_at,
   };
@@ -32,7 +36,7 @@ function toAdminCustomer(row: {
 
 /** All customers, optionally text-filtered by name or mobile (admin list/search). */
 export async function fetchAllCustomers(query?: string): Promise<AdminCustomer[]> {
-  let request = supabase.from("customers").select("id, name, mobile, address, created_at");
+  let request = supabase.from("customers").select("id, name, mobile, alt_mobile, address, created_at");
 
   const q = query?.trim();
   if (q) {
@@ -47,7 +51,7 @@ export async function fetchAllCustomers(query?: string): Promise<AdminCustomer[]
 export async function fetchCustomerById(id: string): Promise<AdminCustomer | null> {
   const { data, error } = await supabase
     .from("customers")
-    .select("id, name, mobile, address, created_at")
+    .select("id, name, mobile, alt_mobile, address, created_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -64,12 +68,36 @@ export async function searchCustomersByMobile(mobile: string): Promise<AdminCust
   if (!q) return [];
   const { data, error } = await supabase
     .from("customers")
-    .select("id, name, mobile, address, created_at")
+    .select("id, name, mobile, alt_mobile, address, created_at")
     .ilike("mobile", `%${q}%`)
     .order("created_at", { ascending: false })
     .limit(6);
   if (error) throw error;
   return (data ?? []).map(toAdminCustomer);
+}
+
+/**
+ * Exact-match lookup used to block duplicate mobile numbers on create/edit
+ * (see BUSINESS-RULES.md — one customer record per mobile number). Pass
+ * `excludeId` when editing so a customer isn't flagged as a duplicate of
+ * themselves.
+ */
+export async function findCustomerByMobile(
+  mobile: string,
+  excludeId?: string,
+): Promise<AdminCustomer | null> {
+  const q = mobile.trim();
+  if (!q) return null;
+  let request = supabase
+    .from("customers")
+    .select("id, name, mobile, alt_mobile, address, created_at")
+    .eq("mobile", q);
+  if (excludeId) {
+    request = request.neq("id", excludeId);
+  }
+  const { data, error } = await request.limit(1).maybeSingle();
+  if (error) throw error;
+  return data ? toAdminCustomer(data) : null;
 }
 
 export async function createCustomer(values: CustomerFormValues): Promise<AdminCustomer> {
@@ -78,9 +106,10 @@ export async function createCustomer(values: CustomerFormValues): Promise<AdminC
     .insert({
       name: values.name,
       mobile: values.mobile,
+      alt_mobile: values.altMobile || null,
       address: values.address || null,
     })
-    .select("id, name, mobile, address, created_at")
+    .select("id, name, mobile, alt_mobile, address, created_at")
     .single();
   if (error) throw error;
   return toAdminCustomer(data);
@@ -92,6 +121,7 @@ export async function updateCustomer(id: string, values: CustomerFormValues): Pr
     .update({
       name: values.name,
       mobile: values.mobile,
+      alt_mobile: values.altMobile || null,
       address: values.address || null,
     })
     .eq("id", id);

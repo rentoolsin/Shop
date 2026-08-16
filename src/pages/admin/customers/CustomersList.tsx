@@ -114,13 +114,16 @@ export function CustomersList() {
           <div className="space-y-2 md:hidden">
             {pageItems.map((customer) => (
               <Card key={customer.id} className="flex items-center justify-between gap-3 p-4">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
                     {customer.name}
                   </p>
                   <p className="font-mono text-[12px] text-graphite-400">{customer.mobile}</p>
+                  <p className="mt-0.5 truncate font-body text-[12px] text-graphite-400">
+                    {customer.address || "No address"}
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-shrink-0 items-center gap-2">
                   <Link to={`/admin/customers/${customer.id}/edit`}>
                     <Button variant="ghost" size="sm">Edit</Button>
                   </Link>
@@ -142,6 +145,7 @@ export function CustomersList() {
               <TableHead>
                 <TableHeaderCell>Name</TableHeaderCell>
                 <TableHeaderCell>Mobile</TableHeaderCell>
+                <TableHeaderCell>Address</TableHeaderCell>
                 <TableHeaderCell className="text-right">Actions</TableHeaderCell>
               </TableHead>
               <TableBody>
@@ -149,6 +153,9 @@ export function CustomersList() {
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell className="font-mono text-[12px] text-graphite-500">{customer.mobile}</TableCell>
+                    <TableCell className="max-w-[280px] truncate text-graphite-500 dark:text-graphite-400">
+                      {customer.address || "—"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link to={`/admin/customers/${customer.id}/edit`}>

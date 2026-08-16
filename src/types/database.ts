@@ -110,6 +110,7 @@ export interface Database {
           id: string;
           name: string;
           mobile: string;
+          alt_mobile: string | null;
           address: string | null;
           created_at: string;
         };

@@ -159,10 +159,13 @@ export function ProductsList() {
       )}
 
       {products.status === "success" && items.length > 0 && (
-        <div className="space-y-2">
-          {pageItems.map((product) => (
-            <Card key={product.id} className="flex items-center justify-between gap-3 p-4">
-              <div className="flex min-w-0 items-center gap-3">
+        <div className="space-y-2 sm:hidden">
+          {pageItems.map((product, i) => (
+            <Card key={product.id} className="p-3">
+              <div className="flex items-center gap-3">
+                <span className="w-5 flex-shrink-0 text-right font-body text-[12px] tabular-nums text-graphite-400">
+                  {(page - 1) * pageSize + i + 1}
+                </span>
                 <button
                   type="button"
                   onClick={() => setViewingId(product.id)}
@@ -177,7 +180,7 @@ export function ProductsList() {
                     </span>
                   )}
                 </button>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <button
                     type="button"
                     onClick={() => setViewingId(product.id)}
@@ -190,21 +193,7 @@ export function ProductsList() {
                     variant{product.variantCount === 1 ? "" : "s"}
                   </p>
                 </div>
-              </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
-                {product.isFeatured && <StatusBadge label="Featured" tone="info" />}
-                <StatusBadge
-                  label={product.isActive ? "Active" : "Inactive"}
-                  tone={product.isActive ? "success" : "neutral"}
-                />
-                <Link
-                  to={`/admin/products/${product.id}/edit`}
-                  aria-label={`Edit ${product.name}`}
-                  className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
-                >
-                  <PencilIcon />
-                </Link>
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <button
                     type="button"
                     aria-label={`More actions for ${product.name}`}
@@ -222,6 +211,13 @@ export function ProductsList() {
                         onClick={() => setOpenMenuId(null)}
                       />
                       <div className="absolute right-0 top-10 z-20 w-36 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
+                        <Link
+                          to={`/admin/products/${product.id}/edit`}
+                          onClick={() => setOpenMenuId(null)}
+                          className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+                        >
+                          Edit
+                        </Link>
                         <button
                           type="button"
                           onClick={() => {
@@ -237,9 +233,147 @@ export function ProductsList() {
                   )}
                 </div>
               </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-8">
+                {product.isFeatured && <StatusBadge label="Featured" tone="info" />}
+                <StatusBadge
+                  label={product.isActive ? "Active" : "Inactive"}
+                  tone={product.isActive ? "success" : "neutral"}
+                />
+              </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {products.status === "success" && items.length > 0 && (
+        <Card className="hidden overflow-x-auto sm:block">
+          <table className="w-full min-w-[860px] border-collapse">
+            <thead>
+              <tr className="border-b border-graphite-200 dark:border-graphite-800">
+                <th className="px-4 py-3 text-right font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  S.No
+                </th>
+                <th className="px-4 py-3 text-left font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  Product
+                </th>
+                <th className="px-4 py-3 text-left font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  Category
+                </th>
+                <th className="px-4 py-3 text-left font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  Variants
+                </th>
+                <th className="px-4 py-3 text-left font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  Flags
+                </th>
+                <th className="px-4 py-3 text-left font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-right font-body text-[11px] font-semibold uppercase tracking-wide text-graphite-400">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageItems.map((product, i) => (
+                <tr
+                  key={product.id}
+                  className="border-b border-graphite-100 last:border-b-0 hover:bg-graphite-50 dark:border-graphite-800 dark:hover:bg-graphite-900/60"
+                >
+                  <td className="px-4 py-4 text-right align-middle font-body text-[13px] tabular-nums text-graphite-400">
+                    {(page - 1) * pageSize + i + 1}
+                  </td>
+                  <td className="max-w-[260px] px-4 py-4 align-middle">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setViewingId(product.id)}
+                        aria-label={`View details for ${product.name}`}
+                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800"
+                      >
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="font-display text-[13px] text-graphite-400">
+                            {product.name.charAt(0)}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewingId(product.id)}
+                        className="truncate text-left font-body text-[14px] font-medium text-ink hover:underline dark:text-ink-inverted"
+                      >
+                        {product.name}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 align-middle font-body text-[13px] text-graphite-500 dark:text-graphite-400">
+                    {categoryName(product.categoryId)}
+                  </td>
+                  <td className="px-4 py-4 align-middle font-body text-[13px] text-graphite-500 dark:text-graphite-400">
+                    {product.variantCount}
+                  </td>
+                  <td className="px-4 py-4 align-middle">
+                    {product.isFeatured ? (
+                      <StatusBadge label="Featured" tone="info" />
+                    ) : (
+                      <span className="font-body text-[13px] text-graphite-300 dark:text-graphite-700">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 align-middle">
+                    <StatusBadge
+                      label={product.isActive ? "Active" : "Inactive"}
+                      tone={product.isActive ? "success" : "neutral"}
+                    />
+                  </td>
+                  <td className="px-4 py-4 align-middle">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        to={`/admin/products/${product.id}/edit`}
+                        aria-label={`Edit ${product.name}`}
+                        className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                      >
+                        <PencilIcon />
+                      </Link>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          aria-label={`More actions for ${product.name}`}
+                          onClick={() => setOpenMenuId((id) => (id === product.id ? null : product.id))}
+                          className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                        >
+                          <MoreIcon />
+                        </button>
+                        {openMenuId === product.id && (
+                          <>
+                            <button
+                              type="button"
+                              aria-label="Close menu"
+                              className="fixed inset-0 z-10 cursor-default"
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div className="absolute right-0 top-10 z-20 w-36 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setPendingDelete({ id: product.id, name: product.name });
+                                }}
+                                className="block w-full px-3 py-2 text-left font-body text-[13px] font-medium text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
 
       <Pagination

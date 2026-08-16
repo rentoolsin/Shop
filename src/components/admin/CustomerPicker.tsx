@@ -10,7 +10,7 @@ import { Button } from "../ui/Button";
 
 const DEBOUNCE_MS = 300;
 const MOBILE_RE = /^\+?[0-9]{10,13}$/;
-const EMPTY_NEW: CustomerFormValues = { name: "", mobile: "", address: "" };
+const EMPTY_NEW: CustomerFormValues = { name: "", mobile: "", altMobile: "", address: "" };
 
 interface CustomerPickerProps {
   /** Currently selected customer, or null if none chosen yet. */
@@ -84,6 +84,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
     setNewValues({
       name: initialName ?? "",
       mobile: debounced.trim() || initialQuery?.trim() || "",
+      altMobile: "",
       address: "",
     });
     setNewErrors({});
@@ -105,6 +106,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
       const customer = await createCustomer({
         name: newValues.name.trim(),
         mobile: newValues.mobile.trim(),
+        altMobile: newValues.altMobile.trim(),
         address: newValues.address.trim(),
       });
       handleSelect(customer);
