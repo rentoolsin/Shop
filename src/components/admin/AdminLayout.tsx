@@ -213,7 +213,21 @@ export function AdminLayout() {
 
       <main
         className={[
-          "min-w-0 flex-1 overflow-x-hidden px-4 pb-24 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8 xl:px-10",
+          // `overflow-x-clip` (not `overflow-x-hidden`) is deliberate: setting
+          // only overflow-x to a non-`visible` value forces the *computed*
+          // overflow-y to `auto` too (a real CSS rule — see the spec's
+          // overflow-x/overflow-y interaction), which silently turns this
+          // element into the nearest ancestor with "a scrolling mechanism".
+          // That's exactly what `position: sticky` elements look for, so any
+          // sticky footer inside a page (e.g. ProductForm's Cancel/Save bar)
+          // would resolve against this always-exactly-content-sized `<main>`
+          // instead of the real page scroll — and since `<main>` never
+          // actually scrolls itself, the sticky element just scrolls away
+          // with the page instead of sticking. `overflow-x: clip` still
+          // prevents horizontal overflow but is excluded from that
+          // auto-scroll-container promotion, so sticky descendants correctly
+          // stick to the real (window) scrollport again.
+          "min-w-0 flex-1 overflow-x-clip px-4 pb-24 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8 xl:px-10",
           collapsed ? "md:ml-[76px]" : "md:ml-64",
         ].join(" ")}
       >
