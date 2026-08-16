@@ -38,9 +38,20 @@ const EMPTY: CustomerFormValues = {
   address: "",
 };
 
-/** Strips a leading +91/91/0 so we always store/compare the bare 10-digit number. */
+/**
+ * Strips spaces, hyphens, dots, and parens — the formatting people paste
+ * numbers in with (e.g. "+91 96555 91196", "91-9655591196") — so those
+ * still validate. Without this, MOBILE_RE saw the punctuation as an
+ * invalid character and rejected an otherwise-correct number, which is
+ * exactly what "won't accept the 91" turned out to be.
+ */
+function sanitizeMobile(mobile: string): string {
+  return mobile.trim().replace(/[\s().-]/g, "");
+}
+
+/** Sanitizes, then strips a leading +91/91/0 so we always store/compare the bare 10-digit number. */
 function normalizeMobile(mobile: string): string {
-  return mobile.trim().replace(/^(?:\+91|91|0)/, "");
+  return sanitizeMobile(mobile).replace(/^(?:\+91|91|0)/, "");
 }
 
 /** Sync checks only — no network. Used on blur/change for instant feedback, and again on submit as the final gate. */
@@ -52,14 +63,14 @@ function validateField(field: FieldName, values: CustomerFormValues): string | u
     if (!HAS_LETTER_RE.test(name)) return "Name must contain letters.";
   }
   if (field === "mobile") {
-    const mobile = values.mobile.trim();
+    const mobile = sanitizeMobile(values.mobile);
     if (!mobile) return "Enter a mobile number.";
     if (!MOBILE_RE.test(mobile)) return "Enter a valid 10-digit Indian mobile number.";
     const bare = normalizeMobile(mobile);
     if (ALL_SAME_DIGIT_RE.test(bare)) return "That doesn't look like a real number.";
   }
   if (field === "altMobile") {
-    const altMobile = values.altMobile.trim();
+    const altMobile = sanitizeMobile(values.altMobile);
     if (!altMobile) return undefined; // optional — no value is fine
     if (!MOBILE_RE.test(altMobile)) return "Enter a valid 10-digit Indian mobile number.";
     const bare = normalizeMobile(altMobile);
@@ -117,7 +128,7 @@ export function CustomerForm() {
   // there's enough to search on) so the admin sees possible matches before
   // they've even finished typing.
   useEffect(() => {
-    const digits = values.mobile.trim();
+    const digits = sanitizeMobile(values.mobile);
     if (digits.length < MIN_MATCH_DIGITS) {
       setMobileMatches([]);
       setMatchesLoading(false);
@@ -176,7 +187,7 @@ export function CustomerForm() {
 
   /** Live duplicate check, run on blur so the person finds out before they hit Save. */
   const checkMobileAvailability = async () => {
-    const mobile = values.mobile.trim();
+    const mobile = sanitizeMobile(values.mobile);
     if (!MOBILE_RE.test(mobile)) return; // format error already shown; don't also hit the network
 
     const token = ++mobileCheckToken.current;

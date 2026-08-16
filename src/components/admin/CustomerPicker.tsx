@@ -12,6 +12,16 @@ const DEBOUNCE_MS = 300;
 const MOBILE_RE = /^\+?[0-9]{10,13}$/;
 const EMPTY_NEW: CustomerFormValues = { name: "", mobile: "", altMobile: "", address: "" };
 
+/**
+ * Strips spaces, hyphens, dots, and parens — the formatting people paste
+ * numbers in with (e.g. "+91 96555 91196", "91-9655591196") — before
+ * validating or searching, so a pasted number with a country code isn't
+ * rejected just for having punctuation in it.
+ */
+function sanitizeMobile(mobile: string): string {
+  return mobile.trim().replace(/[\s().-]/g, "");
+}
+
 interface CustomerPickerProps {
   /** Currently selected customer, or null if none chosen yet. */
   value: AdminCustomer | null;
@@ -53,7 +63,7 @@ export function CustomerPicker({
   const newNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(query), DEBOUNCE_MS);
+    const timer = window.setTimeout(() => setDebounced(sanitizeMobile(query)), DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [query]);
 
@@ -96,7 +106,7 @@ export function CustomerPicker({
   const startCreate = () => {
     setNewValues({
       name: initialName ?? "",
-      mobile: debounced.trim() || initialQuery?.trim() || "",
+      mobile: debounced || sanitizeMobile(initialQuery ?? ""),
       altMobile: "",
       address: "",
     });
@@ -107,7 +117,7 @@ export function CustomerPicker({
   const validateNew = (): boolean => {
     const next: typeof newErrors = {};
     if (!newValues.name.trim()) next.name = "Enter the customer's name.";
-    if (!MOBILE_RE.test(newValues.mobile.trim())) next.mobile = "Enter a valid mobile number.";
+    if (!MOBILE_RE.test(sanitizeMobile(newValues.mobile))) next.mobile = "Enter a valid mobile number.";
     setNewErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -118,7 +128,7 @@ export function CustomerPicker({
     try {
       const customer = await createCustomer({
         name: newValues.name.trim(),
-        mobile: newValues.mobile.trim(),
+        mobile: sanitizeMobile(newValues.mobile),
         altMobile: newValues.altMobile.trim(),
         address: newValues.address.trim(),
       });
