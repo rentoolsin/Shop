@@ -105,6 +105,12 @@ export function CustomerForm() {
     }
   }, [existing.status, existing.data]);
 
+  // New customer (not editing an existing one): put the cursor in Name
+  // as soon as the page is ready, so admins can start typing immediately.
+  useEffect(() => {
+    if (!isEdit) nameRef.current?.focus();
+  }, [isEdit]);
+
   // Live "people who already exist" lookup as the mobile number is typed —
   // separate from checkMobileAvailability, which only fires on blur and
   // only flags an *exact* duplicate. This runs on every keystroke (once

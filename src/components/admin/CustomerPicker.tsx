@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   searchCustomersByMobile,
   createCustomer,
@@ -42,6 +42,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
   const [newValues, setNewValues] = useState<CustomerFormValues>(EMPTY_NEW);
   const [newErrors, setNewErrors] = useState<Partial<Record<keyof CustomerFormValues, string>>>({});
   const [savingNew, setSavingNew] = useState(false);
+  const newNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(query), DEBOUNCE_MS);
@@ -71,6 +72,10 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
       cancelled = true;
     };
   }, [debounced]);
+
+  useEffect(() => {
+    if (creating) newNameRef.current?.focus();
+  }, [creating]);
 
   const handleSelect = (customer: AdminCustomer) => {
     onChange(customer);
@@ -206,6 +211,7 @@ export function CustomerPicker({ value, onChange, initialQuery, initialName }: C
       {creating && (
         <div className="mt-3 space-y-3 rounded border border-graphite-200 p-3 dark:border-graphite-800">
           <Input
+            ref={newNameRef}
             label="Name"
             value={newValues.name}
             onChange={(e) => setNewValues((v) => ({ ...v, name: e.target.value }))}
