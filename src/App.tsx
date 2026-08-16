@@ -71,6 +71,9 @@ const EnquiriesList = lazy(() =>
 const EnquiryDetail = lazy(() =>
   import("./pages/admin/enquiries/EnquiryDetail").then((m) => ({ default: m.EnquiryDetail })),
 );
+const EnquiryForm = lazy(() =>
+  import("./pages/admin/enquiries/EnquiryForm").then((m) => ({ default: m.EnquiryForm })),
+);
 const PurchaseRequestsList = lazy(() =>
   import("./pages/admin/purchase-requests/PurchaseRequestsList").then((m) => ({
     default: m.PurchaseRequestsList,
@@ -230,9 +233,11 @@ export function App() {
             <Route path="rentals/new" element={<RentalForm />} />
             <Route path="enquiries" element={<EnquiriesList />} />
             <Route path="enquiries/:id" element={<EnquiryDetail />} />
+            <Route path="enquiries/:id/edit" element={<EnquiryForm />} />
             <Route path="purchase-requests" element={<PurchaseRequestsList />} />
             <Route path="purchase-requests/new" element={<PurchaseRequestForm />} />
             <Route path="purchase-requests/:id" element={<PurchaseRequestDetail />} />
+            <Route path="purchase-requests/:id/edit" element={<PurchaseRequestForm />} />
             <Route path="reports" element={<Reports />} />
             <Route path="homepage" element={<HomepageSectionsList />} />
             <Route path="homepage/:sectionKey" element={<HomepageSectionForm />} />

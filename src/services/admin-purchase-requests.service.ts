@@ -115,6 +115,35 @@ export async function createPurchaseRequest(
   return toAdminPurchaseRequest(data as unknown as RawPurchaseRequestRow);
 }
 
+/**
+ * Full edit of an existing purchase request — product, linked customer,
+ * quantity, priority and notes. Status stays a separate call
+ * (`updatePurchaseRequestStatus` below), same split as the detail page's
+ * "editable fields vs. status" distinction.
+ */
+export async function updatePurchaseRequest(
+  id: string,
+  values: PurchaseRequestFormValues,
+): Promise<void> {
+  const { error } = await supabase
+    .from("purchase_requests")
+    .update({
+      product_requested: values.productRequested.trim(),
+      customer_id: values.customerId,
+      mobile: values.mobile.trim() || null,
+      quantity: values.quantity,
+      priority: values.priority,
+      notes: values.notes.trim() || null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deletePurchaseRequest(id: string): Promise<void> {
+  const { error } = await supabase.from("purchase_requests").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function updatePurchaseRequestStatus(
   id: string,
   status: PurchaseRequestStatus,

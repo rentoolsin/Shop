@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAdminEnquiry } from "../../../hooks/useAdminData";
-import { updateEnquiryStatus } from "../../../services/admin-enquiries.service";
+import { updateEnquiryStatus, deleteEnquiry } from "../../../services/admin-enquiries.service";
 import { useProduct } from "../../../hooks/useProducts";
 import { RentalForm } from "../rentals/RentalForm";
 import { STATUS_LABEL, STATUS_TONE } from "../../../utils/enquiry-status";
@@ -11,6 +11,7 @@ import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Select } from "../../../components/ui/Select";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ErrorState } from "../../../components/ui/ErrorState";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
 
 const STATUS_OPTIONS: EnquiryStatus[] = ["new", "contacted", "converted", "not_available", "closed"];
@@ -35,6 +36,8 @@ export function EnquiryDetail() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [statusError, setStatusError] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleStatusChange = async (status: EnquiryStatus) => {
     if (!id || savingStatus) return;
@@ -49,6 +52,20 @@ export function EnquiryDetail() {
       showToast("Couldn't update status. Try again.", "danger");
     } finally {
       setSavingStatus(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await deleteEnquiry(id);
+      showToast("Enquiry deleted.", "success");
+      navigate("/admin/enquiries");
+    } catch {
+      showToast("Couldn't delete this enquiry. Try again.", "danger");
+      setDeleting(false);
+      setConfirmingDelete(false);
     }
   };
 
@@ -132,7 +149,15 @@ export function EnquiryDetail() {
           <h1 className="font-display text-[20px] font-bold text-ink dark:text-ink-inverted">{e.name}</h1>
           <p className="font-mono text-[13px] text-graphite-500">{e.mobile}</p>
         </div>
-        <StatusBadge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <StatusBadge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />
+          <Link to={`/admin/enquiries/${e.id}/edit`}>
+            <Button variant="secondary" size="sm">Edit</Button>
+          </Link>
+          <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(true)}>
+            Delete
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
@@ -179,6 +204,15 @@ export function EnquiryDetail() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete enquiry?"
+        description={`This enquiry from "${e.name}" will be permanently removed.`}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -1,18 +1,21 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAdminPurchaseRequest } from "../../../hooks/useAdminData";
 import {
   updatePurchaseRequestStatus,
   updatePurchaseRequestPriority,
+  deletePurchaseRequest,
   type PurchaseRequestPriority,
 } from "../../../services/admin-purchase-requests.service";
 import { STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL } from "../../../utils/purchase-request-status";
 import type { PurchaseRequestStatus } from "../../../types/database";
+import { Button } from "../../../components/ui/Button";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Select } from "../../../components/ui/Select";
 import { Card } from "../../../components/ui/Card";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ErrorState } from "../../../components/ui/ErrorState";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { useToast } from "../../../components/ui/Toast";
 
 const STATUS_OPTIONS: PurchaseRequestStatus[] = ["requested", "sourcing", "fulfilled", "declined"];
@@ -20,6 +23,7 @@ const PRIORITY_OPTIONS: PurchaseRequestPriority[] = ["low", "normal", "high"];
 
 export function PurchaseRequestDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const request = useAdminPurchaseRequest(id);
 
@@ -27,6 +31,8 @@ export function PurchaseRequestDetail() {
   const [statusError, setStatusError] = useState(false);
   const [savingPriority, setSavingPriority] = useState(false);
   const [priorityError, setPriorityError] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleStatusChange = async (status: PurchaseRequestStatus) => {
     if (!id || savingStatus) return;
@@ -57,6 +63,20 @@ export function PurchaseRequestDetail() {
       showToast("Couldn't update priority. Try again.", "danger");
     } finally {
       setSavingPriority(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await deletePurchaseRequest(id);
+      showToast("Purchase request deleted.", "success");
+      navigate("/admin/purchase-requests");
+    } catch {
+      showToast("Couldn't delete this request. Try again.", "danger");
+      setDeleting(false);
+      setConfirmingDelete(false);
     }
   };
 
@@ -99,7 +119,15 @@ export function PurchaseRequestDetail() {
             {r.customerName ?? r.requesterName ?? r.mobile ?? "No contact on file"}
           </p>
         </div>
-        <StatusBadge label={STATUS_LABEL[r.status]} tone={STATUS_TONE[r.status]} />
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <StatusBadge label={STATUS_LABEL[r.status]} tone={STATUS_TONE[r.status]} />
+          <Link to={`/admin/purchase-requests/${r.id}/edit`}>
+            <Button variant="secondary" size="sm">Edit</Button>
+          </Link>
+          <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(true)}>
+            Delete
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
@@ -146,6 +174,15 @@ export function PurchaseRequestDetail() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete purchase request?"
+        description={`"${r.productRequested}" will be permanently removed.`}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
+        loading={deleting}
+      />
     </div>
   );
 }

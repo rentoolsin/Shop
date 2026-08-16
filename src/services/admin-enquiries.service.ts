@@ -88,7 +88,49 @@ export async function fetchEnquiryById(id: string): Promise<AdminEnquiry | null>
   return data ? toAdminEnquiry(data as unknown as RawEnquiryRow) : null;
 }
 
+export interface EnquiryFormValues {
+  name: string;
+  mobile: string;
+  requestedProductText: string;
+  quantity: number | null;
+  requiredDate: string;
+  numberOfDays: number | null;
+  address: string;
+  message: string;
+}
+
 export async function updateEnquiryStatus(id: string, status: EnquiryStatus): Promise<void> {
   const { error } = await supabase.from("enquiries").update({ status }).eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Full edit of an enquiry's contact/request details (name, mobile, product
+ * text, quantity, dates, address, message). Deliberately does not touch
+ * `product_id` — that link is set when the enquiry is submitted (or when
+ * it's converted to a rental); changing it here isn't something this form
+ * offers, to avoid needing a full product picker for what's meant to be a
+ * quick "fix a typo'd name/number" edit. Status stays a separate call
+ * (`updateEnquiryStatus` above).
+ */
+export async function updateEnquiry(id: string, values: EnquiryFormValues): Promise<void> {
+  const { error } = await supabase
+    .from("enquiries")
+    .update({
+      name: values.name.trim(),
+      mobile: values.mobile.trim(),
+      requested_product_text: values.requestedProductText.trim() || null,
+      quantity: values.quantity,
+      required_date: values.requiredDate || null,
+      number_of_days: values.numberOfDays,
+      address: values.address.trim() || null,
+      message: values.message.trim() || null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteEnquiry(id: string): Promise<void> {
+  const { error } = await supabase.from("enquiries").delete().eq("id", id);
   if (error) throw error;
 }
