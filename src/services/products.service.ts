@@ -103,6 +103,17 @@ const LIST_SELECT =
   "categories(name), " +
   "product_reviews(rating)";
 
+// Out-of-stock tools sink to the end of the storefront order automatically,
+// then return to wherever their `sort_order` naturally places them once
+// restocked — no admin action needed, and admins' own drag/manual ordering
+// (see admin-products.service.ts, which reads sort_order directly and is
+// unaffected by this) is left completely alone. Array.prototype.sort is
+// stable, so within each group (in-stock / out-of-stock) items keep the
+// relative order the query already returned them in.
+function withOutOfStockLast(items: ProductListItem[]): ProductListItem[] {
+  return items.slice().sort((a, b) => Number(!a.available) - Number(!b.available));
+}
+
 /** Featured, active products with their lowest active variant rate. */
 export async function fetchFeaturedProducts(): Promise<ProductListItem[]> {
   const { data, error } = await supabase
@@ -114,7 +125,7 @@ export async function fetchFeaturedProducts(): Promise<ProductListItem[]> {
     .limit(12);
 
   if (error) throw error;
-  return ((data ?? []) as unknown as RawListRow[]).map(toListItem);
+  return withOutOfStockLast(((data ?? []) as unknown as RawListRow[]).map(toListItem));
 }
 
 /** All active products, optionally scoped to a category, optionally text-filtered. */
@@ -133,7 +144,7 @@ export async function fetchProducts(options: {
 
   const { data, error } = await request.order("sort_order", { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as unknown as RawListRow[]).map(toListItem);
+  return withOutOfStockLast(((data ?? []) as unknown as RawListRow[]).map(toListItem));
 }
 
 export interface OutOfStockProduct {
