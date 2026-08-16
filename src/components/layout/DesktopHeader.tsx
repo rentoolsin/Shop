@@ -1,19 +1,15 @@
-import { Heart, ShoppingCart, SlidersHorizontal } from "@phosphor-icons/react";
-import { useState, type FormEvent } from "react";
+import { Heart, MagnifyingGlass, ShoppingCart } from "@phosphor-icons/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SearchBar } from "../ui/SearchBar";
 import { ThemeToggle } from "../actions/ThemeToggle";
-import { CallButton } from "../actions/CallButton";
-import { WhatsAppButton } from "../actions/WhatsAppButton";
 import { useTheme } from "../../lib/theme";
 import { useCart } from "../../hooks/useCart";
 import { useSavedProducts } from "../../hooks/useSavedProducts";
-import { useSiteSettings } from "../../hooks/useSiteSettings";
-import { SITE_SETTINGS_DEFAULTS } from "../../utils/site-settings";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/products", label: "Tools" },
+  { to: "/enquire", label: "Enquire" },
+  { to: "/request-purchase", label: "Request a tool" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
 ];
@@ -33,27 +29,22 @@ export function DesktopContainer({
 /**
  * Persistent top bar for the desktop (`md:` and up) layout — replaces the
  * mobile `MobileHeader`/`PageHeader` + `BottomNavigation` combo entirely on
- * wide viewports. Rendered once in `App.tsx` so every route gets nav,
- * search, cart/saved counts, and call/WhatsApp/theme controls without each
- * page re-declaring them (this is what `DesktopHome`'s header was
- * refactored out into).
+ * wide viewports. Rendered once in `App.tsx` so every route gets nav and
+ * cart/saved counts without each page re-declaring them (this is what
+ * `DesktopHome`'s header was refactored out into). Search lives on its own
+ * dedicated /search page rather than inline here — the header icon just
+ * opens it. Call/WhatsApp aren't in the header — WhatsApp is a floating
+ * action button (see FloatingWhatsApp) and Call/WhatsApp CTAs live inline
+ * further down the homepage instead.
  */
 export function DesktopHeader() {
   const location = useLocation();
   const navigate = useNavigate();
   const { resolved } = useTheme();
   const logoSrc = resolved === "dark" ? "/logo-yellow.png" : "/logo-black.png";
-  const [query, setQuery] = useState("");
 
   const { totalItems: cartCount } = useCart();
   const { ids: savedIds } = useSavedProducts();
-  const settings = useSiteSettings();
-  const { phone, whatsapp } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
-
-  const handleSearchSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    navigate(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`);
-  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-graphite-200 bg-graphite-50/90 backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/90">
@@ -82,30 +73,17 @@ export function DesktopHeader() {
           })}
         </nav>
 
-        <form onSubmit={handleSearchSubmit} className="flex-1">
-          <label htmlFor="desktop-header-search" className="sr-only">
-            Search tools
-          </label>
-          <SearchBar
-            id="desktop-header-search"
-            value={query}
-            onChange={setQuery}
-            placeholder="Search tools & equipment…"
-            containerClassName="h-11 w-full"
-            trailing={
-              <button
-                type="button"
-                onClick={() => navigate("/search")}
-                aria-label="Filters"
-                className="-mr-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors hover:bg-graphite-100 dark:hover:bg-graphite-800"
-              >
-                <SlidersHorizontal className="h-4 w-4" weight="regular" />
-              </button>
-            }
-          />
-        </form>
+        <div className="flex-1" />
 
         <div className="flex flex-shrink-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate("/search")}
+            aria-label="Search tools"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+          >
+            <MagnifyingGlass className="h-5 w-5" weight="regular" />
+          </button>
           <Link
             to="/saved"
             aria-label={`Saved tools${savedIds.length > 0 ? ` (${savedIds.length})` : ""}`}
@@ -131,8 +109,6 @@ export function DesktopHeader() {
             )}
           </Link>
           <div className="mx-1 h-6 w-px bg-graphite-200 dark:bg-graphite-800" />
-          <CallButton phone={phone} label="Call" />
-          <WhatsAppButton phone={whatsapp} label="WhatsApp" />
           <ThemeToggle />
         </div>
       </DesktopContainer>

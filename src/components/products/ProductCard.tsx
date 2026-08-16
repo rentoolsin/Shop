@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Star } from "@phosphor-icons/react";
+import { Heart, ShoppingCart, Star } from "@phosphor-icons/react";
 import { Card } from "../ui/Card";
 import { QuantityStepper } from "../ui/QuantityStepper";
 import { useToast } from "../ui/Toast";
@@ -228,8 +228,9 @@ export function ProductCard({
         type="button"
         aria-label={`Add ${name} to cart`}
         onClick={handleAddToCart}
-        className="flex h-full flex-1 items-center justify-center overflow-hidden bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600"
+        className="flex h-full flex-1 items-center justify-center gap-1 overflow-hidden bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600"
       >
+        <ShoppingCart className="h-3.5 w-3.5 flex-shrink-0" weight="bold" />
         Add
       </button>
     </div>

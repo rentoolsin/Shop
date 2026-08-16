@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "../actions/ThemeToggle";
+import { MobileMenu } from "./MobileMenu";
 import { useTheme } from "../../lib/theme";
 
 interface MobileHeaderProps {
@@ -18,14 +19,17 @@ export function MobileHeader({ action, contextLabel }: MobileHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-graphite-200 bg-graphite-50/90 pt-safe-t backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/90">
       <div className="flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logoSrc} alt="RenTools" className="h-11 w-auto flex-shrink-0 sm:h-12" />
-          {contextLabel && (
-            <span className="mt-0.5 font-body text-[12px] text-graphite-500">
-              {contextLabel}
-            </span>
-          )}
-        </Link>
+        <div className="flex min-w-0 items-center gap-2">
+          <MobileMenu />
+          <Link to="/" className="flex min-w-0 items-center gap-2">
+            <img src={logoSrc} alt="RenTools" className="h-11 w-auto flex-shrink-0 sm:h-12" />
+            {contextLabel && (
+              <span className="mt-0.5 truncate font-body text-[12px] text-graphite-500">
+                {contextLabel}
+              </span>
+            )}
+          </Link>
+        </div>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
           {action}

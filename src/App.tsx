@@ -6,7 +6,7 @@ import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { PageTransition } from "./components/layout/PageTransition";
 import { Footer } from "./components/layout/Footer";
 import { DesktopHeader } from "./components/layout/DesktopHeader";
-import { FloatingWhatsApp } from "./components/actions/FloatingWhatsApp";
+import { FloatingWhatsApp, FloatingWhatsAppDesktop } from "./components/actions/FloatingWhatsApp";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
 import { usePwaUpdate } from "./hooks/usePwaUpdate";
@@ -175,11 +175,18 @@ function CustomerApp() {
           inside that wrapper would scroll away with the page instead of
           staying pinned to the viewport, so it lives out here, and shows
           on every route instead of only the homepage.
-          Both the floating chat bubble and the bottom tab bar read as
-          mobile chrome next to the desktop header/layout, so both are
-          hidden at `md:` and up, on every route. */}
+          The bottom tab bar reads as mobile chrome next to the desktop
+          header/layout, so it's hidden at `md:` and up. The WhatsApp
+          bubble, though, is the header's only WhatsApp entry point now
+          that the desktop header dropped its inline Call/WhatsApp
+          buttons — so it switches variant instead of disappearing:
+          the mobile-column-anchored one below `md:`, the
+          viewport-corner-anchored one at `md:` and up. */}
       <div className="md:hidden">
         <FloatingWhatsApp phone={whatsapp} />
+      </div>
+      <div className="hidden md:block">
+        <FloatingWhatsAppDesktop phone={whatsapp} />
       </div>
       <div
         ref={bottomBarRef}
