@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
+import { useSavedProducts } from "../../hooks/useSavedProducts";
 import { useSiteSettings } from "../../hooks/useSiteSettings";
 import { BOTTOM_NAV_ICONS, DEFAULT_BOTTOM_NAV_ITEMS, type BottomNavItem } from "../../utils/bottom-nav";
 
@@ -18,6 +19,8 @@ import { BOTTOM_NAV_ICONS, DEFAULT_BOTTOM_NAV_ITEMS, type BottomNavItem } from "
 export function BottomNavigation() {
   const settings = useSiteSettings();
   const { totalItems: cartCount } = useCart();
+  const { ids: savedIds } = useSavedProducts();
+  const wishlistCount = savedIds.length;
   const items: BottomNavItem[] =
     settings.status === "success" && settings.data.bottomNavItems.length > 0
       ? settings.data.bottomNavItems
@@ -39,9 +42,15 @@ export function BottomNavigation() {
           // Live cart-item count, badged onto whichever tab points at the
           // cart — mirrors the same badge shown on the header cart icon
           // (Products/ProductDetail) so the count is visible no matter
-          // which cart entry point the shopper is looking at.
+          // which cart entry point the shopper is looking at. Same idea
+          // for the wishlist/saved tab, keyed off its destination path
+          // (not the icon) since an admin can swap the icon but the tab
+          // still points at /saved.
           const showCartBadge = icon === "cart" && cartCount > 0;
-          const badgeLabel = cartCount > 99 ? "99+" : cartCount;
+          const showWishlistBadge = path === "/saved" && wishlistCount > 0;
+          const showBadge = showCartBadge || showWishlistBadge;
+          const rawCount = showCartBadge ? cartCount : wishlistCount;
+          const badgeLabel = rawCount > 99 ? "99+" : rawCount;
           return (
             <NavLink
               key={id}
@@ -61,7 +70,7 @@ export function BottomNavigation() {
                       >
                         <Icon className="h-5 w-5 text-graphite-950" weight="bold" />
                       </span>
-                      {showCartBadge && (
+                      {showBadge && (
                         <span
                           aria-hidden="true"
                           className="absolute -right-0.5 -top-3.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-graphite-900 px-1 font-body text-[10px] font-bold leading-none text-white ring-2 ring-white dark:bg-white dark:text-graphite-900 dark:ring-graphite-900"
@@ -83,7 +92,7 @@ export function BottomNavigation() {
                           weight="regular"
                         />
                       </span>
-                      {showCartBadge && (
+                      {showBadge && (
                         <span
                           aria-hidden="true"
                           className="absolute -right-1 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[9.5px] font-bold leading-none text-white ring-2 ring-white dark:ring-graphite-900"

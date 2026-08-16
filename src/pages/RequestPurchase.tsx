@@ -1,17 +1,22 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { submitPurchaseRequest } from "../services/purchase-requests.service";
+import { fetchOutOfStockProducts, type OutOfStockProduct } from "../services/products.service";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 interface LocationState {
   productName?: string;
 }
+
+/** Value used for the "not listed / general request" dropdown option. */
+const OTHER_TOOL_OPTION = "__other__";
 
 interface FormValues {
   name: string;
@@ -51,6 +56,40 @@ export function RequestPurchase() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Only relevant for a *general* request (no specific product handed in
+  // via state, e.g. coming from the footer link or the home page CTA) — a
+  // request against a known out-of-stock product already carries its name
+  // via `state.productName` and shows the read-only tag instead.
+  const isGeneralRequest = !state.productName;
+  const [toolOptions, setToolOptions] = useState<OutOfStockProduct[]>([]);
+  const [toolOptionsLoading, setToolOptionsLoading] = useState(isGeneralRequest);
+  const [selectedToolId, setSelectedToolId] = useState<string>(OTHER_TOOL_OPTION);
+
+  useEffect(() => {
+    if (!isGeneralRequest) return;
+    let cancelled = false;
+    setToolOptionsLoading(true);
+    fetchOutOfStockProducts()
+      .then((products) => {
+        if (!cancelled) setToolOptions(products);
+      })
+      .catch(() => {
+        // Non-fatal — the dropdown just falls back to "not listed" and the
+        // person can still describe the tool in Notes instead.
+      })
+      .finally(() => {
+        if (!cancelled) setToolOptionsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isGeneralRequest]);
+
+  const selectedToolName =
+    selectedToolId === OTHER_TOOL_OPTION
+      ? undefined
+      : toolOptions.find((p) => p.id === selectedToolId)?.name;
+
   const nameRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
   const quantityRef = useRef<HTMLInputElement>(null);
@@ -89,7 +128,7 @@ export function RequestPurchase() {
       await submitPurchaseRequest({
         name: values.name.trim(),
         mobile: values.mobile.trim(),
-        productRequested: state.productName ?? "Not specified",
+        productRequested: state.productName ?? selectedToolName ?? "Not specified",
         quantity: values.quantity ? Number(values.quantity) : undefined,
         notes: values.notes.trim() || undefined,
       });
@@ -103,6 +142,11 @@ export function RequestPurchase() {
       setSubmitting(false);
     }
   };
+
+  // What we tell the person we're notifying them about — the specific
+  // product passed in via state, or whichever tool they picked from the
+  // dropdown on a general request.
+  const confirmedProductName = state.productName ?? selectedToolName;
 
   if (submitted) {
     return (
@@ -121,7 +165,7 @@ export function RequestPurchase() {
             <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
               Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
               at {values.mobile}
-              {state.productName ? ` when ${state.productName} is available` : " about your request"}.
+              {confirmedProductName ? ` when ${confirmedProductName} is available` : " about your request"}.
             </p>
             <div className="mt-2 flex w-full flex-col gap-2">
               <Button variant="accent" fullWidth onClick={() => navigate("/products")}>
@@ -147,7 +191,7 @@ export function RequestPurchase() {
               <p className="font-body text-[15px] text-ink dark:text-ink-inverted">
                 Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
                 at {values.mobile}
-                {state.productName ? ` when ${state.productName} is available` : " about your request"}.
+                {confirmedProductName ? ` when ${confirmedProductName} is available` : " about your request"}.
               </p>
               <div className="mt-2 flex w-full flex-col gap-2.5">
                 <Button variant="accent" size="lg" fullWidth onClick={() => navigate("/products")}>
@@ -164,6 +208,28 @@ export function RequestPurchase() {
     );
   }
 
+  // General requests (no specific out-of-stock product handed in) let the
+  // person pick which tool they mean from what's currently out of stock —
+  // or leave it as a general request if their tool isn't listed yet.
+  const toolNameField = isGeneralRequest && (
+    <Select
+      label="Tool name"
+      name="toolName"
+      value={selectedToolId}
+      disabled={toolOptionsLoading}
+      onChange={(e) => setSelectedToolId(e.target.value)}
+    >
+      <option value={OTHER_TOOL_OPTION}>
+        {toolOptionsLoading ? "Loading tools…" : "Not listed / general request"}
+      </option>
+      {toolOptions.map((product) => (
+        <option key={product.id} value={product.id}>
+          {product.name}
+        </option>
+      ))}
+    </Select>
+  );
+
   return (
     <div>
       <div className="md:hidden">
@@ -176,6 +242,8 @@ export function RequestPurchase() {
           Not currently in stock. Leave your details and RenTools will reach out once it's
           available.
         </p>
+
+        {toolNameField}
 
         <Input
           ref={nameRef}
@@ -249,6 +317,8 @@ export function RequestPurchase() {
                 Not currently in stock. Leave your details and RenTools will reach out once
                 it's available.
               </p>
+
+              {toolNameField}
 
               <Input
                 label="Name"

@@ -195,6 +195,25 @@ export function ProductCard({
     setQty(1);
   };
 
+  const handleRequestTool = (e: React.MouseEvent<HTMLButtonElement>) => {
+    stop(e);
+    navigate("/request-purchase", { state: { productName: name } });
+  };
+
+  // Out of stock: there's nothing to add a quantity of, so the whole pill
+  // becomes a single "Request" button that sends the person to the
+  // out-of-stock request form with this tool's name pre-filled.
+  const requestControl = (
+    <button
+      type="button"
+      aria-label={`Request ${name}`}
+      onClick={handleRequestTool}
+      className="flex h-9 w-full items-center justify-center overflow-hidden rounded border border-graphite-200 bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600 dark:border-graphite-700"
+    >
+      Request
+    </button>
+  );
+
   // Stepper + Add button as ONE bordered control — a single outer pill
   // (not two separate elements with a gap between them) so the orange
   // "Add" segment sits flush against the pill's own right edge and
@@ -202,20 +221,21 @@ export function ProductCard({
   // stepper's mini bordered buttons sit inside on the left; the Add
   // button is the only flexible part and fills (and stretches to) the
   // rest of the pill, so it never overflows the card on narrow layouts.
-  const cartControls = (
+  const addControl = (
     <div className="flex h-9 min-w-0 items-center overflow-hidden rounded border border-graphite-200 bg-white dark:border-graphite-700 dark:bg-graphite-900">
       <div className="flex flex-shrink-0 items-center pl-1 pr-1">{quantityStepper}</div>
       <button
         type="button"
-        disabled={!available}
         aria-label={`Add ${name} to cart`}
         onClick={handleAddToCart}
-        className="flex h-full flex-1 items-center justify-center overflow-hidden bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600 disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-full flex-1 items-center justify-center overflow-hidden bg-accent-500 px-1.5 font-body text-[11.5px] font-semibold text-graphite-950 whitespace-nowrap transition-all duration-150 ease-app active:scale-[0.98] active:bg-accent-600"
       >
         Add
       </button>
     </div>
   );
+
+  const cartControls = available ? addControl : requestControl;
 
   const image = (
     <span

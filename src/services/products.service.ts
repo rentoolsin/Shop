@@ -136,6 +136,40 @@ export async function fetchProducts(options: {
   return ((data ?? []) as unknown as RawListRow[]).map(toListItem);
 }
 
+export interface OutOfStockProduct {
+  id: string;
+  name: string;
+}
+
+/**
+ * Active products with zero available quantity across all active variants —
+ * powers the "Tool name" picker on the general Request a tool page, so
+ * people can only pick something that's genuinely worth requesting.
+ */
+export async function fetchOutOfStockProducts(): Promise<OutOfStockProduct[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, product_variants(quantity_total, quantity_reserved, is_active)")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+
+  type RawRow = {
+    id: string;
+    name: string;
+    product_variants: { quantity_total: number; quantity_reserved: number; is_active: boolean }[] | null;
+  };
+
+  return ((data ?? []) as unknown as RawRow[])
+    .filter((row) => {
+      const activeVariants = (row.product_variants ?? []).filter((v) => v.is_active);
+      if (activeVariants.length === 0) return false;
+      return !activeVariants.some((v) => v.quantity_total - v.quantity_reserved > 0);
+    })
+    .map((row) => ({ id: row.id, name: row.name }));
+}
+
 export async function fetchProductById(id: string): Promise<ProductDetail | null> {
   interface RawProductDetailRow {
     id: string;
