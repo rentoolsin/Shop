@@ -16,8 +16,8 @@ import { useToast } from "../components/ui/Toast";
  * navigation by default — easy to miss in a PWA/SPA where people leave a
  * tab (especially the admin panel) open for a long session without a full
  * reload. So this checks explicitly: once right on registration, then every
- * minute, and again whenever the tab regains focus — so a deploy shows up
- * within moments, not up to an hour later.
+ * 15 seconds, and again whenever the tab regains focus — so a deploy shows
+ * up within moments, not up to an hour later.
  *
  * Mount once, near the app root (see App.tsx) — it has no visual output of
  * its own, it just drives the toast.
@@ -40,9 +40,11 @@ export function usePwaUpdate() {
       // within seconds, not sit unnoticed for up to an hour.
       checkForUpdate();
 
-      // Frequent poll while the tab is open. Was 60 minutes — far too
-      // slow for "should come up instantly once deployed".
-      const POLL_MS = 60 * 1000;
+      // Frequent poll while the tab is open. Was 60 minutes, then 60
+      // seconds — still not fast enough. Every browser tab now re-checks
+      // for a new deploy this often; the request is just a fetch of the
+      // tiny service-worker file, so it's cheap even this frequent.
+      const POLL_MS = 15 * 1000;
       window.setInterval(checkForUpdate, POLL_MS);
 
       // Belt-and-braces: also re-check the moment the tab regains focus.
