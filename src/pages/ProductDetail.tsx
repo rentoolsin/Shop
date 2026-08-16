@@ -233,42 +233,42 @@ export function ProductDetail() {
       <PageHeader
         title={item.name}
         action={
-          <div className="mr-1 flex items-center">
-            <Link
-              to="/cart"
-              aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
-              className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
-            >
-              <ShoppingCart className="h-5 w-5" weight="regular" />
-              {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
-              )}
-            </Link>
-            <button
-              onClick={() => toggleSaved(item.id)}
-              aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
-              aria-pressed={isSaved(item.id)}
-              className={[
-                "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-app active:scale-90",
-                isSaved(item.id)
-                  ? "text-accent-500 hover:bg-graphite-100 dark:hover:bg-graphite-800"
-                  : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
-              ].join(" ")}
-            >
-              <HeartIcon filled={isSaved(item.id)} />
-            </button>
-          </div>
+          <Link
+            to="/cart"
+            aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
+            className="relative mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+          >
+            <ShoppingCart className="h-5 w-5" weight="regular" />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </Link>
         }
       />
 
       <ImageCarousel images={galleryImages} alt={item.name} outOfStock={outOfStock} />
 
       <div className="p-4">
-        <h2 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
-          {item.name}
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
+            {item.name}
+          </h2>
+          <button
+            onClick={() => toggleSaved(item.id)}
+            aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
+            aria-pressed={isSaved(item.id)}
+            className={[
+              "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-150 ease-app active:scale-90",
+              isSaved(item.id)
+                ? "border-accent-200 bg-accent-50 text-accent-500 dark:border-accent-500/30 dark:bg-accent-500/10"
+                : "border-graphite-200 text-graphite-500 hover:bg-graphite-100 dark:border-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-800",
+            ].join(" ")}
+          >
+            <HeartIcon filled={isSaved(item.id)} />
+          </button>
+        </div>
 
         {item.variants.length === 0 && (
           <p className="mt-4 font-body text-[13px] text-graphite-500">

@@ -1,9 +1,21 @@
-import { CaretDown, CaretUp, DotsThreeVertical, PencilSimple, Plus, Wrench } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import {
+  CaretDown,
+  CaretUp,
+  DotsSixVertical,
+  DotsThreeVertical,
+  PencilSimple,
+  Plus,
+  Wrench,
+} from "@phosphor-icons/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminProducts, useAdminCategories, useAdminProduct } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
-import { deleteProduct, updateProductsSortOrder } from "../../../services/admin-products.service";
+import {
+  deleteProduct,
+  updateProductsSortOrder,
+  type AdminProductListItem,
+} from "../../../services/admin-products.service";
 import { formatCurrency } from "../../../utils/currency";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
@@ -28,6 +40,46 @@ function PencilIcon() {
 
 function MoreIcon() {
   return <DotsThreeVertical className="h-4 w-4" weight="regular" />;
+}
+
+// Long-press must clearly beat an ordinary tap/scroll gesture before a drag
+// starts, and a small amount of finger jitter shouldn't cancel it early.
+const LONG_PRESS_MS = 350;
+const PRE_PRESS_CANCEL_PX = 8;
+
+/**
+ * Press-and-hold drag handle — an alternative to the up/down arrows for
+ * reordering several rows quickly. Only wired up in natural (unfiltered,
+ * unsearched) order, same restriction as ReorderControls.
+ */
+function DragHandle({
+  onPointerDown,
+  dragging,
+  disabled,
+}: {
+  onPointerDown: (e: React.PointerEvent) => void;
+  dragging: boolean;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label="Drag to reorder (press and hold, then move)"
+      title="Press and hold to drag"
+      onPointerDown={onPointerDown}
+      onContextMenu={(e) => e.preventDefault()}
+      disabled={disabled}
+      className={[
+        "flex h-6 w-5 flex-shrink-0 touch-none select-none items-center justify-center rounded",
+        "text-graphite-300 disabled:opacity-25",
+        dragging
+          ? "cursor-grabbing text-graphite-700 dark:text-graphite-100"
+          : "cursor-grab hover:text-graphite-500 dark:hover:text-graphite-300",
+      ].join(" ")}
+    >
+      <DotsSixVertical className="h-4 w-4" weight="bold" />
+    </button>
+  );
 }
 
 /** Up/down arrow pair for reordering a row — used in both the mobile card and desktop table layouts. */
@@ -82,6 +134,11 @@ export function ProductsList() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOrderIds, setDragOrderIds] = useState<string[] | null>(null);
+  const dragSessionRef = useRef<{ pointerId: number; timer: ReturnType<typeof setTimeout> | null } | null>(
+    null,
+  );
 
   const allItems = products.status === "success" ? products.data : [];
   const categoryList = categories.status === "success" ? categories.data : [];
@@ -156,6 +213,129 @@ export function ProductsList() {
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(items, {
     resetKey: `${search}-${categoryFilter}-${statusFilter}`,
   });
+
+  // --- Long-press drag reordering (alternative to the up/down arrows) ---
+  // `dragOrderIds` holds the *visual* order of the current page's rows
+  // while a drag is in progress; it's local-only until drop, when it's
+  // translated back into full-list sort_order changes and persisted the
+  // same way handleMove does.
+  const pageItemsById = useMemo(() => new Map(pageItems.map((p) => [p.id, p])), [pageItems]);
+  const displayItems: AdminProductListItem[] = dragOrderIds
+    ? (dragOrderIds.map((id) => pageItemsById.get(id)).filter(Boolean) as AdminProductListItem[])
+    : pageItems;
+
+  const finishDrag = useCallback(
+    async (commit: boolean) => {
+      dragSessionRef.current = null;
+      document.body.style.removeProperty("user-select");
+      const finalOrderIds = dragOrderIds;
+      const draggedId = draggingId;
+      setDraggingId(null);
+      setDragOrderIds(null);
+      if (!commit || !finalOrderIds || !draggedId) return;
+
+      const originalIds = pageItems.map((p) => p.id);
+      if (finalOrderIds.join(",") === originalIds.join(",")) return;
+
+      const idToProduct = new Map(pageItems.map((p) => [p.id, p]));
+      const newSlice = finalOrderIds.map((id) => idToProduct.get(id)).filter(Boolean) as AdminProductListItem[];
+      if (newSlice.length !== pageItems.length) return;
+
+      const offset = (page - 1) * pageSize;
+      const newFullOrder = allItems.slice();
+      newFullOrder.splice(offset, newSlice.length, ...newSlice);
+
+      const changes = newFullOrder
+        .map((p, i) => ({ id: p.id, sortOrder: i, prevSortOrder: p.sortOrder }))
+        .filter((change) => change.sortOrder !== change.prevSortOrder)
+        .map(({ id, sortOrder }) => ({ id, sortOrder }));
+      if (changes.length === 0) return;
+
+      setReorderingId(draggedId);
+      try {
+        await updateProductsSortOrder(changes);
+        products.refetch();
+      } catch {
+        showToast("Couldn't reorder products. Try again.", "danger");
+      } finally {
+        setReorderingId(null);
+      }
+    },
+    [dragOrderIds, draggingId, page, pageSize, pageItems, allItems, products, showToast],
+  );
+
+  // Active drag: track pointer movement globally (the pointer travels well
+  // outside the handle itself) and swap the hovered row into the dragged
+  // row's slot as soon as they differ.
+  useEffect(() => {
+    if (!draggingId) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const overId = el?.closest<HTMLElement>("[data-drag-id]")?.getAttribute("data-drag-id");
+      if (!overId) return;
+      setDragOrderIds((current) => {
+        if (!current) return current;
+        const from = current.indexOf(draggingId);
+        const to = current.indexOf(overId);
+        if (from === -1 || to === -1 || from === to) return current;
+        const next = current.slice();
+        const [moved] = next.splice(from, 1);
+        next.splice(to, 0, moved);
+        return next;
+      });
+    };
+    const handlePointerUp = () => finishDrag(true);
+    const handlePointerCancel = () => finishDrag(false);
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerCancel);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+    };
+  }, [draggingId, finishDrag]);
+
+  // Pending press: waits out LONG_PRESS_MS before a drag actually starts,
+  // so a normal tap or a scroll gesture that starts on the handle doesn't
+  // get hijacked.
+  const handleDragHandlePointerDown = (e: React.PointerEvent, id: string) => {
+    if (!naturalOrder || reorderingId) return;
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const pointerId = e.pointerId;
+
+    const cancelPending = () => {
+      window.removeEventListener("pointermove", onPreMove);
+      window.removeEventListener("pointerup", onPreUp);
+      if (dragSessionRef.current?.timer) clearTimeout(dragSessionRef.current.timer);
+      dragSessionRef.current = null;
+    };
+    const onPreMove = (ev: PointerEvent) => {
+      if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > PRE_PRESS_CANCEL_PX) {
+        cancelPending();
+      }
+    };
+    const onPreUp = () => cancelPending();
+
+    window.addEventListener("pointermove", onPreMove);
+    window.addEventListener("pointerup", onPreUp);
+
+    const timer = setTimeout(() => {
+      window.removeEventListener("pointermove", onPreMove);
+      window.removeEventListener("pointerup", onPreUp);
+      dragSessionRef.current = { pointerId, timer: null };
+      document.body.style.setProperty("user-select", "none");
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(12);
+      setDraggingId(id);
+      setDragOrderIds(pageItems.map((p) => p.id));
+    }, LONG_PRESS_MS);
+
+    dragSessionRef.current = { pointerId, timer };
+  };
 
   const handleDelete = async () => {
     if (!pendingDelete) return;
@@ -255,20 +435,34 @@ export function ProductsList() {
 
       {products.status === "success" && items.length > 0 && (
         <div className="space-y-2 sm:hidden">
-          {pageItems.map((product, i) => (
-            <Card key={product.id} className="p-3">
+          {displayItems.map((product, i) => (
+            <Card
+              key={product.id}
+              data-drag-id={naturalOrder ? product.id : undefined}
+              className={[
+                "p-3 transition-opacity duration-100",
+                draggingId === product.id ? "opacity-50" : "",
+              ].join(" ")}
+            >
               <div className="flex items-center gap-3">
                 <span className="w-5 flex-shrink-0 text-right font-body text-[12px] tabular-nums text-graphite-400">
                   {(page - 1) * pageSize + i + 1}
                 </span>
                 {naturalOrder && (
-                  <ReorderControls
-                    onMoveUp={() => handleMove(product.id, "up")}
-                    onMoveDown={() => handleMove(product.id, "down")}
-                    disableUp={orderIndex.get(product.id) === 0}
-                    disableDown={orderIndex.get(product.id) === allItems.length - 1}
-                    busy={reorderingId === product.id}
-                  />
+                  <div className="flex flex-shrink-0 items-center gap-1">
+                    <DragHandle
+                      onPointerDown={(e) => handleDragHandlePointerDown(e, product.id)}
+                      dragging={draggingId === product.id}
+                      disabled={!!reorderingId}
+                    />
+                    <ReorderControls
+                      onMoveUp={() => handleMove(product.id, "up")}
+                      onMoveDown={() => handleMove(product.id, "down")}
+                      disableUp={orderIndex.get(product.id) === 0}
+                      disableDown={orderIndex.get(product.id) === allItems.length - 1}
+                      busy={reorderingId === product.id}
+                    />
+                  </div>
                 )}
                 <button
                   type="button"
@@ -378,13 +572,25 @@ export function ProductsList() {
               </tr>
             </thead>
             <tbody>
-              {pageItems.map((product, i) => (
+              {displayItems.map((product, i) => (
                 <tr
                   key={product.id}
-                  className="border-b border-graphite-100 last:border-b-0 hover:bg-graphite-50 dark:border-graphite-800 dark:hover:bg-graphite-900/60"
+                  data-drag-id={naturalOrder ? product.id : undefined}
+                  className={[
+                    "border-b border-graphite-100 last:border-b-0 hover:bg-graphite-50 dark:border-graphite-800 dark:hover:bg-graphite-900/60",
+                    "transition-opacity duration-100",
+                    draggingId === product.id ? "opacity-50" : "",
+                  ].join(" ")}
                 >
                   <td className="px-4 py-4 align-middle">
                     <div className="flex items-center justify-end gap-2">
+                      {naturalOrder && (
+                        <DragHandle
+                          onPointerDown={(e) => handleDragHandlePointerDown(e, product.id)}
+                          dragging={draggingId === product.id}
+                          disabled={!!reorderingId}
+                        />
+                      )}
                       {naturalOrder && (
                         <ReorderControls
                           onMoveUp={() => handleMove(product.id, "up")}
