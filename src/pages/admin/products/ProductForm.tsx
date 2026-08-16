@@ -159,7 +159,11 @@ export function ProductForm() {
       <h1 className="mb-4 font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
         {isEdit ? "Edit product" : "New product"}
       </h1>
-      <form onSubmit={handleSubmit} className="space-y-4 pb-4" noValidate>
+      {/* pb-32 leaves enough room for the sticky Cancel/Save bar (~70px) plus
+          its gap above the mobile tab bar, so it never overlaps the last
+          field's content on a short page; md:pb-10 is enough once the bar
+          sits flush at the bottom (no tab bar to clear) at that breakpoint. */}
+      <form onSubmit={handleSubmit} className="space-y-4 pb-32 md:pb-10" noValidate>
         <Input ref={nameRef} label="Name" value={values.name} onChange={(e) => handleNameChange(e.target.value)} error={errors.name} />
         <Input
           label="Slug"

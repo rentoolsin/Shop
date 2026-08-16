@@ -227,7 +227,11 @@ export function AdminLayout() {
           // prevents horizontal overflow but is excluded from that
           // auto-scroll-container promotion, so sticky descendants correctly
           // stick to the real (window) scrollport again.
-          "min-w-0 flex-1 overflow-x-clip px-4 pb-24 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8 xl:px-10",
+          // pb-16 matches AdminMobileNav's own height (h-16) so page content
+          // ends flush against its top edge on mobile, with no dead gap
+          // below the last item — md:pb-6 keeps the roomier desktop value
+          // where there's no bottom nav to clear.
+          "min-w-0 flex-1 overflow-x-clip px-4 pb-16 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8 xl:px-10",
           collapsed ? "md:ml-[76px]" : "md:ml-64",
         ].join(" ")}
       >

@@ -1,7 +1,9 @@
 import {
-  Check,
+  ArrowLineDown,
+  ArrowLineUp,
+  CaretDown,
+  CaretUp,
   DotsThreeVertical,
-  FolderSimple,
   ListBullets,
   PencilSimple,
   Plus,
@@ -15,7 +17,7 @@ import { useAdminProducts, useAdminCategories, useAdminProduct } from "../../../
 import { usePagination } from "../../../hooks/usePagination";
 import {
   deleteProduct,
-  updateProductCategory,
+  updateProductsSortOrder,
 } from "../../../services/admin-products.service";
 import { ProductsBoard } from "./ProductsBoard";
 import { formatCurrency } from "../../../utils/currency";
@@ -49,17 +51,19 @@ function TrashIcon() {
   return <Trash className="h-4 w-4" weight="light" />;
 }
 
-/** Right-aligned "Move" button — opens the category picker sheet for a product. */
+/** Right-aligned "Move" button — opens the reorder-position sheet for a product. */
 function MoveButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
   return (
     <button
       type="button"
-      aria-label="Move to another category"
+      aria-label="Move to a different position in the list"
+      title={disabled ? "Clear search and filters to reorder" : "Change position"}
       onClick={onClick}
       disabled={disabled}
       className="flex h-9 items-center gap-1 rounded px-1.5 font-body text-[12px] font-medium text-graphite-500 hover:bg-graphite-100 disabled:opacity-40 dark:text-graphite-400 dark:hover:bg-graphite-800"
     >
-      <FolderSimple className="h-4 w-4" weight="light" />
+      <CaretUp className="-mr-1 h-4 w-4" weight="bold" />
+      <CaretDown className="h-4 w-4" weight="bold" />
       Move
     </button>
   );
@@ -79,8 +83,8 @@ export function ProductsList() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [view, setView] = useState<"list" | "board">("list");
-  const [movingId, setMovingId] = useState<string | null>(null);
-  // Product currently showing its "Move to…" category-picker sheet.
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
+  // Product currently showing its "Move to…" position-picker sheet.
   const [moveMenuProductId, setMoveMenuProductId] = useState<string | null>(null);
 
   const allItems = products.status === "success" ? products.data : [];
@@ -88,6 +92,18 @@ export function ProductsList() {
 
   const categoryName = (categoryId: string) =>
     categoryList.find((c) => c.id === categoryId)?.name ?? "—";
+
+  // `allItems` is already fetched in sort_order/created_at order — the same
+  // order the storefront home page uses — so the S.No shown here already
+  // *is* the sort order. This map gives O(1) lookup of a product's position
+  // in that true (unfiltered, unpaginated) order, so the Move sheet's
+  // top/up/down/bottom options work off the real order regardless of
+  // filtering, search, or pagination.
+  const orderIndex = useMemo(() => new Map(allItems.map((p, i) => [p.id, i])), [allItems]);
+  // Reordering swaps positions in the *true* order above. If the list is
+  // filtered or searched, "up"/"down" wouldn't mean what's shown on screen,
+  // so Move is only offered when viewing the full, unfiltered list.
+  const naturalOrder = !search.trim() && categoryFilter === "all" && statusFilter === "all";
 
   const items = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -109,19 +125,40 @@ export function ProductsList() {
 
   const displayItems = pageItems;
 
-  const moveProductToCategory = async (productId: string, categoryId: string) => {
-    const product = allItems.find((p) => p.id === productId);
+  const moveProductPosition = async (productId: string, target: "top" | "up" | "down" | "bottom") => {
+    const index = orderIndex.get(productId);
     setMoveMenuProductId(null);
-    if (!product || product.categoryId === categoryId) return;
-    setMovingId(productId);
+    if (index === undefined) return;
+
+    const newIndex =
+      target === "top" ? 0 : target === "bottom" ? allItems.length - 1 : target === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= allItems.length || newIndex === index) return;
+
+    const reordered = allItems.slice();
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    // Renumber sequentially and only push rows whose sort_order actually
+    // changes, comparing each row's new position against *that row's own*
+    // previous sort_order (not whatever value used to sit at that array
+    // index) — see updateProductsSortOrder's docstring for why.
+    const changes = reordered
+      .map((p, i) => ({ id: p.id, sortOrder: i, prevSortOrder: p.sortOrder }))
+      .filter((change) => change.sortOrder !== change.prevSortOrder)
+      .map(({ id, sortOrder }) => ({ id, sortOrder }));
+    if (changes.length === 0) return;
+
+    setReorderingId(productId);
     try {
-      await updateProductCategory(productId, categoryId);
+      await updateProductsSortOrder(changes);
       products.refetch();
-      showToast(`Moved "${product.name}" to ${categoryName(categoryId)}.`, "success");
+      const label =
+        target === "top" ? "to the top" : target === "bottom" ? "to the bottom" : target === "up" ? "up" : "down";
+      showToast(`Moved "${moved.name}" ${label}.`, "success");
     } catch {
-      showToast("Couldn't move this product. Try again.", "danger");
+      showToast("Couldn't reorder this product. Try again.", "danger");
     } finally {
-      setMovingId(null);
+      setReorderingId(null);
     }
   };
 
@@ -218,6 +255,12 @@ export function ProductsList() {
         </Select>
       </div>
 
+      {view === "list" && !naturalOrder && products.status === "success" && allItems.length > 0 && (
+        <p className="mb-3 font-body text-[12px] text-graphite-400">
+          Clear the search and filters to reorder products — this is also the order they'll appear in on the home page.
+        </p>
+      )}
+
       {view === "board" && products.status === "success" && allItems.length > 0 && (
         <ProductsBoard
           allItems={allItems}
@@ -300,7 +343,7 @@ export function ProductsList() {
                   </p>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-1">
-                  <MoveButton onClick={() => setMoveMenuProductId(product.id)} disabled={movingId === product.id} />
+                  <MoveButton onClick={() => setMoveMenuProductId(product.id)} disabled={!naturalOrder || reorderingId === product.id} />
                   <Link
                     to={`/admin/products/${product.id}/edit`}
                     aria-label={`Edit ${product.name}`}
@@ -415,7 +458,7 @@ export function ProductsList() {
                     <div className="flex items-center justify-end gap-2">
                       <MoveButton
                         onClick={() => setMoveMenuProductId(product.id)}
-                        disabled={movingId === product.id}
+                        disabled={!naturalOrder || reorderingId === product.id}
                       />
                       <Link
                         to={`/admin/products/${product.id}/edit`}
@@ -584,29 +627,39 @@ export function ProductsList() {
         onClose={() => setMoveMenuProductId(null)}
         title={
           moveMenuProductId
-            ? `Move "${allItems.find((p) => p.id === moveMenuProductId)?.name ?? ""}" to…`
+            ? `Move "${allItems.find((p) => p.id === moveMenuProductId)?.name ?? ""}"`
             : undefined
         }
       >
         <div className="flex flex-col gap-0.5">
-          {categoryList.map((category) => {
-            const product = moveMenuProductId ? allItems.find((p) => p.id === moveMenuProductId) : undefined;
-            const isCurrent = product?.categoryId === category.id;
+          {(
+            [
+              { target: "top", label: "Move to top", icon: <ArrowLineUp className="h-4 w-4" weight="bold" /> },
+              { target: "up", label: "Move up", icon: <CaretUp className="h-4 w-4" weight="bold" /> },
+              { target: "down", label: "Move down", icon: <CaretDown className="h-4 w-4" weight="bold" /> },
+              { target: "bottom", label: "Move to bottom", icon: <ArrowLineDown className="h-4 w-4" weight="bold" /> },
+            ] as const
+          ).map(({ target, label, icon }) => {
+            const index = moveMenuProductId ? orderIndex.get(moveMenuProductId) : undefined;
+            const disabled =
+              index === undefined ||
+              ((target === "top" || target === "up") && index === 0) ||
+              ((target === "bottom" || target === "down") && index === allItems.length - 1);
             return (
               <button
-                key={category.id}
+                key={target}
                 type="button"
-                disabled={isCurrent || !!movingId}
-                onClick={() => moveMenuProductId && moveProductToCategory(moveMenuProductId, category.id)}
+                disabled={disabled}
+                onClick={() => moveMenuProductId && moveProductPosition(moveMenuProductId, target)}
                 className={[
-                  "flex items-center justify-between rounded-lg px-3 py-2.5 text-left font-body text-[14px]",
-                  isCurrent
+                  "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left font-body text-[14px]",
+                  disabled
                     ? "text-graphite-300 dark:text-graphite-700"
                     : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
                 ].join(" ")}
               >
-                {category.name}
-                {isCurrent && <Check className="h-4 w-4" weight="bold" />}
+                {icon}
+                {label}
               </button>
             );
           })}
