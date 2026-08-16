@@ -6,7 +6,6 @@ import {
   Package,
   Phone,
   ShieldCheck,
-  SlidersHorizontal,
 } from "@phosphor-icons/react";
 import type { FormEvent, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,13 +16,12 @@ import { EmptyState } from "../ui/EmptyState";
 import { ErrorState } from "../ui/ErrorState";
 import { Button } from "../ui/Button";
 import { SearchBar } from "../ui/SearchBar";
-import { ThemeToggle } from "../actions/ThemeToggle";
 import { CallButton } from "../actions/CallButton";
 import { WhatsAppButton } from "../actions/WhatsAppButton";
 import { HeroCarousel } from "./HeroCarousel";
 import { ShopLocationCard } from "./ShopLocationCard";
 import { HowItWorksSteps } from "./HowItWorksSteps";
-import { useTheme } from "../../lib/theme";
+import { DesktopContainer as Container } from "../layout/DesktopHeader";
 import type { CategoryListItem } from "../../services/categories.service";
 import type { ProductListItem } from "../../services/products.service";
 import type { HomepageSectionContentMap } from "../../utils/homepage-content";
@@ -47,13 +45,6 @@ interface DesktopHomeProps {
   setQuery: (value: string) => void;
   onSearchSubmit: (e: FormEvent) => void;
 }
-
-const NAV_LINKS = [
-  { to: "/", label: "Home" },
-  { to: "/products", label: "Tools" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
-];
 
 const iconProps = { className: "h-5 w-5 text-white", weight: "regular" } as const;
 
@@ -99,12 +90,6 @@ function HighlightSite({ text }: { text: string }) {
   );
 }
 
-/** Fixed 1280px content column, centered — every section shares this so
- *  headings/grids line up vertically down the page. */
-function Container({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`mx-auto w-full max-w-[1280px] px-10 ${className}`}>{children}</div>;
-}
-
 /**
  * Desktop homepage — a distinct layout tree from the mobile `Home` page
  * (see `pages/Home.tsx`), not a breakpoint-tweaked version of it. Reuses
@@ -128,62 +113,12 @@ export function DesktopHome({
   onSearchSubmit,
 }: DesktopHomeProps) {
   const navigate = useNavigate();
-  const { resolved } = useTheme();
-  const logoSrc = resolved === "dark" ? "/logo-yellow.png" : "/logo-black.png";
 
   return (
     <div className="bg-graphite-25 dark:bg-graphite-950">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-graphite-200 bg-graphite-50/90 backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/90">
-        <Container className="flex h-20 items-center gap-8">
-          <Link to="/" className="flex flex-shrink-0 items-center">
-            <img src={logoSrc} alt="RenTools" className="h-12 w-auto" />
-          </Link>
-
-          <nav aria-label="Primary" className="flex flex-shrink-0 items-center gap-6">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="font-body text-[14.5px] font-medium text-graphite-600 transition-colors hover:text-ink dark:text-graphite-300 dark:hover:text-ink-inverted"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <form onSubmit={onSearchSubmit} className="flex-1">
-            <label htmlFor="home-search-desktop" className="sr-only">
-              Search tools
-            </label>
-            <SearchBar
-              id="home-search-desktop"
-              value={query}
-              onChange={setQuery}
-              placeholder="Search tools & equipment…"
-              containerClassName="h-11 w-full"
-              trailing={
-                <button
-                  type="button"
-                  onClick={() => navigate("/search")}
-                  aria-label="Filters"
-                  className="-mr-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-colors hover:bg-graphite-100 dark:hover:bg-graphite-800"
-                >
-                  <SlidersHorizontal className="h-4 w-4" weight="regular" />
-                </button>
-              }
-            />
-          </form>
-
-          <div className="flex flex-shrink-0 items-center gap-2.5">
-            <CallButton phone={phone} label="Call" />
-            <WhatsAppButton phone={whatsapp} label="WhatsApp" />
-            <ThemeToggle />
-          </div>
-        </Container>
-      </header>
-
-      {/* Hero */}
+      {/* Hero — the persistent top nav/search/cart bar lives in
+          `DesktopHeader` (rendered once in App.tsx, shared by every
+          route); this section is Home's own hero content below it. */}
       {!hiddenSections.has("hero") && (
         <section className="border-b border-graphite-200 py-14 dark:border-graphite-800">
           <Container className="grid grid-cols-2 items-center gap-16">

@@ -2,6 +2,7 @@ import { ArrowUpRight, Clock, CircleNotch, Envelope, MapPin, NavigationArrow, Ph
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Button } from "../components/ui/Button";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
 import { useSiteSettings } from "../hooks/useSiteSettings";
@@ -95,6 +96,8 @@ export function Contact() {
 
   return (
     <div>
+      {/* Mobile / narrow-viewport layout */}
+      <div className="md:hidden">
       <PageHeader title="Contact" />
 
       <div className="space-y-5 p-4">
@@ -268,6 +271,179 @@ export function Contact() {
             </Button>
           </div>
         </section>
+      </div>
+      </div>
+
+      {/* Desktop / wide-viewport layout */}
+      <div className="hidden md:block">
+        {/* Hero — full-bleed band */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-graphite-950 to-graphite-800 dark:to-black">
+          <div
+            className="pointer-events-none absolute -right-10 -top-10 h-56 w-72 opacity-40"
+            style={{
+              backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
+              backgroundSize: "16px 16px",
+              color: "rgb(240 168 27)",
+              maskImage: "radial-gradient(ellipse at top right, black 40%, transparent 75%)",
+              WebkitMaskImage: "radial-gradient(ellipse at top right, black 40%, transparent 75%)",
+            }}
+          />
+          <DesktopContainer className="relative flex items-center justify-between gap-10 py-16">
+            <div className="max-w-[48ch]">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-body text-[12px] font-medium text-white/70">
+                <span className="h-1.5 w-1.5 rounded-full bg-state-success" />
+                Usually replies in minutes
+              </span>
+              <h1 className="mt-4 font-display text-[34px] font-semibold leading-tight text-white">
+                We&apos;re here to help you find the <span className="text-accent-400">right tool</span>.
+              </h1>
+              <p className="mt-3 font-body text-[15px] leading-relaxed text-graphite-400">
+                Message us on WhatsApp for the fastest reply, or call — whichever&apos;s easiest for you.
+              </p>
+              <div className="mt-6 flex gap-3">
+                <Button
+                  variant="accent"
+                  size="lg"
+                  onClick={() => window.open(waHref, "_blank", "noopener,noreferrer")}
+                >
+                  <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                    <WhatsAppIcon className="h-4 w-4" />
+                    Chat on WhatsApp
+                  </span>
+                </Button>
+                <a
+                  href={`tel:${phone}`}
+                  className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded border border-white/15 bg-white/10 px-5 py-3 font-body text-[14.5px] font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/15"
+                >
+                  <Phone className="h-4 w-4" weight="regular" />
+                  Call Us
+                </a>
+              </div>
+            </div>
+            <img
+              src="/images/support-headset.png"
+              alt=""
+              aria-hidden="true"
+              className="h-40 w-auto flex-shrink-0 drop-shadow-[0_8px_20px_rgba(0,0,0,0.35)]"
+            />
+          </DesktopContainer>
+        </section>
+
+        <DesktopContainer className="py-14">
+          <div className="grid grid-cols-2 gap-14">
+            {/* Left column: Reach us + reassurance strip + funnel handoff */}
+            <div className="space-y-8">
+              <section>
+                <h2 className="mb-2 font-display text-[13px] font-semibold uppercase tracking-[0.06em] text-graphite-400">
+                  Reach us directly
+                </h2>
+                <div className="divide-y divide-graphite-100 overflow-hidden rounded-lg border border-graphite-200 bg-white dark:divide-graphite-800 dark:border-graphite-800 dark:bg-graphite-900">
+                  <ReachRow icon={<Phone className="h-[18px] w-[18px]" weight="regular" />} label="Call" value={phone} href={`tel:${phone}`} />
+                  <ReachRow icon={<Envelope className="h-[18px] w-[18px]" weight="regular" />} label="Email" value={email} href={`mailto:${email}`} />
+                </div>
+              </section>
+
+              <section className="grid grid-cols-2 gap-3 rounded-lg border border-accent-200 bg-accent-50 px-4 py-4 dark:border-accent-700/40 dark:bg-accent-500/10">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 flex-shrink-0 text-accent-600 dark:text-accent-400" weight="regular" />
+                  <span className="font-body text-[13px] leading-tight text-graphite-700 dark:text-graphite-300">Local, Coimbatore-based</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 flex-shrink-0 text-accent-600 dark:text-accent-400" weight="regular" />
+                  <span className="font-body text-[13px] leading-tight text-graphite-700 dark:text-graphite-300">Fast replies on WhatsApp</span>
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-dashed border-graphite-300 bg-white px-5 py-5 dark:border-graphite-700 dark:bg-graphite-900">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-accent-500/10 text-accent-600 dark:text-accent-400">
+                    <Wrench className="h-5 w-5" weight="regular" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                      Not sure what to ask for?
+                    </p>
+                    <p className="font-body text-[13px] text-graphite-500">
+                      Browse the catalog, or just tell us what you need.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2.5">
+                  <Button variant="accent" fullWidth onClick={() => navigate("/products")}>
+                    Browse catalog
+                  </Button>
+                  <Button variant="outline" fullWidth onClick={() => navigate("/enquire")}>
+                    Send a message
+                  </Button>
+                </div>
+              </section>
+            </div>
+
+            {/* Right column: Visit the yard */}
+            <section>
+              <h2 className="mb-2 font-display text-[13px] font-semibold uppercase tracking-[0.06em] text-graphite-400">
+                Visit the yard
+              </h2>
+              <div className="overflow-hidden rounded-lg border border-graphite-200 bg-white dark:border-graphite-800 dark:bg-graphite-900">
+                <div className="relative h-64 overflow-hidden bg-graphite-100 dark:bg-graphite-800">
+                  <iframe
+                    title="RenTools yard location"
+                    src={`https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`}
+                    className="h-full w-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 font-body text-[12px] font-semibold text-ink shadow-sm backdrop-blur-sm transition-all hover:bg-white dark:bg-graphite-950/90 dark:text-ink-inverted"
+                  >
+                    <MapPin className="h-3.5 w-3.5 text-accent-500" weight="fill" />
+                    Open in Maps
+                  </a>
+                </div>
+
+                <div className="p-5">
+                  <h3 className="font-display text-[16px] font-semibold text-ink dark:text-ink-inverted">
+                    RenTools yard
+                  </h3>
+                  <p className="mt-1 font-body text-[14px] leading-relaxed text-graphite-500">{address}</p>
+
+                  {distance.status === "success" && (
+                    <p className="mt-2.5 inline-flex items-center gap-1.5 font-body text-[13.5px] font-semibold text-accent-600 dark:text-accent-400">
+                      <NavigationArrow className="h-4 w-4" weight="regular" />
+                      {formatDistance(distance.km)} from you
+                    </p>
+                  )}
+                  {distance.status === "error" && (
+                    <p className="mt-2.5 font-body text-[13px] text-state-danger-text dark:text-state-danger-text-dark">
+                      {distance.message}
+                    </p>
+                  )}
+
+                  <div className="mt-4">
+                    <Button
+                      variant="accent"
+                      fullWidth
+                      onClick={handleCheckDistance}
+                      disabled={distance.status === "loading"}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        {distance.status === "loading" ? (
+                          <CircleNotch className="h-4 w-4 animate-spin" weight="regular" />
+                        ) : (
+                          <NavigationArrow className="h-4 w-4" weight="regular" />
+                        )}
+                        Check distance
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </DesktopContainer>
       </div>
     </div>
   );

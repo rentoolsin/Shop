@@ -2,6 +2,7 @@ import { Check, Heart, ShieldCheck, ShoppingCart, Truck } from "@phosphor-icons/
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -110,11 +111,25 @@ export function ProductDetail() {
   if (product.status === "loading") {
     return (
       <div>
-        <PageHeader title="Tool" />
-        <Skeleton className="aspect-square w-full" />
-        <div className="space-y-2 p-4">
-          <Skeleton className="h-5 w-2/3" />
-          <Skeleton className="h-4 w-1/3" />
+        <div className="md:hidden">
+          <PageHeader title="Tool" />
+          <Skeleton className="aspect-square w-full" />
+          <div className="space-y-2 p-4">
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-4 w-1/3" />
+          </div>
+        </div>
+        <div className="hidden md:block">
+          <DesktopContainer className="py-10">
+            <div className="grid grid-cols-2 gap-14">
+              <Skeleton className="aspect-square w-full rounded-lg" />
+              <div className="space-y-3">
+                <Skeleton className="h-7 w-2/3" />
+                <Skeleton className="h-5 w-1/3" />
+                <Skeleton className="h-11 w-full" />
+              </div>
+            </div>
+          </DesktopContainer>
         </div>
       </div>
     );
@@ -123,8 +138,15 @@ export function ProductDetail() {
   if (product.status === "error") {
     return (
       <div>
-        <PageHeader title="Tool" />
-        <ErrorState title="Couldn't load this tool" onRetry={product.refetch} />
+        <div className="md:hidden">
+          <PageHeader title="Tool" />
+          <ErrorState title="Couldn't load this tool" onRetry={product.refetch} />
+        </div>
+        <div className="hidden md:block">
+          <DesktopContainer className="py-16">
+            <ErrorState title="Couldn't load this tool" onRetry={product.refetch} />
+          </DesktopContainer>
+        </div>
       </div>
     );
   }
@@ -132,8 +154,15 @@ export function ProductDetail() {
   if (!product.data) {
     return (
       <div>
-        <PageHeader title="Tool" />
-        <EmptyState title="Tool not found" description="It may have been removed." />
+        <div className="md:hidden">
+          <PageHeader title="Tool" />
+          <EmptyState title="Tool not found" description="It may have been removed." />
+        </div>
+        <div className="hidden md:block">
+          <DesktopContainer className="py-16">
+            <EmptyState title="Tool not found" description="It may have been removed." />
+          </DesktopContainer>
+        </div>
       </div>
     );
   }
@@ -198,6 +227,9 @@ export function ProductDetail() {
 
   return (
     <div>
+      {/* Mobile / narrow-viewport layout — unchanged, scoped to `< md`
+          now that a separate desktop layout exists below. */}
+      <div className="md:hidden">
       <PageHeader
         title={item.name}
         action={
@@ -414,7 +446,7 @@ export function ProductDetail() {
             </>
           )}
         </div>
-      </div>
+        </div>
 
       {loadedProduct && related.status === "success" && (
         <>
@@ -470,6 +502,262 @@ export function ProductDetail() {
           )}
         </div>
       )}
+      </div>
+
+      {/* Desktop / wide-viewport layout — classic two-column PDP: gallery
+          left, purchase panel right (sticky so it stays in view while the
+          description/reviews below scroll), related tools in a grid at
+          the bottom. Reuses every value computed above, unchanged. */}
+      <div className="hidden md:block">
+        <DesktopContainer className="py-10">
+          <div className="grid grid-cols-2 gap-14">
+            {/* Gallery */}
+            <div className="overflow-hidden rounded-lg">
+              <ImageCarousel images={galleryImages} alt={item.name} outOfStock={outOfStock} />
+            </div>
+
+            {/* Purchase panel */}
+            <div className="sticky top-28 self-start">
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="font-display text-[26px] font-bold leading-tight text-ink dark:text-ink-inverted">
+                  {item.name}
+                </h1>
+                <button
+                  onClick={() => toggleSaved(item.id)}
+                  aria-label={isSaved(item.id) ? "Remove from saved" : "Save this tool"}
+                  aria-pressed={isSaved(item.id)}
+                  className={[
+                    "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-150 ease-app hover:scale-105",
+                    isSaved(item.id)
+                      ? "border-accent-200 bg-accent-50 text-accent-500 dark:border-accent-500/30 dark:bg-accent-500/10"
+                      : "border-graphite-200 text-graphite-500 hover:bg-graphite-100 dark:border-graphite-800 dark:text-graphite-300 dark:hover:bg-graphite-800",
+                  ].join(" ")}
+                >
+                  <HeartIcon filled={isSaved(item.id)} />
+                </button>
+              </div>
+
+              {item.variants.length === 0 && (
+                <p className="mt-4 font-body text-[14px] text-graphite-500">
+                  Rate and availability on enquiry.
+                </p>
+              )}
+
+              {item.variants.length > 0 && (
+                <div className="mt-5">
+                  <h3 className="font-body text-[13px] font-medium text-graphite-500">Size / Variant</h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {item.variants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => setSelectedVariantId(variant.id)}
+                        aria-pressed={activeVariant?.id === variant.id}
+                        className={[
+                          "inline-flex min-h-[42px] min-w-[42px] items-center justify-center rounded border px-4",
+                          "font-body text-[13.5px] font-medium leading-none transition-colors duration-150 ease-app",
+                          activeVariant?.id === variant.id
+                            ? "border-accent-500 bg-transparent text-accent-700 dark:border-accent-400 dark:text-accent-300"
+                            : "border-graphite-300 bg-transparent text-graphite-700 hover:border-graphite-400 dark:border-graphite-600 dark:text-graphite-300",
+                        ].join(" ")}
+                      >
+                        {variant.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeVariant && (
+                    <div className="mt-5 flex flex-wrap items-center gap-2">
+                      <span className="font-display text-[26px] font-bold text-ink dark:text-ink-inverted">
+                        {formatCurrency(activeVariant.dailyRate)}
+                      </span>
+                      <span className="font-body text-[14px] text-graphite-500">/ day</span>
+                      {activeVariant.originalDailyRate != null && (
+                        <span className="font-body text-[15px] text-graphite-400 line-through dark:text-graphite-500">
+                          {formatCurrency(activeVariant.originalDailyRate)}
+                        </span>
+                      )}
+                      {activeVariant.originalDailyRate != null &&
+                        activeVariant.originalDailyRate > activeVariant.dailyRate && (
+                          <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[11px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                            Save {formatCurrency(activeVariant.originalDailyRate - activeVariant.dailyRate)}/day
+                          </span>
+                        )}
+                    </div>
+                  )}
+
+                  {!outOfStock && (
+                    <div className="mt-4 flex items-center gap-3">
+                      <QuantityStepper
+                        quantity={cartQty}
+                        onDecrease={() => setCartQty((q) => Math.max(1, q - 1))}
+                        onIncrease={() => setCartQty((q) => q + 1)}
+                      />
+                      <Button variant="accent" size="lg" className="flex-1" onClick={handleAddToCart}>
+                        <span className="inline-flex items-center gap-2">
+                          <ShoppingCart className="h-4 w-4" weight="regular" />
+                          Add to cart
+                        </span>
+                      </Button>
+                    </div>
+                  )}
+
+                  {(outOfStock || item.variants.length === 0) && (
+                    <div className="mt-4">
+                      {outOfStock ? (
+                        <RequestPurchaseButton productName={item.name} fullWidth />
+                      ) : (
+                        <EnquiryButton
+                          productId={item.id}
+                          productName={item.name}
+                          dailyRate={activeVariant?.dailyRate}
+                          fullWidth
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {item.variants.length === 0 && (
+                <div className="mt-4">
+                  <EnquiryButton productId={item.id} productName={item.name} fullWidth />
+                </div>
+              )}
+
+              <div className="mt-5 grid grid-cols-2 gap-2 rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-700/40 dark:bg-accent-500/10">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" weight="regular" />
+                  <span className="font-body text-[12px] leading-tight text-graphite-700 dark:text-graphite-300">
+                    Pickup or delivery available
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 flex-shrink-0 text-accent-600 dark:text-accent-400" weight="regular" />
+                  <span className="font-body text-[12px] leading-tight text-graphite-700 dark:text-graphite-300">
+                    Deposit refunded on return
+                  </span>
+                </div>
+              </div>
+
+              {(intro || highlights.length > 0) && (
+                <div className="mt-6">
+                  <h3 className="font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                    About this tool
+                  </h3>
+                  {intro && (
+                    <p className="mt-1.5 font-body text-[14px] leading-relaxed text-graphite-600 dark:text-graphite-300">
+                      {intro}
+                    </p>
+                  )}
+                  {highlights.length > 0 && (
+                    <ul className="mt-3 space-y-2.5">
+                      {highlights.map((highlight, index) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2 font-body text-[14px] text-graphite-600 dark:text-graphite-300"
+                        >
+                          <span className="mt-0.5">
+                            <CheckIcon />
+                          </span>
+                          {highlight}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Ratings & Reviews — full width below the two-column top */}
+          <div className="mt-14 max-w-[760px] border-t border-graphite-200 pt-10 dark:border-graphite-800">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
+                Ratings & Reviews
+              </h3>
+              <button
+                onClick={() => setReviewSheetOpen(true)}
+                className="font-body text-[13.5px] font-medium text-accent-500 hover:underline"
+              >
+                Write a review
+              </button>
+            </div>
+
+            {reviews.status === "loading" && (
+              <div className="mt-3 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            )}
+
+            {reviews.status === "success" && reviews.data.count === 0 && (
+              <p className="mt-3 font-body text-[13.5px] text-graphite-500">
+                No reviews yet — be the first to rate this tool.
+              </p>
+            )}
+
+            {reviews.status === "success" && reviews.data.count > 0 && (
+              <>
+                <div className="mt-3 flex items-center gap-2">
+                  <StarRatingDisplay value={reviews.data.averageRating ?? 0} size="md" />
+                  <span className="font-body text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                    {reviews.data.averageRating!.toFixed(1)}
+                  </span>
+                  <span className="font-body text-[13.5px] text-graphite-500">
+                    ({reviews.data.count} review{reviews.data.count === 1 ? "" : "s"})
+                  </span>
+                </div>
+
+                <ul className="mt-5 grid grid-cols-2 gap-x-8 gap-y-4">
+                  {reviews.data.reviews.map((review) => (
+                    <li
+                      key={review.id}
+                      className="border-b border-graphite-200 pb-4 dark:border-graphite-800"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                          {review.name}
+                        </span>
+                        <span className="font-body text-[12px] text-graphite-400">
+                          {formatRelativeTime(review.createdAt)}
+                        </span>
+                      </div>
+                      <StarRatingDisplay value={review.rating} className="mt-1" />
+                      {review.comment && (
+                        <p className="mt-1.5 font-body text-[14px] leading-relaxed text-graphite-600 dark:text-graphite-300">
+                          {review.comment}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+
+          {/* Related tools */}
+          {loadedProduct && related.status === "success" && (
+            <>
+              {(() => {
+                const picks = related.data.filter((p) => p.id !== loadedProduct.id).slice(0, 4);
+                if (picks.length === 0) return null;
+                return (
+                  <div className="mt-14 border-t border-graphite-200 pt-10 dark:border-graphite-800">
+                    <h3 className="font-display text-[19px] font-bold text-ink dark:text-ink-inverted">
+                      You might also need
+                    </h3>
+                    <div className="mt-5 grid grid-cols-4 gap-5">
+                      {picks.map((p) => (
+                        <ProductCard key={p.id} {...p} variant="compact" />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
+        </DesktopContainer>
+      </div>
 
       <BottomSheet
         open={reviewSheetOpen}

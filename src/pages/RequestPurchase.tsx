@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
@@ -106,29 +107,58 @@ export function RequestPurchase() {
   if (submitted) {
     return (
       <div>
-        <PageHeader title="Request sent" />
-        <div className="flex flex-col items-center gap-4 p-4 pt-10 text-center">
-          <span
-            aria-hidden="true"
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-state-success/10 text-state-success"
-          >
-            <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" strokeWidth={2}>
-              <path d="M5 12l4.5 4.5L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
-            Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
-            at {values.mobile}
-            {state.productName ? ` when ${state.productName} is available` : " about your request"}.
-          </p>
-          <div className="mt-2 flex w-full flex-col gap-2">
-            <Button variant="accent" fullWidth onClick={() => navigate("/products")}>
-              Browse more tools
-            </Button>
-            <Button variant="ghost" fullWidth onClick={() => navigate("/")}>
-              Back to home
-            </Button>
+        <div className="md:hidden">
+          <PageHeader title="Request sent" />
+          <div className="flex flex-col items-center gap-4 p-4 pt-10 text-center">
+            <span
+              aria-hidden="true"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-state-success/10 text-state-success"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" strokeWidth={2}>
+                <path d="M5 12l4.5 4.5L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <p className="font-body text-[14px] text-ink dark:text-ink-inverted">
+              Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
+              at {values.mobile}
+              {state.productName ? ` when ${state.productName} is available` : " about your request"}.
+            </p>
+            <div className="mt-2 flex w-full flex-col gap-2">
+              <Button variant="accent" fullWidth onClick={() => navigate("/products")}>
+                Browse more tools
+              </Button>
+              <Button variant="ghost" fullWidth onClick={() => navigate("/")}>
+                Back to home
+              </Button>
+            </div>
           </div>
+        </div>
+        <div className="hidden md:block">
+          <DesktopContainer className="flex justify-center py-20">
+            <div className="flex w-full max-w-[440px] flex-col items-center gap-4 text-center">
+              <span
+                aria-hidden="true"
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-state-success/10 text-state-success"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-8 w-8" strokeWidth={2}>
+                  <path d="M5 12l4.5 4.5L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <p className="font-body text-[15px] text-ink dark:text-ink-inverted">
+                Thanks{values.name ? `, ${values.name}` : ""} — RenTools will contact you
+                at {values.mobile}
+                {state.productName ? ` when ${state.productName} is available` : " about your request"}.
+              </p>
+              <div className="mt-2 flex w-full flex-col gap-2.5">
+                <Button variant="accent" size="lg" fullWidth onClick={() => navigate("/products")}>
+                  Browse more tools
+                </Button>
+                <Button variant="ghost" size="lg" fullWidth onClick={() => navigate("/")}>
+                  Back to home
+                </Button>
+              </div>
+            </div>
+          </DesktopContainer>
         </div>
       </div>
     );
@@ -136,6 +166,7 @@ export function RequestPurchase() {
 
   return (
     <div>
+      <div className="md:hidden">
       <PageHeader title="Request a tool" />
       <form onSubmit={handleSubmit} className="space-y-4 p-4" noValidate>
         {state.productName && (
@@ -196,6 +227,79 @@ export function RequestPurchase() {
           {submitting ? "Sending…" : "Send request"}
         </Button>
       </form>
+      </div>
+
+      {/* Desktop / wide-viewport layout — simple form, so just a centered,
+          narrower card rather than a two-column split. */}
+      <div className="hidden md:block">
+        <DesktopContainer className="flex justify-center py-14">
+          <div className="w-full max-w-[480px]">
+            <h1 className="mb-6 text-center font-display text-[26px] font-extrabold text-ink dark:text-ink-inverted">
+              Request a tool
+            </h1>
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4 rounded-lg border border-graphite-200 bg-white p-8 dark:border-graphite-800 dark:bg-graphite-900"
+              noValidate
+            >
+              {state.productName && (
+                <div className="spec-tag spec-tag--accent">{state.productName}</div>
+              )}
+              <p className="font-body text-[13.5px] text-graphite-500">
+                Not currently in stock. Leave your details and RenTools will reach out once
+                it's available.
+              </p>
+
+              <Input
+                label="Name"
+                name="name"
+                autoComplete="name"
+                required
+                value={values.name}
+                onChange={(e) => setField("name", e.target.value)}
+                error={errors.name}
+                placeholder="Your name"
+              />
+
+              <Input
+                label="Mobile number"
+                name="mobile"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                required
+                value={values.mobile}
+                onChange={(e) => setField("mobile", e.target.value)}
+                error={errors.mobile}
+                placeholder="10-digit mobile number"
+              />
+
+              <Input
+                label="Quantity"
+                name="quantity"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={values.quantity}
+                onChange={(e) => setField("quantity", e.target.value)}
+                error={errors.quantity}
+              />
+
+              <Textarea
+                label="Notes"
+                name="notes"
+                value={values.notes}
+                onChange={(e) => setField("notes", e.target.value)}
+                placeholder="Anything else RenTools should know (optional)"
+              />
+
+              <Button type="submit" variant="accent" size="lg" fullWidth disabled={submitting}>
+                {submitting ? "Sending…" : "Send request"}
+              </Button>
+            </form>
+          </div>
+        </DesktopContainer>
+      </div>
     </div>
   );
 }

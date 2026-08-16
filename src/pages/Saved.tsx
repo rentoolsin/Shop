@@ -1,6 +1,7 @@
 import { Heart } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { ProductCard } from "../components/products/ProductCard";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -24,47 +25,99 @@ export function Saved() {
 
   return (
     <div>
-      <PageHeader title="Saved tools" />
+      {/* Mobile / narrow-viewport layout */}
+      <div className="md:hidden">
+        <PageHeader title="Saved tools" />
 
-      {ids.length === 0 && (
-        <div className="px-4 pt-4">
-          <EmptyState
-            icon={<Heart className="h-5 w-5" weight="regular" />}
-            title="Nothing saved yet"
-            description="Tap the heart on any tool to keep it here for later."
-            action={
-              <Link to="/products">
-                <Button variant="secondary">Browse tools</Button>
-              </Link>
-            }
-          />
-        </div>
-      )}
+        {ids.length === 0 && (
+          <div className="px-4 pt-4">
+            <EmptyState
+              icon={<Heart className="h-5 w-5" weight="regular" />}
+              title="Nothing saved yet"
+              description="Tap the heart on any tool to keep it here for later."
+              action={
+                <Link to="/products">
+                  <Button variant="secondary">Browse tools</Button>
+                </Link>
+              }
+            />
+          </div>
+        )}
 
-      {ids.length > 0 && products.status === "loading" && (
-        <div className="grid grid-cols-2 gap-3 p-4">
-          {Array.from({ length: Math.min(ids.length, 4) }).map((_, i) => (
-            <div key={i}>
-              <Skeleton className="aspect-square w-full rounded-t" />
-              <Skeleton className="mt-1 h-4 w-full" />
+        {ids.length > 0 && products.status === "loading" && (
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {Array.from({ length: Math.min(ids.length, 4) }).map((_, i) => (
+              <div key={i}>
+                <Skeleton className="aspect-square w-full rounded-t" />
+                <Skeleton className="mt-1 h-4 w-full" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {ids.length > 0 && products.status === "error" && (
+          <div className="px-4 pt-4">
+            <ErrorState title="Couldn't load your saved tools" onRetry={products.refetch} />
+          </div>
+        )}
+
+        {ids.length > 0 && products.status === "success" && savedProducts.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {savedProducts.map((product) => (
+              <ProductCard key={product.id} {...product} variant="compact" />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop / wide-viewport layout */}
+      <div className="hidden md:block">
+        <DesktopContainer className="py-10">
+          <h1 className="font-display text-[28px] font-extrabold text-ink dark:text-ink-inverted">
+            Saved tools
+          </h1>
+
+          {ids.length === 0 && (
+            <div className="mt-8">
+              <EmptyState
+                icon={<Heart className="h-5 w-5" weight="regular" />}
+                title="Nothing saved yet"
+                description="Tap the heart on any tool to keep it here for later."
+                action={
+                  <Link to="/products">
+                    <Button variant="secondary">Browse tools</Button>
+                  </Link>
+                }
+              />
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {ids.length > 0 && products.status === "error" && (
-        <div className="px-4 pt-4">
-          <ErrorState title="Couldn't load your saved tools" onRetry={products.refetch} />
-        </div>
-      )}
+          {ids.length > 0 && products.status === "loading" && (
+            <div className="mt-8 grid grid-cols-4 gap-5">
+              {Array.from({ length: Math.min(ids.length, 8) }).map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="aspect-square w-full rounded-t" />
+                  <Skeleton className="mt-1 h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          )}
 
-      {ids.length > 0 && products.status === "success" && savedProducts.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 p-4">
-          {savedProducts.map((product) => (
-            <ProductCard key={product.id} {...product} variant="compact" />
-          ))}
-        </div>
-      )}
+          {ids.length > 0 && products.status === "error" && (
+            <div className="mt-8">
+              <ErrorState title="Couldn't load your saved tools" onRetry={products.refetch} />
+            </div>
+          )}
+
+          {ids.length > 0 && products.status === "success" && savedProducts.length > 0 && (
+            <div className="mt-8 grid grid-cols-4 gap-5">
+              {savedProducts.map((product) => (
+                <ProductCard key={product.id} {...product} variant="compact" />
+              ))}
+            </div>
+          )}
+        </DesktopContainer>
+      </div>
     </div>
   );
 }

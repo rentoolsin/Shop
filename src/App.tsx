@@ -1,10 +1,11 @@
 import { lazy, Suspense, useRef } from "react";
 import { useSwipeNavigation } from "./hooks/useSwipeNavigation";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { BottomNavigation } from "./components/layout/BottomNavigation";
 import { InstallAppBanner } from "./components/layout/InstallAppBanner";
 import { PageTransition } from "./components/layout/PageTransition";
 import { Footer } from "./components/layout/Footer";
+import { DesktopHeader } from "./components/layout/DesktopHeader";
 import { FloatingWhatsApp } from "./components/actions/FloatingWhatsApp";
 import { useScrollRestoration } from "./hooks/useScrollRestoration";
 import { useManifestForRoute } from "./hooks/useManifestForRoute";
@@ -108,15 +109,6 @@ function CustomerApp() {
   const bottomBarHeight = useBottomBarHeight();
   const settings = useSiteSettings();
   const { whatsapp } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
-  const location = useLocation();
-  // The mobile 480px canvas cap (`.app-shell`, see index.css) is a
-  // deliberate mobile-first decision that every route still gets by
-  // default. Home is the only route with an actual desktop layout so
-  // far (see `pages/Home.tsx` / `components/home/DesktopHome.tsx`), so
-  // it's the only one that opts out of the cap at `md:` — every other
-  // route keeps rendering its mobile markup centered in the narrow
-  // column on desktop, unchanged, until it gets the same treatment.
-  const isHome = location.pathname === "/";
 
   // Android/iOS-style edge navigation: swipe right anywhere on the page to
   // go back, swipe left to go forward again — see useSwipeNavigation for
@@ -125,19 +117,33 @@ function CustomerApp() {
   useSwipeNavigation(mainRef);
 
   return (
-    <div className={`app-shell${isHome ? " md:max-w-none" : ""}`}>
+    // The mobile 480px canvas cap (`.app-shell`, see index.css) is a
+    // deliberate mobile-first decision — every route still gets it by
+    // default below `md:`. Every route now also has an actual desktop
+    // layout (see each page's `hidden md:block` section, and
+    // `DesktopHeader`/`DesktopHome` for the pattern), so the cap is
+    // lifted at `md:` unconditionally instead of only for Home.
+    <div className="app-shell md:max-w-none">
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
+      {/* Persistent top bar for `md:` and up — replaces MobileHeader/
+          PageHeader + BottomNavigation as the primary chrome once a
+          desktop layout exists. Sits outside PageTransition/`<main>` so
+          it never re-mounts or animates on route change. */}
+      <div className="hidden md:block">
+        <DesktopHeader />
+      </div>
       {/* Static fallback padding (className) covers the first paint before
           ResizeObserver reports a real height; the inline style then takes
           over with the exact measured value — including whenever the
           install banner appears/disappears, which the static estimate
-          alone can never account for. */}
+          alone can never account for. Padding only matters for the mobile
+          bottom nav, so it's zeroed out again at `md:`. */}
       <main
         id="main-content"
         ref={mainRef}
-        className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))]"
+        className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pb-0"
         style={bottomBarHeight > 0 ? { paddingBottom: bottomBarHeight } : undefined}
       >
         <PageTransition>
@@ -168,17 +174,16 @@ function CustomerApp() {
           `position: fixed` descendant. A floating action button nested
           inside that wrapper would scroll away with the page instead of
           staying pinned to the viewport, so it lives out here, and shows
-          on every route instead of only the homepage. */}
-      {/* Hidden on desktop Home only (see `isHome`): a bottom tab bar +
-          floating chat bubble read as mobile chrome next to a full
-          desktop layout. Left showing on every other route until they
-          get their own desktop treatment too. */}
-      <div className={isHome ? "md:hidden" : undefined}>
+          on every route instead of only the homepage.
+          Both the floating chat bubble and the bottom tab bar read as
+          mobile chrome next to the desktop header/layout, so both are
+          hidden at `md:` and up, on every route. */}
+      <div className="md:hidden">
         <FloatingWhatsApp phone={whatsapp} />
       </div>
       <div
         ref={bottomBarRef}
-        className={`fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app${isHome ? " md:hidden" : ""}`}
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-app md:hidden"
       >
         <InstallAppBanner />
         <BottomNavigation />

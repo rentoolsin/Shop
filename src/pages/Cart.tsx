@@ -2,6 +2,7 @@ import { ShoppingCart, Tag, Trash } from "@phosphor-icons/react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { Button } from "../components/ui/Button";
@@ -93,18 +94,34 @@ export function Cart() {
   if (items.length === 0) {
     return (
       <div>
-        <PageHeader title="Cart" />
-        <div className="px-4 pt-4">
-          <EmptyState
-            icon={<ShoppingCart className="h-5 w-5" weight="regular" />}
-            title="Your cart is empty"
-            description="Add a tool from its page to build a multi-item enquiry."
-            action={
-              <Link to="/products">
-                <Button variant="secondary">Browse tools</Button>
-              </Link>
-            }
-          />
+        <div className="md:hidden">
+          <PageHeader title="Cart" />
+          <div className="px-4 pt-4">
+            <EmptyState
+              icon={<ShoppingCart className="h-5 w-5" weight="regular" />}
+              title="Your cart is empty"
+              description="Add a tool from its page to build a multi-item enquiry."
+              action={
+                <Link to="/products">
+                  <Button variant="secondary">Browse tools</Button>
+                </Link>
+              }
+            />
+          </div>
+        </div>
+        <div className="hidden md:block">
+          <DesktopContainer className="py-16">
+            <EmptyState
+              icon={<ShoppingCart className="h-5 w-5" weight="regular" />}
+              title="Your cart is empty"
+              description="Add a tool from its page to build a multi-item enquiry."
+              action={
+                <Link to="/products">
+                  <Button variant="secondary">Browse tools</Button>
+                </Link>
+              }
+            />
+          </DesktopContainer>
         </div>
       </div>
     );
@@ -112,6 +129,8 @@ export function Cart() {
 
   return (
     <div>
+      {/* Mobile / narrow-viewport layout */}
+      <div className="md:hidden">
       <PageHeader title="Cart" />
 
       <div className="space-y-3 p-4">
@@ -277,6 +296,180 @@ export function Cart() {
           </div>
         </section>
       )}
+      </div>
+
+      {/* Desktop / wide-viewport layout — classic cart pattern: line
+          items in a wide left column, order summary in a sticky card on
+          the right, cross-sell as a full-width grid below. */}
+      <div className="hidden md:block">
+        <DesktopContainer className="py-10">
+          <h1 className="font-display text-[28px] font-extrabold text-ink dark:text-ink-inverted">
+            Your cart
+          </h1>
+
+          <div className="mt-8 grid grid-cols-[1fr_380px] items-start gap-10">
+            {/* Line items */}
+            <div className="space-y-3">
+              {items.map((item, index) => (
+                <div
+                  key={item.productId}
+                  className="flex items-center gap-4 rounded border border-graphite-200 p-4 dark:border-graphite-800"
+                >
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={`/products/${item.productId}`}
+                      className="truncate font-body text-[15px] font-medium text-ink hover:underline dark:text-ink-inverted"
+                    >
+                      {item.productName}
+                    </Link>
+                    {item.variantLabel && (
+                      <span className="mt-1 block font-body text-[12.5px] text-graphite-500">
+                        {item.variantLabel}
+                      </span>
+                    )}
+                    {item.dailyRate != null && (
+                      <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="font-body text-[13.5px] text-graphite-600 dark:text-graphite-300">
+                          {formatCurrency(item.dailyRate)} / day
+                        </span>
+                        {item.originalDailyRate != null && item.originalDailyRate > item.dailyRate && (
+                          <span className="font-body text-[12.5px] text-graphite-400 line-through dark:text-graphite-500">
+                            {formatCurrency(item.originalDailyRate)}
+                          </span>
+                        )}
+                        {item.originalDailyRate != null && item.originalDailyRate > item.dailyRate && (
+                          <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                            Save {formatCurrency(item.originalDailyRate - item.dailyRate)}/day
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  <QuantityStepper
+                    size="sm"
+                    quantity={item.quantity}
+                    onDecrease={() => setQuantity(item.productId, item.quantity - 1)}
+                    onIncrease={() => setQuantity(item.productId, item.quantity + 1)}
+                  />
+
+                  {lineTotals[index] !== null && (
+                    <span className="w-24 flex-shrink-0 text-right font-body text-[14.5px] font-semibold text-ink dark:text-ink-inverted">
+                      {formatCurrency(lineTotals[index]!)}
+                    </span>
+                  )}
+
+                  <button
+                    onClick={() => removeItem(item.productId)}
+                    aria-label={`Remove ${item.productName} from cart`}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-graphite-400 transition-all duration-150 ease-app hover:bg-graphite-100 hover:text-state-danger dark:hover:bg-graphite-800"
+                  >
+                    <Trash className="h-4 w-4" weight="regular" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Cross-sell */}
+              {featured.status === "error" && (
+                <ErrorState title="Couldn't load suggestions" onRetry={featured.refetch} />
+              )}
+              {crossSellProducts.length > 0 && (
+                <section className="pt-6">
+                  <h2 className="mb-4 font-display text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                    You might also need
+                  </h2>
+                  <div className="grid grid-cols-3 gap-5">
+                    {crossSellProducts.slice(0, 6).map((product) => (
+                      <ProductCard key={product.id} {...product} variant="compact" />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Order summary — sticky */}
+            <div className="sticky top-28 space-y-4 rounded-lg border border-graphite-200 bg-white p-5 dark:border-graphite-800 dark:bg-graphite-900">
+              <h2 className="font-display text-[16px] font-semibold text-ink dark:text-ink-inverted">
+                Order summary
+              </h2>
+
+              <Input
+                label="Number of days"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                hint="Optional — shows an estimated total. We'll confirm any minimum rental period when you enquire."
+                value={numberOfDays}
+                onChange={(e) => setNumberOfDays(e.target.value)}
+              />
+
+              <div className="rounded border border-dashed border-graphite-300 p-3.5 dark:border-graphite-700">
+                <label className="mb-1.5 flex items-center gap-1.5 font-body text-[13px] font-medium text-graphite-600 dark:text-graphite-300">
+                  <Tag className="h-4 w-4 flex-shrink-0" weight="regular" />
+                  Have a promo code?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter code"
+                    className="h-10 flex-1 min-w-0 rounded border border-graphite-300 bg-white px-3 font-body text-[13.5px] text-ink outline-none focus:border-accent-500 dark:border-graphite-700 dark:bg-graphite-900 dark:text-ink-inverted"
+                  />
+                  <a
+                    href={promoWaHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-10 flex-shrink-0 items-center gap-1.5 rounded bg-accent-500 px-3.5 font-body text-[13px] font-semibold text-graphite-950 transition-all hover:bg-accent-400 active:scale-[0.97]"
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
+                    Ask
+                  </a>
+                </div>
+              </div>
+
+              {totalSavingsPerDay > 0 && (
+                <div className="rounded border border-savings-border bg-savings-bg px-3.5 py-2.5 dark:border-savings-border-dark dark:bg-savings-bg-dark">
+                  <div className="flex items-center justify-between">
+                    <span className="font-body text-[12.5px] font-medium text-savings-text dark:text-savings-text-dark">
+                      You're saving
+                    </span>
+                    <span className="font-display text-[14px] font-bold text-savings-text dark:text-savings-text-dark">
+                      {formatCurrency(totalSavingsPerDay)}/day
+                    </span>
+                  </div>
+                  {daysValid && (
+                    <div className="mt-1 flex items-center justify-between border-t border-savings-border/60 pt-1 dark:border-savings-border-dark/60">
+                      <span className="font-body text-[11.5px] text-savings-text dark:text-savings-text-dark">
+                        Total for {daysNum} day{daysNum === 1 ? "" : "s"}
+                      </span>
+                      <span className="font-body text-[12.5px] font-bold text-savings-text dark:text-savings-text-dark">
+                        {formatCurrency(totalSavingsPerDay * daysNum)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {grandTotal !== null && (
+                <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-950/40">
+                  <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
+                    Estimated total ({daysNum} day{daysNum === 1 ? "" : "s"})
+                  </span>
+                  <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
+                    {formatCurrency(grandTotal)}
+                  </span>
+                </div>
+              )}
+
+              <Button variant="accent" size="lg" fullWidth onClick={handleCheckout}>
+                Continue to enquiry ({items.reduce((n, i) => n + i.quantity, 0)} item
+                {items.reduce((n, i) => n + i.quantity, 0) === 1 ? "" : "s"})
+              </Button>
+            </div>
+          </div>
+        </DesktopContainer>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { ArrowsDownUp, Heart, ShoppingCart } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { ProductCard } from "../components/products/ProductCard";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -70,132 +71,242 @@ export function Products() {
 
   return (
     <div>
-      <PageHeader
-        title="Tools"
-        action={
-          <div className="mr-1 flex items-center">
-            <Link
-              to="/cart"
-              aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
-            >
-              <ShoppingCart className="h-[18px] w-[18px]" weight="regular" />
-              {cartCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/saved"
-              aria-label={`Saved tools${savedIds.length > 0 ? ` (${savedIds.length})` : ""}`}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
-            >
-              <Heart className="h-[18px] w-[18px]" weight="regular" />
-              {savedIds.length > 0 && (
-                <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-accent-500" />
-              )}
-            </Link>
-            <button
-              onClick={() => setSortOpen(true)}
-              className="flex h-10 items-center gap-1.5 rounded px-3 font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
-            >
-              <ArrowsDownUp className="h-4 w-4" weight="light" />
-              Sort
-            </button>
-          </div>
-        }
-      />
-
-      {/* Category chips — always visible so switching categories doesn't
-          require a separate filter sheet round-trip. `top-14` docks this
-          directly under PageHeader (which is h-14), and it shares the
-          header's z-index stacking so the two scroll/stick together as
-          one unit instead of the header stopping and the chips scrolling
-          out from underneath it. */}
-      {categories.status === "success" && categories.data.length > 0 && (
-        <div className="sticky top-14 z-30 flex gap-2 overflow-x-auto border-b border-graphite-200/70 bg-graphite-50/90 px-4 py-3 backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-graphite-800/70 dark:bg-graphite-950/90">
-          <button
-            type="button"
-            aria-pressed={!categoryId}
-            onClick={() => setCategoryId(undefined)}
-            className={`spec-tag flex-shrink-0 ${!categoryId ? "spec-tag--accent" : ""}`}
-          >
-            All
-          </button>
-          {categories.data.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              aria-pressed={categoryId === category.id}
-              onClick={() => setCategoryId(category.id)}
-              className={`spec-tag flex-shrink-0 ${categoryId === category.id ? "spec-tag--accent" : ""}`}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {products.status === "success" && products.data.length > 0 && (
-        <p className="px-4 pt-3 font-body text-[12.5px] text-graphite-500">
-          {sortedProducts.length} tool{sortedProducts.length === 1 ? "" : "s"}
-          {activeCategoryName ? ` in ${activeCategoryName}` : ""}
-        </p>
-      )}
-
-      {products.status === "loading" && (
-        <div className="grid grid-cols-2 gap-3 p-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i}>
-              <Skeleton className="aspect-square w-full rounded-t" />
-              <Skeleton className="mt-1 h-4 w-full" />
+      {/* Mobile / narrow-viewport layout — unchanged, scoped to `< md`
+          now that a separate desktop layout exists below. */}
+      <div className="md:hidden">
+        <PageHeader
+          title="Tools"
+          action={
+            <div className="mr-1 flex items-center">
+              <Link
+                to="/cart"
+                aria-label={`Cart${cartCount > 0 ? ` (${cartCount})` : ""}`}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+              >
+                <ShoppingCart className="h-[18px] w-[18px]" weight="regular" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[10px] font-semibold leading-none text-white">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
+              </Link>
+              <Link
+                to="/saved"
+                aria-label={`Saved tools${savedIds.length > 0 ? ` (${savedIds.length})` : ""}`}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+              >
+                <Heart className="h-[18px] w-[18px]" weight="regular" />
+                {savedIds.length > 0 && (
+                  <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-accent-500" />
+                )}
+              </Link>
+              <button
+                onClick={() => setSortOpen(true)}
+                className="flex h-10 items-center gap-1.5 rounded px-3 font-body text-[13px] font-medium text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+              >
+                <ArrowsDownUp className="h-4 w-4" weight="light" />
+                Sort
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+          }
+        />
 
-      {products.status === "error" && (
-        <div className="px-4 pt-4">
-          <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
-        </div>
-      )}
-
-      {products.status === "success" && products.data.length === 0 && (
-        <div className="px-4 pt-4">
-          <EmptyState
-            title="No tools found"
-            description="Try a different category or check back once inventory is added."
-          />
-        </div>
-      )}
-
-      {products.status === "success" && sortedProducts.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 p-4">
-          {sortedProducts.map((product) => (
-            <ProductCard key={product.id} {...product} variant="compact" />
-          ))}
-        </div>
-      )}
-
-      <BottomSheet open={sortOpen} onClose={() => setSortOpen(false)} title="Sort by">
-        <div className="flex flex-col gap-1">
-          {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-            <Button
-              key={key}
-              variant={sort === key ? "accent" : "ghost"}
-              fullWidth
-              className="justify-start"
-              onClick={() => {
-                setSort(key);
-                setSortOpen(false);
-              }}
+        {/* Category chips — always visible so switching categories doesn't
+            require a separate filter sheet round-trip. `top-14` docks this
+            directly under PageHeader (which is h-14), and it shares the
+            header's z-index stacking so the two scroll/stick together as
+            one unit instead of the header stopping and the chips scrolling
+            out from underneath it. */}
+        {categories.status === "success" && categories.data.length > 0 && (
+          <div className="sticky top-14 z-30 flex gap-2 overflow-x-auto border-b border-graphite-200/70 bg-graphite-50/90 px-4 py-3 backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-graphite-800/70 dark:bg-graphite-950/90">
+            <button
+              type="button"
+              aria-pressed={!categoryId}
+              onClick={() => setCategoryId(undefined)}
+              className={`spec-tag flex-shrink-0 ${!categoryId ? "spec-tag--accent" : ""}`}
             >
-              {SORT_LABELS[key]}
-            </Button>
-          ))}
-        </div>
-      </BottomSheet>
+              All
+            </button>
+            {categories.data.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                aria-pressed={categoryId === category.id}
+                onClick={() => setCategoryId(category.id)}
+                className={`spec-tag flex-shrink-0 ${categoryId === category.id ? "spec-tag--accent" : ""}`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {products.status === "success" && products.data.length > 0 && (
+          <p className="px-4 pt-3 font-body text-[12.5px] text-graphite-500">
+            {sortedProducts.length} tool{sortedProducts.length === 1 ? "" : "s"}
+            {activeCategoryName ? ` in ${activeCategoryName}` : ""}
+          </p>
+        )}
+
+        {products.status === "loading" && (
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i}>
+                <Skeleton className="aspect-square w-full rounded-t" />
+                <Skeleton className="mt-1 h-4 w-full" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {products.status === "error" && (
+          <div className="px-4 pt-4">
+            <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
+          </div>
+        )}
+
+        {products.status === "success" && products.data.length === 0 && (
+          <div className="px-4 pt-4">
+            <EmptyState
+              title="No tools found"
+              description="Try a different category or check back once inventory is added."
+            />
+          </div>
+        )}
+
+        {products.status === "success" && sortedProducts.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {sortedProducts.map((product) => (
+              <ProductCard key={product.id} {...product} variant="compact" />
+            ))}
+          </div>
+        )}
+
+        <BottomSheet open={sortOpen} onClose={() => setSortOpen(false)} title="Sort by">
+          <div className="flex flex-col gap-1">
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+              <Button
+                key={key}
+                variant={sort === key ? "accent" : "ghost"}
+                fullWidth
+                className="justify-start"
+                onClick={() => {
+                  setSort(key);
+                  setSortOpen(false);
+                }}
+              >
+                {SORT_LABELS[key]}
+              </Button>
+            ))}
+          </div>
+        </BottomSheet>
+      </div>
+
+      {/* Desktop / wide-viewport layout — sidebar category filter next to a
+          dense multi-column grid, browsing pattern of most catalog sites.
+          The nav/search/cart chrome lives in the global `DesktopHeader`. */}
+      <div className="hidden md:block">
+        <DesktopContainer className="py-10">
+          <div className="flex items-end justify-between">
+            <div>
+              <h1 className="font-display text-[28px] font-extrabold text-ink dark:text-ink-inverted">
+                {activeCategoryName ?? "All tools"}
+              </h1>
+              {products.status === "success" && (
+                <p className="mt-1 font-body text-[13.5px] text-graphite-500">
+                  {sortedProducts.length} tool{sortedProducts.length === 1 ? "" : "s"} available
+                </p>
+              )}
+            </div>
+            <label className="flex items-center gap-2">
+              <span className="font-body text-[13px] text-graphite-500">Sort by</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                className="h-10 rounded border border-graphite-200 bg-white px-3 font-body text-[13.5px] text-ink outline-none focus:border-accent-500 dark:border-graphite-800 dark:bg-graphite-900 dark:text-ink-inverted"
+              >
+                {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                  <option key={key} value={key}>
+                    {SORT_LABELS[key]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-8 grid grid-cols-[220px_1fr] gap-10">
+            {/* Category sidebar */}
+            <aside className="sticky top-28 self-start">
+              <h2 className="font-display text-[12.5px] font-semibold uppercase tracking-[0.06em] text-graphite-400">
+                Categories
+              </h2>
+              <div className="mt-3 flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  aria-pressed={!categoryId}
+                  onClick={() => setCategoryId(undefined)}
+                  className={`rounded px-2.5 py-2 text-left font-body text-[14px] transition-colors ${
+                    !categoryId
+                      ? "bg-accent-500/10 font-semibold text-accent-700 dark:text-accent-400"
+                      : "text-graphite-600 hover:bg-graphite-100 dark:text-graphite-300 dark:hover:bg-graphite-800"
+                  }`}
+                >
+                  All tools
+                </button>
+                {categories.status === "success" &&
+                  categories.data.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      aria-pressed={categoryId === category.id}
+                      onClick={() => setCategoryId(category.id)}
+                      className={`rounded px-2.5 py-2 text-left font-body text-[14px] transition-colors ${
+                        categoryId === category.id
+                          ? "bg-accent-500/10 font-semibold text-accent-700 dark:text-accent-400"
+                          : "text-graphite-600 hover:bg-graphite-100 dark:text-graphite-300 dark:hover:bg-graphite-800"
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+              </div>
+            </aside>
+
+            {/* Product grid */}
+            <div>
+              {products.status === "loading" && (
+                <div className="grid grid-cols-4 gap-5">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i}>
+                      <Skeleton className="aspect-square w-full rounded-t" />
+                      <Skeleton className="mt-1 h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {products.status === "error" && (
+                <ErrorState title="Couldn't load tools" onRetry={products.refetch} />
+              )}
+
+              {products.status === "success" && products.data.length === 0 && (
+                <EmptyState
+                  title="No tools found"
+                  description="Try a different category or check back once inventory is added."
+                />
+              )}
+
+              {products.status === "success" && sortedProducts.length > 0 && (
+                <div className="grid grid-cols-4 gap-5">
+                  {sortedProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} variant="compact" />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </DesktopContainer>
+      </div>
     </div>
   );
 }

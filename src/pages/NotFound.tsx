@@ -16,7 +16,7 @@ export function NotFound() {
   useDocumentMeta({ title: "Page not found", noindex: true });
 
   return (
-    <div className="pt-6">
+    <div className="pt-6 md:pt-20 md:pb-20">
       {/* This route skips PageHeader (no back/title bar makes sense for a
           dead end), so EmptyState's h3 below would otherwise be the only
           heading on the page — every page needs one real h1 landmark. */}
