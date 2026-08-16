@@ -1,9 +1,9 @@
-import { DotsThreeVertical, PencilSimple, Plus, Wrench } from "@phosphor-icons/react";
+import { CaretDown, CaretUp, DotsThreeVertical, PencilSimple, Plus, Wrench } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminProducts, useAdminCategories, useAdminProduct } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
-import { deleteProduct } from "../../../services/admin-products.service";
+import { deleteProduct, updateProductsSortOrder } from "../../../services/admin-products.service";
 import { formatCurrency } from "../../../utils/currency";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
@@ -30,6 +30,44 @@ function MoreIcon() {
   return <DotsThreeVertical className="h-4 w-4" weight="regular" />;
 }
 
+/** Up/down arrow pair for reordering a row — used in both the mobile card and desktop table layouts. */
+function ReorderControls({
+  onMoveUp,
+  onMoveDown,
+  disableUp,
+  disableDown,
+  busy,
+}: {
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  disableUp: boolean;
+  disableDown: boolean;
+  busy: boolean;
+}) {
+  return (
+    <div className="flex flex-shrink-0 flex-col">
+      <button
+        type="button"
+        aria-label="Move up"
+        onClick={onMoveUp}
+        disabled={busy || disableUp}
+        className="flex h-4 w-5 items-center justify-center text-graphite-400 hover:text-ink disabled:opacity-25 disabled:hover:text-graphite-400 dark:hover:text-ink-inverted dark:disabled:hover:text-graphite-400"
+      >
+        <CaretUp className="h-3 w-3" weight="bold" />
+      </button>
+      <button
+        type="button"
+        aria-label="Move down"
+        onClick={onMoveDown}
+        disabled={busy || disableDown}
+        className="flex h-4 w-5 items-center justify-center text-graphite-400 hover:text-ink disabled:opacity-25 disabled:hover:text-graphite-400 dark:hover:text-ink-inverted dark:disabled:hover:text-graphite-400"
+      >
+        <CaretDown className="h-3 w-3" weight="bold" />
+      </button>
+    </div>
+  );
+}
+
 export function ProductsList() {
   const products = useAdminProducts();
   const categories = useAdminCategories();
@@ -43,9 +81,53 @@ export function ProductsList() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   const allItems = products.status === "success" ? products.data : [];
   const categoryList = categories.status === "success" ? categories.data : [];
+
+  // `allItems` is already fetched in sort_order/created_at order — the same
+  // order the storefront home page uses — so the S.No shown here already
+  // *is* the sort order; there's no separate field to hand-edit. This map
+  // gives O(1) lookup of a product's position in that true (unfiltered,
+  // unpaginated) order, so Move up/down still finds the right neighbour
+  // even when the list is filtered, searched, or paginated.
+  const orderIndex = useMemo(() => new Map(allItems.map((p, i) => [p.id, i])), [allItems]);
+  // Reordering swaps positions in the *true* order above. If the list is
+  // filtered or searched, the row shown directly above/below on screen
+  // isn't necessarily the true neighbour, so we only offer the controls
+  // when viewing the full, unfiltered list.
+  const naturalOrder = !search.trim() && categoryFilter === "all" && statusFilter === "all";
+
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (reorderingId) return;
+    const index = orderIndex.get(id);
+    if (index === undefined) return;
+    const swapWith = direction === "up" ? index - 1 : index + 1;
+    if (swapWith < 0 || swapWith >= allItems.length) return;
+
+    const reordered = allItems.slice();
+    [reordered[index], reordered[swapWith]] = [reordered[swapWith], reordered[index]];
+
+    // Renumber sequentially and only push rows whose sort_order actually
+    // changes. Most products share sort_order 0 until the first reorder,
+    // so this also resolves that tie for the whole list, not just the pair
+    // being swapped — see updateProductsSortOrder's docstring.
+    const changes = reordered
+      .map((p, i) => ({ id: p.id, sortOrder: i }))
+      .filter((change, i) => change.sortOrder !== allItems[i].sortOrder);
+    if (changes.length === 0) return;
+
+    setReorderingId(id);
+    try {
+      await updateProductsSortOrder(changes);
+      products.refetch();
+    } catch {
+      showToast("Couldn't reorder products. Try again.", "danger");
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   const categoryName = (categoryId: string) =>
     categoryList.find((c) => c.id === categoryId)?.name ?? "—";
@@ -125,6 +207,12 @@ export function ProductsList() {
         </Select>
       </div>
 
+      {!naturalOrder && products.status === "success" && allItems.length > 0 && (
+        <p className="mb-3 font-body text-[12px] text-graphite-400">
+          Clear the search and filters to reorder products — this is also the order they'll appear in on the home page.
+        </p>
+      )}
+
       {products.status === "loading" && (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -166,6 +254,15 @@ export function ProductsList() {
                 <span className="w-5 flex-shrink-0 text-right font-body text-[12px] tabular-nums text-graphite-400">
                   {(page - 1) * pageSize + i + 1}
                 </span>
+                {naturalOrder && (
+                  <ReorderControls
+                    onMoveUp={() => handleMove(product.id, "up")}
+                    onMoveDown={() => handleMove(product.id, "down")}
+                    disableUp={orderIndex.get(product.id) === 0}
+                    disableDown={orderIndex.get(product.id) === allItems.length - 1}
+                    busy={reorderingId === product.id}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => setViewingId(product.id)}
@@ -279,8 +376,21 @@ export function ProductsList() {
                   key={product.id}
                   className="border-b border-graphite-100 last:border-b-0 hover:bg-graphite-50 dark:border-graphite-800 dark:hover:bg-graphite-900/60"
                 >
-                  <td className="px-4 py-4 text-right align-middle font-body text-[13px] tabular-nums text-graphite-400">
-                    {(page - 1) * pageSize + i + 1}
+                  <td className="px-4 py-4 align-middle">
+                    <div className="flex items-center justify-end gap-2">
+                      {naturalOrder && (
+                        <ReorderControls
+                          onMoveUp={() => handleMove(product.id, "up")}
+                          onMoveDown={() => handleMove(product.id, "down")}
+                          disableUp={orderIndex.get(product.id) === 0}
+                          disableDown={orderIndex.get(product.id) === allItems.length - 1}
+                          busy={reorderingId === product.id}
+                        />
+                      )}
+                      <span className="font-body text-[13px] tabular-nums text-graphite-400">
+                        {(page - 1) * pageSize + i + 1}
+                      </span>
+                    </div>
                   </td>
                   <td className="max-w-[260px] px-4 py-4 align-middle">
                     <div className="flex min-w-0 items-center gap-3">

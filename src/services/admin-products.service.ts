@@ -282,6 +282,31 @@ export async function fetchProductInventorySummary(): Promise<Map<string, Produc
   return map;
 }
 
+export interface ProductOrderUpdate {
+  id: string;
+  sortOrder: number;
+}
+
+/**
+ * Persists a renumbering of `sort_order` after a "Move up"/"Move down"
+ * action in the admin products list. Callers should only pass rows whose
+ * sort_order actually changed (see ProductsList's handleMove) — most
+ * products share `sort_order: 0` until the first reorder (see the comment
+ * in fetchAllProducts), so the *first* move an admin makes here also
+ * renumbers every tied row sequentially, not just the pair being swapped.
+ * Runs as separate per-row updates rather than a single RPC — this is a
+ * low-frequency admin action, and a partial failure just leaves the order
+ * as it was before the click (the next successful move corrects it), so
+ * transactional atomicity isn't worth the extra migration for this.
+ */
+export async function updateProductsSortOrder(updates: ProductOrderUpdate[]): Promise<void> {
+  const results = await Promise.all(
+    updates.map((u) => supabase.from("products").update({ sort_order: u.sortOrder }).eq("id", u.id)),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
+}
+
 export async function deleteVariant(variantId: string): Promise<void> {
   const { error } = await supabase.from("product_variants").delete().eq("id", variantId);
   if (error) throw error;

@@ -193,14 +193,6 @@ export function ProductForm() {
           folder="products"
           hint="Extra photos shown in the swipeable gallery on the tool's detail page, after the cover image."
         />
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Sort order"
-            type="number"
-            value={values.sortOrder}
-            onChange={(e) => setField("sortOrder", Number(e.target.value))}
-          />
-        </div>
         <Switch label="Featured on homepage" checked={values.isFeatured} onChange={(v) => setField("isFeatured", v)} />
         <Switch label="Active (visible to customers)" checked={values.isActive} onChange={(v) => setField("isActive", v)} />
 
