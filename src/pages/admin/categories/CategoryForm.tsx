@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAdminCategory } from "../../../hooks/useAdminData";
 import { createCategory, updateCategory, type CategoryFormValues } from "../../../services/admin-categories.service";
@@ -30,6 +30,7 @@ export function CategoryForm() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CategoryFormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (existing.status === "success" && existing.data) {
@@ -43,6 +44,10 @@ export function CategoryForm() {
       setSlugTouched(true);
     }
   }, [existing.status, existing.data]);
+
+  useEffect(() => {
+    if (!isEdit) nameRef.current?.focus();
+  }, [isEdit]);
 
   if (isEdit && existing.status === "loading") return <LoadingState label="Loading category…" />;
   if (isEdit && existing.status === "error") {
@@ -93,6 +98,7 @@ export function CategoryForm() {
       </h1>
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input
+          ref={nameRef}
           label="Name"
           value={values.name}
           onChange={(e) => handleNameChange(e.target.value)}

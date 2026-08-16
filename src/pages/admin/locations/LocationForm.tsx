@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAdminLocation } from "../../../hooks/useAdminData";
 import { createLocation, updateLocation, type LocationFormValues } from "../../../services/admin-locations.service";
@@ -26,6 +26,7 @@ export function LocationForm() {
   const [values, setValues] = useState<LocationFormValues>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof LocationFormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (existing.status === "success" && existing.data) {
@@ -37,6 +38,10 @@ export function LocationForm() {
       });
     }
   }, [existing.status, existing.data]);
+
+  useEffect(() => {
+    if (!isEdit) nameRef.current?.focus();
+  }, [isEdit]);
 
   if (isEdit && existing.status === "loading") return <LoadingState label="Loading location…" />;
   if (isEdit && existing.status === "error") {
@@ -82,6 +87,7 @@ export function LocationForm() {
       </h1>
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input
+          ref={nameRef}
           label="City"
           value={values.name}
           onChange={(e) => setField("name", e.target.value)}

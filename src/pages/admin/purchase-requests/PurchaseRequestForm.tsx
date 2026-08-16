@@ -72,7 +72,7 @@ export function PurchaseRequestForm() {
           <span className="mb-1 block font-body text-[13px] font-medium text-graphite-600 dark:text-graphite-300">
             Customer
           </span>
-          <CustomerPicker value={customer} onChange={setCustomer} />
+          <CustomerPicker value={customer} onChange={setCustomer} autoFocus />
           {errors.customer && (
             <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{errors.customer}</p>
           )}
