@@ -122,7 +122,7 @@ export function EnquiryDetail() {
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="lg:max-w-4xl">
       <Link to="/admin/enquiries" className="mb-4 block font-body text-[13px] font-medium text-graphite-700 hover:text-ink dark:text-graphite-300 dark:hover:text-ink-inverted">
         ← All enquiries
       </Link>
@@ -135,43 +135,49 @@ export function EnquiryDetail() {
         <StatusBadge label={STATUS_LABEL[e.status]} tone={STATUS_TONE[e.status]} />
       </div>
 
-      <div className="space-y-3 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
-        <Detail label="Product" value={e.productName ?? e.requestedProductText ?? "Not specified"} />
-        {e.quantity && <Detail label="Quantity" value={String(e.quantity)} />}
-        {e.requiredDate && <Detail label="Required from" value={e.requiredDate} />}
-        {e.numberOfDays && <Detail label="Number of days" value={String(e.numberOfDays)} />}
-        {e.address && <Detail label="Address" value={e.address} />}
-        {e.message && <Detail label="Message" value={e.message} />}
-        <Detail label="Submitted" value={new Date(e.createdAt).toLocaleString()} />
-      </div>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
+        <div className="max-w-lg lg:max-w-none">
+          <div className="space-y-3 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
+            <Detail label="Product" value={e.productName ?? e.requestedProductText ?? "Not specified"} />
+            {e.quantity && <Detail label="Quantity" value={String(e.quantity)} />}
+            {e.requiredDate && <Detail label="Required from" value={e.requiredDate} />}
+            {e.numberOfDays && <Detail label="Number of days" value={String(e.numberOfDays)} />}
+            {e.address && <Detail label="Address" value={e.address} />}
+            {e.message && <Detail label="Message" value={e.message} />}
+            <Detail label="Submitted" value={new Date(e.createdAt).toLocaleString()} />
+          </div>
+        </div>
 
-      <div className="mt-5">
-        <Select
-          label="Status"
-          value={e.status}
-          onChange={(ev) => handleStatusChange(ev.target.value as EnquiryStatus)}
-          disabled={savingStatus}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-          ))}
-        </Select>
-        {statusError && (
-          <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
-        )}
-      </div>
+        <div className="max-w-lg space-y-5 lg:sticky lg:top-6 lg:max-w-none">
+          <div>
+            <Select
+              label="Status"
+              value={e.status}
+              onChange={(ev) => handleStatusChange(ev.target.value as EnquiryStatus)}
+              disabled={savingStatus}
+            >
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+              ))}
+            </Select>
+            {statusError && (
+              <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
+            )}
+          </div>
 
-      <div className="mt-5 border-t border-graphite-200 pt-5 dark:border-graphite-800">
-        <Button fullWidth onClick={() => setConverting(true)} disabled={alreadyConverted}>
-          {alreadyConverted ? "Already converted to rental" : "Convert to Rental"}
-        </Button>
-        {!alreadyConverted && (
-          <p className="mt-2 font-body text-[12px] text-graphite-500">
-            Carries this enquiry's name, mobile, product and dates into a new rental. The
-            original enquiry is preserved and marked "Converted to Rental" once the rental is
-            created.
-          </p>
-        )}
+          <div className="border-t border-graphite-200 pt-5 dark:border-graphite-800">
+            <Button fullWidth onClick={() => setConverting(true)} disabled={alreadyConverted}>
+              {alreadyConverted ? "Already converted to rental" : "Convert to Rental"}
+            </Button>
+            {!alreadyConverted && (
+              <p className="mt-2 font-body text-[12px] text-graphite-500">
+                Carries this enquiry's name, mobile, product and dates into a new rental. The
+                original enquiry is preserved and marked "Converted to Rental" once the rental is
+                created.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

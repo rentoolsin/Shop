@@ -23,6 +23,8 @@ export type PurchaseRequestStatus =
   | "fulfilled"
   | "declined";
 
+export type PaymentMethod = "cash" | "upi" | "card" | "bank_transfer" | "other";
+
 export interface Database {
   public: {
     Tables: {
@@ -142,6 +144,23 @@ export interface Database {
           daily_rate: number;
         };
         Update: Partial<Database["public"]["Tables"]["rentals"]["Row"]>;
+        Relationships: [];
+      };
+      rental_payments: {
+        Row: {
+          id: string;
+          rental_id: string;
+          amount: number;
+          payment_date: string;
+          method: PaymentMethod;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["rental_payments"]["Row"]> & {
+          rental_id: string;
+          amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["rental_payments"]["Row"]>;
         Relationships: [];
       };
       enquiries: {
@@ -338,6 +357,22 @@ export interface Database {
           }>;
         };
         Returns: string;
+      };
+      record_rental_payment: {
+        Args: {
+          p_rental_id: string;
+          p_amount: number;
+          p_payment_date: string;
+          p_method: PaymentMethod;
+          p_notes: string | null;
+        };
+        Returns: string;
+      };
+      delete_rental_payment: {
+        Args: {
+          p_payment_id: string;
+        };
+        Returns: void;
       };
     };
     Enums: Record<string, never>;

@@ -1,6 +1,6 @@
-import { ClipboardText, Plus } from "@phosphor-icons/react";
+import { ClipboardText, Plus, CaretRight } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAdminPurchaseRequests } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
 import type {
@@ -18,6 +18,7 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { Pagination } from "../../../components/ui/Pagination";
 import { STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL } from "../../../utils/purchase-request-status";
+import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from "../../../components/ui/Table";
 
 const DEBOUNCE_MS = 300;
 
@@ -32,6 +33,7 @@ function CalendarIcon() {
 }
 
 export function PurchaseRequestsList() {
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | PurchaseRequestStatus>("all");
@@ -124,38 +126,88 @@ export function PurchaseRequestsList() {
       )}
 
       {requests.status === "success" && rows.length > 0 && (
-        <div className="space-y-2">
-          {pageItems.map((request) => (
-            <Link key={request.id} to={`/admin/purchase-requests/${request.id}`}>
-              <Card interactive className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                      {request.productRequested}
+        <>
+          {/* Mobile: stacked cards */}
+          <div className="space-y-2 md:hidden">
+            {pageItems.map((request) => (
+              <Link key={request.id} to={`/admin/purchase-requests/${request.id}`}>
+                <Card interactive className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                        {request.productRequested}
+                      </p>
+                      <p className="font-mono text-[12px] text-graphite-400">
+                        {request.customerName ?? request.requesterName ?? request.mobile ?? "No contact on file"}
+                      </p>
+                    </div>
+                    <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                      <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
+                      {request.priority !== "normal" && (
+                        <StatusBadge
+                          label={PRIORITY_LABEL[request.priority]}
+                          tone={PRIORITY_TONE[request.priority]}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {request.quantity && (
+                    <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
+                      Qty {request.quantity}
                     </p>
-                    <p className="font-mono text-[12px] text-graphite-400">
+                  )}
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop: dense table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHead>
+                <TableHeaderCell>Product</TableHeaderCell>
+                <TableHeaderCell>Contact</TableHeaderCell>
+                <TableHeaderCell>Qty</TableHeaderCell>
+                <TableHeaderCell>Priority</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell aria-label="Open" />
+              </TableHead>
+              <TableBody>
+                {pageItems.map((request) => (
+                  <TableRow
+                    key={request.id}
+                    interactive
+                    onClick={() => navigate(`/admin/purchase-requests/${request.id}`)}
+                  >
+                    <TableCell className="font-medium">{request.productRequested}</TableCell>
+                    <TableCell className="font-mono text-[12px] text-graphite-500">
                       {request.customerName ?? request.requesterName ?? request.mobile ?? "No contact on file"}
-                    </p>
-                  </div>
-                  <div className="flex flex-shrink-0 flex-col items-end gap-1">
-                    <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
-                    {request.priority !== "normal" && (
-                      <StatusBadge
-                        label={PRIORITY_LABEL[request.priority]}
-                        tone={PRIORITY_TONE[request.priority]}
-                      />
-                    )}
-                  </div>
-                </div>
-                {request.quantity && (
-                  <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                    Qty {request.quantity}
-                  </p>
-                )}
-              </Card>
-            </Link>
-          ))}
-        </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-[12px] text-graphite-500">
+                      {request.quantity ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {request.priority !== "normal" ? (
+                        <StatusBadge
+                          label={PRIORITY_LABEL[request.priority]}
+                          tone={PRIORITY_TONE[request.priority]}
+                        />
+                      ) : (
+                        <span className="font-body text-[12px] text-graphite-400">Normal</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge label={STATUS_LABEL[request.status]} tone={STATUS_TONE[request.status]} />
+                    </TableCell>
+                    <TableCell className="w-8">
+                      <CaretRight className="h-4 w-4 text-graphite-300" weight="light" aria-hidden="true" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
       {requests.status === "success" && rows.length > 0 && (
         <Pagination

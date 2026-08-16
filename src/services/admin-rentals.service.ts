@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { RentalStatus } from "../types/database";
+import type { PaymentMethod, RentalStatus } from "../types/database";
 import { calculateRentalTotals } from "../utils/rental-calculations";
 
 export interface AdminRentalListItem {
@@ -152,6 +152,41 @@ export async function cancelRental(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export interface RentalUpdateValues {
+  quantity: number;
+  startDate: string;
+  returnDate: string;
+  dailyRate: number;
+  advance: number;
+}
+
+/**
+ * Full edit of a rental's core terms (quantity, dates, rate, advance).
+ * Product/variant/customer are intentionally not editable here — swapping
+ * those out from under an existing rental would bypass the inventory
+ * trigger's original allocation, so those fields stay fixed for the life
+ * of the rental (create a new rental instead if the item itself changed).
+ */
+export async function updateRental(id: string, values: RentalUpdateValues): Promise<void> {
+  const { error } = await supabase
+    .from("rentals")
+    .update({
+      quantity: values.quantity,
+      start_date: values.startDate,
+      return_date: values.returnDate,
+      daily_rate: values.dailyRate,
+      advance: values.advance,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Permanently removes a rental record (distinct from `cancelRental`, which just changes status). */
+export async function deleteRental(id: string): Promise<void> {
+  const { error } = await supabase.from("rentals").delete().eq("id", id);
+  if (error) throw error;
+}
+
 /**
  * Manually triggers the DB-side due_today/overdue automation
  * (`sync_rental_open_statuses()`, 0006_due_today_overdue_status_
@@ -165,4 +200,92 @@ export async function syncOpenRentalStatuses(): Promise<number> {
   const { data, error } = await supabase.rpc("sync_rental_open_statuses");
   if (error) throw error;
   return (data as number) ?? 0;
+}
+
+export interface RentalPayment {
+  id: string;
+  rentalId: string;
+  amount: number;
+  paymentDate: string;
+  method: PaymentMethod;
+  notes: string | null;
+  createdAt: string;
+}
+
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  cash: "Cash",
+  upi: "UPI",
+  card: "Card",
+  bank_transfer: "Bank transfer",
+  other: "Other",
+};
+
+export function paymentMethodLabel(method: PaymentMethod): string {
+  return PAYMENT_METHOD_LABEL[method];
+}
+
+interface RawRentalPaymentRow {
+  id: string;
+  rental_id: string;
+  amount: number;
+  payment_date: string;
+  method: PaymentMethod;
+  notes: string | null;
+  created_at: string;
+}
+
+function toPayment(row: RawRentalPaymentRow): RentalPayment {
+  return {
+    id: row.id,
+    rentalId: row.rental_id,
+    amount: row.amount,
+    paymentDate: row.payment_date,
+    method: row.method,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+/** Full payment history for one rental, most recent first. */
+export async function fetchRentalPayments(rentalId: string): Promise<RentalPayment[]> {
+  const { data, error } = await supabase
+    .from("rental_payments")
+    .select("id, rental_id, amount, payment_date, method, notes, created_at")
+    .eq("rental_id", rentalId)
+    .order("payment_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as unknown as RawRentalPaymentRow[]).map(toPayment);
+}
+
+export interface RecordPaymentValues {
+  rentalId: string;
+  amount: number;
+  paymentDate: string;
+  method: PaymentMethod;
+  notes?: string;
+}
+
+/**
+ * Logs a payment (whenever it happened — before, during, or after the
+ * rental) and adds it to the rental's running `advance` total via the
+ * `record_rental_payment` RPC (0020_rental_payments.sql), atomically —
+ * so the admin never has to recompute the new cumulative total by hand.
+ */
+export async function recordRentalPayment(values: RecordPaymentValues): Promise<string> {
+  const { data, error } = await supabase.rpc("record_rental_payment", {
+    p_rental_id: values.rentalId,
+    p_amount: values.amount,
+    p_payment_date: values.paymentDate,
+    p_method: values.method,
+    p_notes: values.notes ?? null,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+/** Removes a logged payment and reverses it out of the rental's `advance` total. */
+export async function deleteRentalPayment(paymentId: string): Promise<void> {
+  const { error } = await supabase.rpc("delete_rental_payment", { p_payment_id: paymentId });
+  if (error) throw error;
 }

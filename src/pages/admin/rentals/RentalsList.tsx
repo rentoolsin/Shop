@@ -1,15 +1,21 @@
 import { Calendar, CaretRight, Plus, ArrowsClockwise } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAdminRentals } from "../../../hooks/useAdminData";
+import { useAdminRentals, useAdminRentalPayments } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
 import {
   extendRental,
   returnRental,
   cancelRental,
+  updateRental,
+  deleteRental,
   syncOpenRentalStatuses,
+  recordRentalPayment,
+  deleteRentalPayment,
+  paymentMethodLabel,
   type AdminRentalListItem,
 } from "../../../services/admin-rentals.service";
+import type { PaymentMethod } from "../../../types/database";
 import {
   calculateRentalTotals,
   validateRentalInput,
@@ -95,6 +101,29 @@ export function RentalsList() {
   const [cancelling, setCancelling] = useState<Row | null>(null);
   const [savingCancel, setSavingCancel] = useState(false);
 
+  const [editing, setEditing] = useState<Row | null>(null);
+  const [editQuantity, setEditQuantity] = useState(1);
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editReturnDate, setEditReturnDate] = useState("");
+  const [editDailyRate, setEditDailyRate] = useState(0);
+  const [editAdvance, setEditAdvance] = useState(0);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [deleting, setDeleting] = useState<Row | null>(null);
+  const [savingDelete, setSavingDelete] = useState(false);
+
+  const [viewing, setViewing] = useState<Row | null>(null);
+
+  const payments = useAdminRentalPayments(viewing?.id);
+  const [payAmount, setPayAmount] = useState("");
+  const [payDate, setPayDate] = useState("");
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
+  const [payNotes, setPayNotes] = useState("");
+  const [payError, setPayError] = useState<string | null>(null);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
+
   const [syncing, setSyncing] = useState(false);
 
   const data = useMemo(() => (rentals.status === "success" ? rentals.data : []), [rentals]);
@@ -113,6 +142,16 @@ export function RentalsList() {
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(rows, {
     resetKey: `${query}-${statusFilter}`,
   });
+
+  // The details popup holds a snapshot `Row` from whenever it was opened;
+  // after recording/removing a payment the balance changes, so re-derive
+  // the row being shown from the latest fetched data (falling back to the
+  // snapshot if it's since disappeared, e.g. mid-delete).
+  const viewingLive: Row | null = useMemo(() => {
+    if (!viewing) return null;
+    const fresh = data.find((r) => r.id === viewing.id);
+    return fresh ? { ...fresh, displayStatus: deriveDisplayStatus(fresh.status, fresh.returnDate) } : viewing;
+  }, [viewing, data]);
 
   const startExtend = (row: Row) => {
     setExtending(row);
@@ -184,6 +223,132 @@ export function RentalsList() {
       showToast("Couldn't cancel this rental. Try again.", "danger");
     } finally {
       setSavingCancel(false);
+    }
+  };
+
+  const startEdit = (row: Row) => {
+    setEditing(row);
+    setEditQuantity(row.quantity);
+    setEditStartDate(row.startDate);
+    setEditReturnDate(row.returnDate);
+    setEditDailyRate(row.dailyRate);
+    setEditAdvance(row.advance);
+    setEditError(null);
+  };
+
+  const editTotals = editing
+    ? calculateRentalTotals({
+        startDate: editStartDate,
+        returnDate: editReturnDate,
+        dailyRate: editDailyRate,
+        quantity: editQuantity,
+        advance: editAdvance,
+      })
+    : null;
+
+  const handleEditSave = async () => {
+    if (!editing || savingEdit) return;
+    const businessErrors = validateRentalInput({
+      startDate: editStartDate,
+      returnDate: editReturnDate,
+      dailyRate: editDailyRate,
+      quantity: editQuantity,
+      advance: editAdvance,
+    });
+    if (businessErrors.length > 0) {
+      setEditError(describeRentalError(businessErrors[0]));
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await updateRental(editing.id, {
+        quantity: editQuantity,
+        startDate: editStartDate,
+        returnDate: editReturnDate,
+        dailyRate: editDailyRate,
+        advance: editAdvance,
+      });
+      showToast("Rental updated.", "success");
+      setEditing(null);
+      rentals.refetch();
+    } catch {
+      setEditError("Couldn't save these changes. Try again.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleting) return;
+    setSavingDelete(true);
+    try {
+      await deleteRental(deleting.id);
+      showToast("Rental deleted.", "success");
+      setDeleting(null);
+      rentals.refetch();
+    } catch {
+      showToast("Couldn't delete this rental. Try again.", "danger");
+    } finally {
+      setSavingDelete(false);
+    }
+  };
+
+  // Reset the "record payment" mini-form whenever a different rental's
+  // details popup opens (or it closes), so a half-filled form never
+  // leaks onto the next rental.
+  useEffect(() => {
+    setPayAmount("");
+    setPayDate(new Date().toISOString().slice(0, 10));
+    setPayMethod("cash");
+    setPayNotes("");
+    setPayError(null);
+  }, [viewing?.id]);
+
+  const handleRecordPayment = async () => {
+    if (!viewing || savingPayment) return;
+    const amount = Number(payAmount);
+    if (!payAmount || Number.isNaN(amount) || amount <= 0) {
+      setPayError("Enter a payment amount greater than zero.");
+      return;
+    }
+    if (!payDate) {
+      setPayError("Choose the date this payment was made.");
+      return;
+    }
+    setPayError(null);
+    setSavingPayment(true);
+    try {
+      await recordRentalPayment({
+        rentalId: viewing.id,
+        amount,
+        paymentDate: payDate,
+        method: payMethod,
+        notes: payNotes.trim() || undefined,
+      });
+      showToast("Payment recorded.", "success");
+      setPayAmount("");
+      setPayNotes("");
+      payments.refetch();
+      rentals.refetch();
+    } catch {
+      setPayError("Couldn't record this payment. Try again.");
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (deletingPaymentId) return;
+    setDeletingPaymentId(paymentId);
+    try {
+      await deleteRentalPayment(paymentId);
+      showToast("Payment removed.", "success");
+      payments.refetch();
+      rentals.refetch();
+    } catch {
+      showToast("Couldn't remove this payment. Try again.", "danger");
+    } finally {
+      setDeletingPaymentId(null);
     }
   };
 
@@ -307,7 +472,12 @@ export function RentalsList() {
               return (
                 <Card key={rental.id} className="overflow-hidden p-3">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800">
+                    <button
+                      type="button"
+                      onClick={() => setViewing(rental)}
+                      aria-label={`View details for ${rental.productName}`}
+                      className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800"
+                    >
                       {rental.productImageUrl ? (
                         <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -315,13 +485,23 @@ export function RentalsList() {
                           {rental.productName.charAt(0)}
                         </span>
                       )}
-                    </span>
+                    </button>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-display text-[14.5px] font-bold uppercase tracking-tight text-ink dark:text-ink-inverted">
+                      <button
+                        type="button"
+                        onClick={() => setViewing(rental)}
+                        className="block truncate text-left font-display text-[14.5px] font-bold uppercase tracking-tight text-ink hover:underline dark:text-ink-inverted"
+                      >
                         {rental.productName}
-                      </p>
-                      <p className="font-mono text-[11.5px] text-graphite-400">{rentalReference(rental.id)}</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewing(rental)}
+                        className="font-mono text-[11.5px] text-graphite-400 hover:underline"
+                      >
+                        {rentalReference(rental.id)}
+                      </button>
                       <p className="mt-0.5 flex items-center gap-1 font-body text-[12px] text-graphite-500">
                         <CalendarIcon className="h-3.5 w-3.5" />
                         {rental.startDate} → {rental.returnDate}
@@ -364,6 +544,20 @@ export function RentalsList() {
                       </Button>
                     </div>
                   )}
+
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-graphite-100 pt-3 dark:border-graphite-800">
+                    <Button variant="secondary" size="sm" onClick={() => startEdit(rental)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-state-danger-text dark:text-state-danger-text-dark"
+                      onClick={() => setDeleting(rental)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </Card>
               );
             })}
@@ -427,6 +621,284 @@ export function RentalsList() {
           </div>
         )}
       </Modal>
+
+      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit rental">
+        {editing && (
+          <div className="space-y-3">
+            <p className="font-body text-[13px] text-graphite-500">
+              {editing.customerName} — {editing.productName} ({editing.variantLabel})
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Quantity"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={editQuantity}
+                onChange={(e) => setEditQuantity(Number(e.target.value))}
+              />
+              <Input
+                label="Daily rate (₹)"
+                type="number"
+                min={0}
+                value={editDailyRate}
+                onChange={(e) => setEditDailyRate(Number(e.target.value))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Start date"
+                type="date"
+                value={editStartDate}
+                onChange={(e) => setEditStartDate(e.target.value)}
+              />
+              <Input
+                label="Return date"
+                type="date"
+                value={editReturnDate}
+                onChange={(e) => setEditReturnDate(e.target.value)}
+              />
+            </div>
+            <Input
+              label="Advance received (₹)"
+              type="number"
+              min={0}
+              value={editAdvance}
+              onChange={(e) => setEditAdvance(Number(e.target.value))}
+            />
+            {editTotals && (
+              <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+                <div className="flex items-center justify-between">
+                  <span>{editTotals.rentalDays} day{editTotals.rentalDays === 1 ? "" : "s"}</span>
+                  <span>{formatCurrency(editTotals.totalRental)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between font-semibold">
+                  <span>Balance due</span>
+                  <span>{formatCurrency(editTotals.balance)}</span>
+                </div>
+              </div>
+            )}
+            {editError && (
+              <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{editError}</p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <Button variant="secondary" fullWidth onClick={() => setEditing(null)} disabled={savingEdit}>
+                Cancel
+              </Button>
+              <Button fullWidth onClick={handleEditSave} disabled={savingEdit}>
+                {savingEdit ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={!!viewing} onClose={() => setViewing(null)} title="Rental details">
+        {viewingLive && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800">
+                {viewingLive.productImageUrl ? (
+                  <img src={viewingLive.productImageUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="font-display text-[18px] text-graphite-400">
+                    {viewingLive.productName.charAt(0)}
+                  </span>
+                )}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate font-display text-[15px] font-bold uppercase tracking-tight text-ink dark:text-ink-inverted">
+                  {viewingLive.productName}
+                </p>
+                <p className="font-mono text-[12px] text-graphite-400">{rentalReference(viewingLive.id)}</p>
+                <StatusBadge
+                  label={STATUS_LABEL[viewingLive.displayStatus]}
+                  tone={STATUS_TONE[viewingLive.displayStatus]}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 rounded border border-graphite-200 p-3 font-body text-[13px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Customer</span>
+                <span>{viewingLive.customerName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Mobile</span>
+                <span className="font-mono">{viewingLive.customerMobile}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Size / variant</span>
+                <span>{viewingLive.variantLabel || "—"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Quantity</span>
+                <span>{viewingLive.quantity}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Start date</span>
+                <span>{viewingLive.startDate}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Return date</span>
+                <span>{viewingLive.returnDate}</span>
+              </div>
+              {viewingLive.actualReturnDate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-graphite-500">Actually returned</span>
+                  <span>{viewingLive.actualReturnDate}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-graphite-500">Daily rate</span>
+                <span>{formatCurrency(viewingLive.dailyRate)}</span>
+              </div>
+            </div>
+
+            <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+              <div className="flex items-center justify-between">
+                <span>Total rental</span>
+                <span>{formatCurrency(viewingLive.totalRental)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Advance / paid so far</span>
+                <span>{formatCurrency(viewingLive.advance)}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between font-semibold">
+                <span>Balance due</span>
+                <span>{formatCurrency(viewingLive.balance)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 border-t border-graphite-200 pt-4 dark:border-graphite-800">
+              <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
+
+              {payments.status === "loading" && (
+                <div className="space-y-1.5">
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              )}
+
+              {payments.status === "error" && (
+                <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+                  Couldn't load payment history.
+                </p>
+              )}
+
+              {payments.status === "success" && payments.data.length === 0 && (
+                <p className="font-body text-[12px] text-graphite-400">No payments logged yet.</p>
+              )}
+
+              {payments.status === "success" && payments.data.length > 0 && (
+                <div className="divide-y divide-graphite-100 rounded border border-graphite-200 dark:divide-graphite-800 dark:border-graphite-800">
+                  {payments.data.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 font-body text-[12.5px] text-ink dark:text-ink-inverted">
+                      <div className="min-w-0">
+                        <p className="font-mono font-semibold">{formatCurrency(p.amount)}</p>
+                        <p className="truncate text-graphite-400">
+                          {p.paymentDate} · {paymentMethodLabel(p.method)}
+                          {p.notes ? ` · ${p.notes}` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePayment(p.id)}
+                        disabled={deletingPaymentId === p.id}
+                        className="flex-shrink-0 font-body text-[12px] font-medium text-state-danger-text hover:underline disabled:opacity-60 dark:text-state-danger-text-dark"
+                      >
+                        {deletingPaymentId === p.id ? "Removing…" : "Remove"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800">
+                <p className="font-body text-[12px] font-medium text-graphite-500">Record a payment</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label="Amount (₹)"
+                    type="number"
+                    min={0}
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                  />
+                  <Input
+                    label="Date paid"
+                    type="date"
+                    value={payDate}
+                    onChange={(e) => setPayDate(e.target.value)}
+                  />
+                </div>
+                <Select
+                  label="Method"
+                  value={payMethod}
+                  onChange={(e) => setPayMethod(e.target.value as PaymentMethod)}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                  <option value="card">Card</option>
+                  <option value="bank_transfer">Bank transfer</option>
+                  <option value="other">Other</option>
+                </Select>
+                <Input
+                  label="Note (optional)"
+                  value={payNotes}
+                  onChange={(e) => setPayNotes(e.target.value)}
+                  placeholder="e.g. Paid after return"
+                />
+                {payError && (
+                  <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{payError}</p>
+                )}
+                <Button size="sm" fullWidth onClick={handleRecordPayment} disabled={savingPayment}>
+                  {savingPayment ? "Saving…" : "Add payment"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => {
+                  const row = viewingLive;
+                  setViewing(null);
+                  startEdit(row);
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                fullWidth
+                className="text-state-danger-text dark:text-state-danger-text-dark"
+                onClick={() => {
+                  const row = viewingLive;
+                  setViewing(null);
+                  setDeleting(row);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleting}
+        title="Delete this rental?"
+        description={
+          deleting
+            ? `This will permanently remove the rental record for ${deleting.customerName} (${deleting.productName}). This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleting(null)}
+        loading={savingDelete}
+      />
 
       <ConfirmDialog
         open={!!returning}

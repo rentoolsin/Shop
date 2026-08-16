@@ -97,7 +97,15 @@ export async function fetchAllProducts(): Promise<AdminProductListItem[]> {
   const { data, error } = await supabase
     .from("products")
     .select("id, name, category_id, image_url, is_featured, is_active, sort_order, product_variants(id)")
-    .order("sort_order", { ascending: true });
+    // `sort_order` defaults to 0 and most products never get it hand-set,
+    // so most rows tie on it. Without a secondary key, Postgres is free to
+    // return tied rows in physical (heap) order — and an UPDATE rewrites a
+    // row's physical location, which is what made editing a product look
+    // like it silently reordered the list. `created_at` breaks ties
+    // deterministically and never changes on edit, so the list order is
+    // now stable regardless of what gets edited.
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
   if (error) throw error;
 
   return ((data ?? []) as unknown as RawProductListRow[]).map((p) => ({

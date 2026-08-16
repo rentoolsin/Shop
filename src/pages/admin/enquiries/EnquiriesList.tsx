@@ -1,6 +1,6 @@
 import { ChatText } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAdminEnquiries } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
 import type { AdminEnquiry } from "../../../services/admin-enquiries.service";
@@ -15,6 +15,8 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { Pagination } from "../../../components/ui/Pagination";
 import { STATUS_LABEL, STATUS_TONE } from "../../../utils/enquiry-status";
+import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from "../../../components/ui/Table";
+import { CaretRight } from "@phosphor-icons/react";
 
 const DEBOUNCE_MS = 300;
 
@@ -23,6 +25,7 @@ function EnquiryIcon() {
 }
 
 export function EnquiriesList() {
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | EnquiryStatus>("all");
@@ -102,31 +105,82 @@ export function EnquiriesList() {
       )}
 
       {enquiries.status === "success" && rows.length > 0 && (
-        <div className="space-y-2">
-          {pageItems.map((enquiry) => (
-            <Link key={enquiry.id} to={`/admin/enquiries/${enquiry.id}`}>
-              <Card interactive className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                      {enquiry.name}
-                    </p>
-                    <p className="font-mono text-[12px] text-graphite-400">{enquiry.mobile}</p>
+        <>
+          {/* Mobile: stacked cards */}
+          <div className="space-y-2 md:hidden">
+            {pageItems.map((enquiry) => (
+              <Link key={enquiry.id} to={`/admin/enquiries/${enquiry.id}`}>
+                <Card interactive className="p-4 hover:border-graphite-300 dark:hover:border-graphite-700">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                        {enquiry.name}
+                      </p>
+                      <p className="font-mono text-[12px] text-graphite-400">{enquiry.mobile}</p>
+                    </div>
+                    <StatusBadge label={STATUS_LABEL[enquiry.status]} tone={STATUS_TONE[enquiry.status]} />
                   </div>
-                  <StatusBadge label={STATUS_LABEL[enquiry.status]} tone={STATUS_TONE[enquiry.status]} />
-                </div>
-                <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                  {enquiry.productName ?? enquiry.requestedProductText ?? "No specific product"}
-                  {enquiry.quantity ? ` · Qty ${enquiry.quantity}` : ""}
-                </p>
-                <p className="font-mono text-[12px] text-graphite-400">
-                  {enquiry.requiredDate ? `Needed from ${enquiry.requiredDate}` : "No date specified"}
-                  {enquiry.numberOfDays ? ` · ${enquiry.numberOfDays} day${enquiry.numberOfDays === 1 ? "" : "s"}` : ""}
-                </p>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  <p className="mt-2 font-body text-[13px] text-graphite-600 dark:text-graphite-300">
+                    {enquiry.productName ?? enquiry.requestedProductText ?? "No specific product"}
+                    {enquiry.quantity ? ` · Qty ${enquiry.quantity}` : ""}
+                  </p>
+                  <p className="font-mono text-[12px] text-graphite-400">
+                    {enquiry.requiredDate ? `Needed from ${enquiry.requiredDate}` : "No date specified"}
+                    {enquiry.numberOfDays ? ` · ${enquiry.numberOfDays} day${enquiry.numberOfDays === 1 ? "" : "s"}` : ""}
+                  </p>
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop: dense table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHead>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Mobile</TableHeaderCell>
+                <TableHeaderCell>Product</TableHeaderCell>
+                <TableHeaderCell>Needed</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell aria-label="Open" />
+              </TableHead>
+              <TableBody>
+                {pageItems.map((enquiry) => (
+                  <TableRow
+                    key={enquiry.id}
+                    interactive
+                    onClick={() => navigate(`/admin/enquiries/${enquiry.id}`)}
+                  >
+                    <TableCell className="font-medium">{enquiry.name}</TableCell>
+                    <TableCell className="font-mono text-[12px] text-graphite-500">{enquiry.mobile}</TableCell>
+                    <TableCell>
+                      <span className="text-graphite-600 dark:text-graphite-300">
+                        {enquiry.productName ?? enquiry.requestedProductText ?? "No specific product"}
+                      </span>
+                      {enquiry.quantity ? (
+                        <span className="ml-1 font-mono text-[11.5px] text-graphite-400">
+                          Qty {enquiry.quantity}
+                        </span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-[12px] text-graphite-500">
+                        {enquiry.requiredDate ?? "No date"}
+                        {enquiry.numberOfDays ? ` · ${enquiry.numberOfDays}d` : ""}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge label={STATUS_LABEL[enquiry.status]} tone={STATUS_TONE[enquiry.status]} />
+                    </TableCell>
+                    <TableCell className="w-8">
+                      <CaretRight className="h-4 w-4 text-graphite-300" weight="light" aria-hidden="true" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
       {enquiries.status === "success" && rows.length > 0 && (
         <Pagination

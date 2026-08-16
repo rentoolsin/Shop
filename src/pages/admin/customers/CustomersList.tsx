@@ -13,6 +13,7 @@ import { ErrorState } from "../../../components/ui/ErrorState";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { Pagination } from "../../../components/ui/Pagination";
 import { useToast } from "../../../components/ui/Toast";
+import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from "../../../components/ui/Table";
 
 const DEBOUNCE_MS = 300;
 
@@ -108,30 +109,66 @@ export function CustomersList() {
       )}
 
       {customers.status === "success" && customers.data.length > 0 && (
-        <div className="space-y-2">
-          {pageItems.map((customer) => (
-            <Card key={customer.id} className="flex items-center justify-between gap-3 p-4">
-              <div>
-                <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
-                  {customer.name}
-                </p>
-                <p className="font-mono text-[12px] text-graphite-400">{customer.mobile}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Link to={`/admin/customers/${customer.id}/edit`}>
-                  <Button variant="ghost" size="sm">Edit</Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPendingDelete({ id: customer.id, name: customer.name })}
-                >
-                  Delete
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <>
+          {/* Mobile: stacked cards */}
+          <div className="space-y-2 md:hidden">
+            {pageItems.map((customer) => (
+              <Card key={customer.id} className="flex items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+                    {customer.name}
+                  </p>
+                  <p className="font-mono text-[12px] text-graphite-400">{customer.mobile}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link to={`/admin/customers/${customer.id}/edit`}>
+                    <Button variant="ghost" size="sm">Edit</Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPendingDelete({ id: customer.id, name: customer.name })}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop: dense table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHead>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Mobile</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableHead>
+              <TableBody>
+                {pageItems.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell className="font-medium">{customer.name}</TableCell>
+                    <TableCell className="font-mono text-[12px] text-graphite-500">{customer.mobile}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link to={`/admin/customers/${customer.id}/edit`}>
+                          <Button variant="ghost" size="sm">Edit</Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPendingDelete({ id: customer.id, name: customer.name })}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       <Pagination

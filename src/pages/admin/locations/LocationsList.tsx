@@ -78,16 +78,16 @@ export function LocationsList() {
       )}
 
       {locations.status === "success" && locations.data.length > 0 && (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
           {locations.data.map((location) => (
             <Card key={location.id} className="flex items-center justify-between gap-3 p-4">
-              <div>
-                <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+              <div className="min-w-0">
+                <p className="truncate font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
                   {location.name}
                 </p>
                 <p className="font-body text-[12px] text-graphite-400">{location.state}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-shrink-0 items-center gap-2">
                 <StatusBadge
                   label={location.isAvailable ? "Available" : "Coming soon"}
                   tone={location.isAvailable ? "success" : "neutral"}

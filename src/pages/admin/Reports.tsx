@@ -146,7 +146,7 @@ export function Reports() {
 
       {rangeValid && !isLoading && !hasError && (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             <StatCard label="Rentals" value={summary.rentalCount} />
             <StatCard label="Rental days" value={summary.rentalDays} />
             <StatCard label="Revenue" value={formatCurrency(summary.revenue)} />
@@ -161,7 +161,7 @@ export function Reports() {
           <p className="mb-3 font-body text-[12px] text-graphite-400">
             Live snapshot — not limited to the selected date range.
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:max-w-md">
             <StatCard label="Active rentals" value={liveSnapshot?.active ?? 0} to="/admin/rentals" />
             <StatCard label="Overdue rentals" value={liveSnapshot?.overdue ?? 0} to="/admin/rentals" tone="danger" />
           </div>

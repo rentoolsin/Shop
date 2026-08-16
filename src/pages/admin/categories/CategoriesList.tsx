@@ -77,16 +77,16 @@ export function CategoriesList() {
       )}
 
       {categories.status === "success" && categories.data.length > 0 && (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
           {categories.data.map((category) => (
             <Card key={category.id} className="flex items-center justify-between gap-3 p-4">
-              <div>
-                <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
+              <div className="min-w-0">
+                <p className="truncate font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
                   {category.name}
                 </p>
                 <p className="font-mono text-[12px] text-graphite-400">/{category.slug}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-shrink-0 items-center gap-2">
                 <StatusBadge
                   label={category.isActive ? "Active" : "Inactive"}
                   tone={category.isActive ? "success" : "neutral"}

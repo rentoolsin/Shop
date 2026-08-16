@@ -6,7 +6,7 @@ import {
   fetchProductInventorySummary,
 } from "../services/admin-products.service";
 import { fetchAllCustomers, fetchCustomerById } from "../services/admin-customers.service";
-import { fetchAllRentals } from "../services/admin-rentals.service";
+import { fetchAllRentals, fetchRentalPayments } from "../services/admin-rentals.service";
 import { fetchAllEnquiries, fetchEnquiryById } from "../services/admin-enquiries.service";
 import {
   fetchAllPurchaseRequests,
@@ -64,6 +64,15 @@ export function useAdminCustomer(id: string | undefined) {
 
 export function useAdminRentals() {
   return useAsyncData(fetchAllRentals, [], { realtimeTables: ["rentals"] });
+}
+
+/** Payment history for one rental — fetched on demand (e.g. when a details popup opens). */
+export function useAdminRentalPayments(rentalId: string | undefined) {
+  return useAsyncData(
+    () => (rentalId ? fetchRentalPayments(rentalId) : Promise.resolve([])),
+    [rentalId],
+    { realtimeTables: ["rental_payments"] },
+  );
 }
 
 export function useAdminEnquiries(query = "") {

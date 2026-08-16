@@ -213,11 +213,11 @@ export function AdminLayout() {
 
       <main
         className={[
-          "min-w-0 flex-1 overflow-x-hidden px-4 pb-24 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8",
+          "min-w-0 flex-1 overflow-x-hidden px-4 pb-24 pt-6 transition-[margin] duration-200 ease-app sm:px-6 md:pb-6 lg:px-8 xl:px-10",
           collapsed ? "md:ml-[76px]" : "md:ml-64",
         ].join(" ")}
       >
-        <div key={location.pathname} className="mx-auto max-w-4xl animate-page-in">
+        <div key={location.pathname} className="mx-auto max-w-[1400px] animate-page-in">
           <Outlet />
         </div>
       </main>

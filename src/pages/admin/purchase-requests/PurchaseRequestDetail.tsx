@@ -82,7 +82,7 @@ export function PurchaseRequestDetail() {
   const r = request.data;
 
   return (
-    <div className="max-w-lg">
+    <div className="lg:max-w-4xl">
       <Link
         to="/admin/purchase-requests"
         className="mb-4 block font-body text-[13px] font-medium text-graphite-700 hover:text-ink dark:text-graphite-300 dark:hover:text-ink-inverted"
@@ -102,46 +102,48 @@ export function PurchaseRequestDetail() {
         <StatusBadge label={STATUS_LABEL[r.status]} tone={STATUS_TONE[r.status]} />
       </div>
 
-      <Card className="space-y-3 p-4">
-        {r.customerName && <Detail label="Customer" value={r.customerName} />}
-        {!r.customerName && r.requesterName && <Detail label="Name" value={r.requesterName} />}
-        {r.mobile && <Detail label="Mobile" value={r.mobile} />}
-        {r.quantity && <Detail label="Quantity" value={String(r.quantity)} />}
-        <Detail label="Priority" value={PRIORITY_LABEL[r.priority]} />
-        {r.notes && <Detail label="Notes" value={r.notes} />}
-        <Detail label="Logged" value={new Date(r.createdAt).toLocaleString()} />
-      </Card>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
+        <Card className="max-w-lg space-y-3 p-4 lg:max-w-none">
+          {r.customerName && <Detail label="Customer" value={r.customerName} />}
+          {!r.customerName && r.requesterName && <Detail label="Name" value={r.requesterName} />}
+          {r.mobile && <Detail label="Mobile" value={r.mobile} />}
+          {r.quantity && <Detail label="Quantity" value={String(r.quantity)} />}
+          <Detail label="Priority" value={PRIORITY_LABEL[r.priority]} />
+          {r.notes && <Detail label="Notes" value={r.notes} />}
+          <Detail label="Logged" value={new Date(r.createdAt).toLocaleString()} />
+        </Card>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <div>
-          <Select
-            label="Status"
-            value={r.status}
-            onChange={(ev) => handleStatusChange(ev.target.value as PurchaseRequestStatus)}
-            disabled={savingStatus}
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-            ))}
-          </Select>
-          {statusError && (
-            <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
-          )}
-        </div>
-        <div>
-          <Select
-            label="Priority"
-            value={r.priority}
-            onChange={(ev) => handlePriorityChange(ev.target.value as PurchaseRequestPriority)}
-            disabled={savingPriority}
-          >
-            {PRIORITY_OPTIONS.map((p) => (
-              <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>
-            ))}
-          </Select>
-          {priorityError && (
-            <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
-          )}
+        <div className="max-w-lg space-y-3 lg:sticky lg:top-6 lg:max-w-none">
+          <div>
+            <Select
+              label="Status"
+              value={r.status}
+              onChange={(ev) => handleStatusChange(ev.target.value as PurchaseRequestStatus)}
+              disabled={savingStatus}
+            >
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+              ))}
+            </Select>
+            {statusError && (
+              <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
+            )}
+          </div>
+          <div>
+            <Select
+              label="Priority"
+              value={r.priority}
+              onChange={(ev) => handlePriorityChange(ev.target.value as PurchaseRequestPriority)}
+              disabled={savingPriority}
+            >
+              {PRIORITY_OPTIONS.map((p) => (
+                <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>
+              ))}
+            </Select>
+            {priorityError && (
+              <p className="mt-1 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">Couldn't save. Try again.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

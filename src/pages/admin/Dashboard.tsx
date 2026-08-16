@@ -97,7 +97,7 @@ export function Dashboard() {
       </h1>
 
       <SectionHeading>Needs attention today</SectionHeading>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {dueTodayCount !== null ? (
           <StatCard label="Due today" value={dueTodayCount} to="/admin/rentals" tone="warning" />
         ) : (
@@ -125,7 +125,7 @@ export function Dashboard() {
       </div>
 
       <SectionHeading>This month</SectionHeading>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {activeRentalCount !== null ? (
           <StatCard label="Active rentals" value={activeRentalCount} to="/admin/rentals" />
         ) : (
@@ -157,7 +157,7 @@ export function Dashboard() {
       </div>
 
       <SectionHeading>Catalog</SectionHeading>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 lg:max-w-lg">
         {customers.status === "success" ? (
           <StatCard label="Customers" value={customers.data.length} to="/admin/customers" />
         ) : (
