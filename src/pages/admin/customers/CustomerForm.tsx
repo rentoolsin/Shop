@@ -116,10 +116,11 @@ export function CustomerForm() {
     }
   }, [existing.status, existing.data]);
 
-  // New customer (not editing an existing one): put the cursor in Name
-  // as soon as the page is ready, so admins can start typing immediately.
+  // New customer (not editing an existing one): put the cursor in Mobile
+  // number — the first field in the form — as soon as the page is ready,
+  // so admins can start typing immediately.
   useEffect(() => {
-    if (!isEdit) nameRef.current?.focus();
+    if (!isEdit) mobileRef.current?.focus();
   }, [isEdit]);
 
   // Live "people who already exist" lookup as the mobile number is typed —
@@ -217,9 +218,12 @@ export function CustomerForm() {
     return next;
   };
 
+  // Focus order here must match the visual/tab order of the fields
+  // (Mobile → Name → Address → Alt mobile) so the first error focused
+  // is always the first one the user would actually tab to.
   const focusFirstError = (errs: FieldErrors) => {
-    if (errs.name) nameRef.current?.focus();
-    else if (errs.mobile) mobileRef.current?.focus();
+    if (errs.mobile) mobileRef.current?.focus();
+    else if (errs.name) nameRef.current?.focus();
     else if (errs.altMobile) altMobileRef.current?.focus();
   };
 
@@ -288,15 +292,6 @@ export function CustomerForm() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Card className="space-y-4 p-4 sm:p-6">
-          <Input
-            ref={nameRef}
-            label="Name"
-            value={values.name}
-            onChange={(e) => setField("name", e.target.value)}
-            onBlur={handleBlur("name")}
-            error={touched.name ? errors.name : undefined}
-            autoComplete="name"
-          />
           <div className="relative">
             <Input
               ref={mobileRef}
@@ -343,6 +338,22 @@ export function CustomerForm() {
             )}
           </div>
           <Input
+            ref={nameRef}
+            label="Name"
+            value={values.name}
+            onChange={(e) => setField("name", e.target.value)}
+            onBlur={handleBlur("name")}
+            error={touched.name ? errors.name : undefined}
+            autoComplete="name"
+          />
+          <Input
+            label="Address"
+            value={values.address}
+            onChange={(e) => setField("address", e.target.value)}
+            hint="Optional."
+            autoComplete="street-address"
+          />
+          <Input
             ref={altMobileRef}
             label="Additional mobile number"
             type="tel"
@@ -353,13 +364,6 @@ export function CustomerForm() {
             error={touched.altMobile ? errors.altMobile : undefined}
             hint={touched.altMobile && errors.altMobile ? undefined : "Optional."}
             autoComplete="tel"
-          />
-          <Input
-            label="Address"
-            value={values.address}
-            onChange={(e) => setField("address", e.target.value)}
-            hint="Optional."
-            autoComplete="street-address"
           />
         </Card>
         <div className="flex gap-2 pt-2">
