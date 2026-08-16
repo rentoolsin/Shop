@@ -5,7 +5,9 @@ import { useAdminCustomer } from "../../../hooks/useAdminData";
 import {
   createCustomer,
   findCustomerByMobile,
+  searchCustomersByMobile,
   updateCustomer,
+  type AdminCustomer,
   type CustomerFormValues,
 } from "../../../services/admin-customers.service";
 import { Input } from "../../../components/ui/Input";
@@ -23,6 +25,8 @@ const MOBILE_RE = /^(?:\+91|91|0)?[6-9]\d{9}$/;
 const ALL_SAME_DIGIT_RE = /^(\d)\1{9}$/;
 const HAS_LETTER_RE = /[A-Za-z]/;
 const MIN_NAME_LENGTH = 2;
+const MATCH_DEBOUNCE_MS = 250;
+const MIN_MATCH_DIGITS = 3;
 
 type FieldName = keyof CustomerFormValues;
 type FieldErrors = Partial<Record<FieldName, string>>;
@@ -78,12 +82,17 @@ export function CustomerForm() {
   const [submitting, setSubmitting] = useState(false);
   const [checkingMobile, setCheckingMobile] = useState(false);
 
+  const [mobileMatches, setMobileMatches] = useState<AdminCustomer[]>([]);
+  const [matchesLoading, setMatchesLoading] = useState(false);
+  const [showMatches, setShowMatches] = useState(false);
+
   const nameRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
   const altMobileRef = useRef<HTMLInputElement>(null);
   // Guards against a slow duplicate-check response landing after the user
   // has already typed a different number.
   const mobileCheckToken = useRef(0);
+  const matchesToken = useRef(0);
 
   useEffect(() => {
     if (existing.status === "success" && existing.data) {
@@ -95,6 +104,36 @@ export function CustomerForm() {
       });
     }
   }, [existing.status, existing.data]);
+
+  // Live "people who already exist" lookup as the mobile number is typed —
+  // separate from checkMobileAvailability, which only fires on blur and
+  // only flags an *exact* duplicate. This runs on every keystroke (once
+  // there's enough to search on) so the admin sees possible matches before
+  // they've even finished typing.
+  useEffect(() => {
+    const digits = values.mobile.trim();
+    if (digits.length < MIN_MATCH_DIGITS) {
+      setMobileMatches([]);
+      setMatchesLoading(false);
+      return;
+    }
+    const token = ++matchesToken.current;
+    setMatchesLoading(true);
+    const timer = window.setTimeout(() => {
+      searchCustomersByMobile(digits)
+        .then((data) => {
+          if (token !== matchesToken.current) return;
+          setMobileMatches(isEdit ? data.filter((c) => c.id !== id) : data);
+        })
+        .catch(() => {
+          if (token === matchesToken.current) setMobileMatches([]);
+        })
+        .finally(() => {
+          if (token === matchesToken.current) setMatchesLoading(false);
+        });
+    }, MATCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [values.mobile, isEdit, id]);
 
   if (isEdit && existing.status === "loading") return <LoadingState label="Loading customer…" />;
   if (isEdit && existing.status === "error") {
@@ -108,6 +147,7 @@ export function CustomerForm() {
     if (touched[field]) {
       setErrors((prev) => ({ ...prev, [field]: validateField(field, { ...values, [field]: value }) }));
     }
+    if (field === "mobile") setShowMatches(true);
   };
 
   const handleBlur = (field: FieldName) => (_e: FocusEvent<HTMLInputElement>) => {
@@ -116,7 +156,16 @@ export function CustomerForm() {
 
     if (field === "mobile") {
       void checkMobileAvailability();
+      // Delay so a click on a suggestion (which blurs the input first)
+      // still registers before the dropdown disappears.
+      window.setTimeout(() => setShowMatches(false), 150);
     }
+  };
+
+  /** Jump straight to editing a matched existing customer instead of creating a duplicate. */
+  const handleSelectMatch = (customer: AdminCustomer) => {
+    setShowMatches(false);
+    navigate(`/admin/customers/${customer.id}/edit`);
   };
 
   /** Live duplicate check, run on blur so the person finds out before they hit Save. */
@@ -231,18 +280,51 @@ export function CustomerForm() {
             error={touched.name ? errors.name : undefined}
             autoComplete="name"
           />
-          <Input
-            ref={mobileRef}
-            label="Mobile number"
-            type="tel"
-            inputMode="tel"
-            value={values.mobile}
-            onChange={(e) => setField("mobile", e.target.value)}
-            onBlur={handleBlur("mobile")}
-            error={touched.mobile ? errors.mobile : undefined}
-            hint={checkingMobile ? "Checking number…" : undefined}
-            autoComplete="tel"
-          />
+          <div className="relative">
+            <Input
+              ref={mobileRef}
+              label="Mobile number"
+              type="tel"
+              inputMode="tel"
+              value={values.mobile}
+              onChange={(e) => setField("mobile", e.target.value)}
+              onFocus={() => setShowMatches(true)}
+              onBlur={handleBlur("mobile")}
+              error={touched.mobile ? errors.mobile : undefined}
+              hint={checkingMobile ? "Checking number…" : undefined}
+              autoComplete="tel"
+            />
+            {showMatches && (matchesLoading || mobileMatches.length > 0) && (
+              <div className="absolute z-10 mt-1 w-full overflow-hidden rounded border border-graphite-200 bg-white shadow-md dark:border-graphite-800 dark:bg-graphite-900">
+                {matchesLoading && (
+                  <p className="px-3 py-2 font-body text-[13px] text-graphite-500">Searching…</p>
+                )}
+                {!matchesLoading &&
+                  mobileMatches.map((customer) => (
+                    <button
+                      key={customer.id}
+                      type="button"
+                      // onMouseDown (not onClick) fires before the input's onBlur,
+                      // so the selection registers before the dropdown closes.
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectMatch(customer);
+                      }}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-graphite-50 dark:hover:bg-graphite-800"
+                    >
+                      <span>
+                        <span className="block font-body text-[14px] text-ink dark:text-ink-inverted">
+                          {customer.name}
+                        </span>
+                        <span className="block font-mono text-[12px] text-graphite-500">
+                          {customer.mobile}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
           <Input
             ref={altMobileRef}
             label="Additional mobile number"
