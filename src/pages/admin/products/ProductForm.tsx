@@ -286,10 +286,11 @@ export function ProductForm() {
         </div>
 
         {/* Sticky so Cancel/Save stay reachable while scrolling a long
-            variants list — sits above the mobile bottom tab bar (bottom-16)
-            and flush with the bottom of the viewport once that bar is
-            hidden at md+. */}
-        <div className="sticky bottom-16 z-10 -mx-4 flex gap-2 border-t border-graphite-200 bg-white/95 px-4 py-3 pb-safe-b backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95 sm:-mx-6 sm:px-6 md:bottom-0 lg:-mx-8 lg:px-8">
+            variants list — sits above the mobile bottom tab bar with a small
+            gap (bottom-[76px], vs. the bar's own h-16/64px) so it doesn't
+            look flush/cramped against it, and drops back to flush-bottom
+            (md:bottom-0) once that tab bar is hidden at md+. */}
+        <div className="sticky bottom-[76px] z-10 -mx-4 flex gap-2 rounded-lg border-t border-graphite-200 bg-white/95 px-4 py-3 pb-safe-b shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95 sm:-mx-6 sm:px-6 md:bottom-0 md:rounded-none md:shadow-none lg:-mx-8 lg:px-8">
           <Button variant="secondary" fullWidth type="button" onClick={() => navigate("/admin/products")}>
             Cancel
           </Button>
