@@ -12,6 +12,13 @@ import { useToast } from "../components/ui/Toast";
  * happen to fully reload, or (b) the page yanking itself out from under them
  * mid-session.
  *
+ * The browser only checks an already-registered SW for updates on
+ * navigation by default — easy to miss in a PWA/SPA where people leave a
+ * tab (especially the admin panel) open for a long session without a full
+ * reload. So this checks explicitly: once right on registration, then every
+ * minute, and again whenever the tab regains focus — so a deploy shows up
+ * within moments, not up to an hour later.
+ *
  * Mount once, near the app root (see App.tsx) — it has no visual output of
  * its own, it just drives the toast.
  */
@@ -19,17 +26,31 @@ export function usePwaUpdate() {
   const { showToast } = useToast();
   const { needRefresh, updateServiceWorker } = useRegisterSW({
     onRegisteredSW(_url, registration) {
-      // Chrome/Edge/etc. only re-check an already-registered SW for updates
-      // on navigation by default, which is easy to miss in a PWA where
-      // people don't often do a hard refresh. Poll explicitly so a user who
-      // leaves the app open in the background still gets offered the update.
       if (!registration) return;
-      const HOUR_MS = 60 * 60 * 1000;
-      window.setInterval(() => {
+
+      const checkForUpdate = () => {
         registration.update().catch(() => {
-          // Offline or the update check failed — next interval will retry.
+          // Offline or the update check failed — next check will retry.
         });
-      }, HOUR_MS);
+      };
+
+      // Check immediately on registration, not just on the first interval
+      // tick — a deploy that lands while someone (an admin especially,
+      // where sessions run long) already has the app open should surface
+      // within seconds, not sit unnoticed for up to an hour.
+      checkForUpdate();
+
+      // Frequent poll while the tab is open. Was 60 minutes — far too
+      // slow for "should come up instantly once deployed".
+      const POLL_MS = 60 * 1000;
+      window.setInterval(checkForUpdate, POLL_MS);
+
+      // Belt-and-braces: also re-check the moment the tab regains focus.
+      // Covers someone who deploys while the admin has the tab backgrounded
+      // or asleep on another monitor, rather than waiting for the next poll.
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") checkForUpdate();
+      });
     },
   });
 
