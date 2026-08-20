@@ -34,6 +34,13 @@ export interface CartEnquiryItemInput {
   productName: string;
   dailyRate?: number | null;
   quantity: number;
+  /**
+   * Per-line rental duration (e.g. the general tool picker, where each
+   * tool can need a different number of days). Cart checkout still relies
+   * on `CartEnquiryInput.numberOfDays` (one shared value for every line)
+   * and leaves this undefined.
+   */
+  numberOfDays?: number;
 }
 
 export interface CartEnquiryInput {
@@ -84,6 +91,7 @@ export async function submitCartEnquiry(input: CartEnquiryInput): Promise<void> 
       product_name: item.productName,
       daily_rate: item.dailyRate ?? null,
       quantity: item.quantity,
+      number_of_days: item.numberOfDays ?? null,
     })),
   );
 

@@ -21,6 +21,13 @@ interface CartLineState {
   variantLabel?: string;
   dailyRate: number | null;
   quantity: number;
+  /**
+   * Per-tool rental duration, as a raw input string (mirrors
+   * FormValues.numberOfDays). Only populated/used in general-mode (tool
+   * picker) items — cart-mode items keep sharing the top-level
+   * `values.numberOfDays` field instead.
+   */
+  numberOfDays?: string;
 }
 
 interface LocationState {
@@ -120,7 +127,10 @@ export function Enquire() {
     if (!product) return;
     setGeneralItems((items) => {
       if (items.some((i) => i.productId === product.id)) return items; // guarded by disabling the option below too
-      return [...items, { productId: product.id, productName: product.name, dailyRate: product.dailyRate, quantity: 1 }];
+      return [
+        ...items,
+        { productId: product.id, productName: product.name, dailyRate: product.dailyRate, quantity: 1, numberOfDays: "" },
+      ];
     });
     setPickerToolId("");
     setPickerError(undefined);
@@ -133,6 +143,12 @@ export function Enquire() {
   const handleGeneralQtyChange = (productId: string, delta: number) => {
     setGeneralItems((items) =>
       items.map((i) => (i.productId === productId ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i)),
+    );
+  };
+
+  const handleGeneralDaysChange = (productId: string, value: string) => {
+    setGeneralItems((items) =>
+      items.map((i) => (i.productId === productId ? { ...i, numberOfDays: value } : i)),
     );
   };
 
@@ -171,15 +187,30 @@ export function Enquire() {
     !isMultiMode && typeof state.dailyRate === "number" && values.quantity !== "" && quantityNum > 0 && daysValid;
   const singleEstimatedTotal = singleEstimateValid ? state.dailyRate! * quantityNum * daysNum : null;
 
-  const multiItems = isCartMode ? state.cartItems! : isGeneralMode ? generalItems : null;
-
-  const multiEstimatedTotal =
-    multiItems && multiItems.length > 0 && daysValid
-      ? multiItems.reduce<number | null>((sum, item) => {
+  // Cart-mode items still share one "number of days" value across every
+  // line (see Cart.tsx). General-mode (tool picker) items each carry their
+  // own — the whole point of this mode is that tools can need different
+  // durations — so the total only firms up once every line has a valid,
+  // positive day count of its own.
+  const cartEstimatedTotal =
+    isCartMode && state.cartItems!.length > 0 && daysValid
+      ? state.cartItems!.reduce<number | null>((sum, item) => {
           if (sum === null || item.dailyRate == null) return null;
           return sum + item.dailyRate * item.quantity * daysNum;
         }, 0)
       : null;
+
+  const generalItemsDaysValid =
+    generalItems.length > 0 && generalItems.every((item) => Number(item.numberOfDays) > 0);
+  const generalEstimatedTotal =
+    isGeneralMode && generalItemsDaysValid
+      ? generalItems.reduce<number | null>((sum, item) => {
+          if (sum === null || item.dailyRate == null) return null;
+          return sum + item.dailyRate * item.quantity * Number(item.numberOfDays);
+        }, 0)
+      : null;
+
+  const multiEstimatedTotal = isCartMode ? cartEstimatedTotal : generalEstimatedTotal;
 
   const estimatedTotal = isMultiMode ? multiEstimatedTotal : singleEstimatedTotal;
 
@@ -233,9 +264,9 @@ export function Enquire() {
             productName: item.productName,
             dailyRate: item.dailyRate,
             quantity: item.quantity,
+            numberOfDays: item.numberOfDays ? Number(item.numberOfDays) : undefined,
           })),
           requiredDate: values.requiredDate || undefined,
-          numberOfDays: values.numberOfDays ? Number(values.numberOfDays) : undefined,
           address: values.address.trim() || undefined,
           message: values.message.trim() || undefined,
         });
@@ -409,24 +440,21 @@ export function Enquire() {
             {generalItems.length > 0 && (
               <ul className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
                 {generalItems.map((item) => (
-                  <li key={item.productId} className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-body text-[13.5px] text-ink dark:text-ink-inverted">
-                        {item.productName}
-                      </p>
-                      {item.dailyRate != null && (
-                        <p className="font-body text-[12px] text-graphite-500">
-                          {formatCurrency(item.dailyRate)}/day
+                  <li
+                    key={item.productId}
+                    className="space-y-2 border-b border-graphite-100 pb-2 last:border-b-0 last:pb-0 dark:border-graphite-800"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-body text-[13.5px] text-ink dark:text-ink-inverted">
+                          {item.productName}
                         </p>
-                      )}
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <QuantityStepper
-                        size="sm"
-                        quantity={item.quantity}
-                        onDecrease={() => handleGeneralQtyChange(item.productId!, -1)}
-                        onIncrease={() => handleGeneralQtyChange(item.productId!, 1)}
-                      />
+                        {item.dailyRate != null && (
+                          <p className="font-body text-[12px] text-graphite-500">
+                            {formatCurrency(item.dailyRate)}/day
+                          </p>
+                        )}
+                      </div>
                       <button
                         type="button"
                         aria-label={`Remove ${item.productName}`}
@@ -435,6 +463,27 @@ export function Enquire() {
                       >
                         <Trash className="h-4 w-4" />
                       </button>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                        Days
+                        <input
+                          type="number"
+                          min={1}
+                          inputMode="numeric"
+                          aria-label={`Number of days for ${item.productName}`}
+                          value={item.numberOfDays ?? ""}
+                          onChange={(e) => handleGeneralDaysChange(item.productId!, e.target.value)}
+                          placeholder="—"
+                          className="w-16 rounded border border-graphite-200 bg-transparent px-2 py-1 font-body text-[13px] text-ink focus:border-accent-500 focus:outline-none dark:border-graphite-700 dark:text-ink-inverted"
+                        />
+                      </label>
+                      <QuantityStepper
+                        size="sm"
+                        quantity={item.quantity}
+                        onDecrease={() => handleGeneralQtyChange(item.productId!, -1)}
+                        onIncrease={() => handleGeneralQtyChange(item.productId!, 1)}
+                      />
                     </div>
                   </li>
                 ))}
@@ -469,7 +518,7 @@ export function Enquire() {
           placeholder="10-digit mobile number"
         />
 
-        {isMultiMode ? (
+        {isCartMode ? (
           <Input
             label="Number of days"
             name="numberOfDays"
@@ -480,7 +529,7 @@ export function Enquire() {
             value={values.numberOfDays}
             onChange={(e) => setField("numberOfDays", e.target.value)}
           />
-        ) : (
+        ) : isGeneralMode ? null : (
           <div className="grid grid-cols-2 gap-3">
             <Input
               ref={quantityRef}
@@ -509,9 +558,11 @@ export function Enquire() {
         {estimatedTotal !== null && (
           <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-              {isMultiMode
+              {isCartMode
                 ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
-                : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
+                : isGeneralMode
+                  ? "Estimated total"
+                  : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
             </span>
             <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
               {formatCurrency(estimatedTotal)}
@@ -644,24 +695,21 @@ export function Enquire() {
                   {generalItems.length > 0 && (
                     <ul className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
                       {generalItems.map((item) => (
-                        <li key={item.productId} className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="truncate font-body text-[13.5px] text-ink dark:text-ink-inverted">
-                              {item.productName}
-                            </p>
-                            {item.dailyRate != null && (
-                              <p className="font-body text-[12px] text-graphite-500">
-                                {formatCurrency(item.dailyRate)}/day
+                        <li
+                          key={item.productId}
+                          className="space-y-2 border-b border-graphite-100 pb-2 last:border-b-0 last:pb-0 dark:border-graphite-800"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate font-body text-[13.5px] text-ink dark:text-ink-inverted">
+                                {item.productName}
                               </p>
-                            )}
-                          </div>
-                          <div className="flex flex-shrink-0 items-center gap-2">
-                            <QuantityStepper
-                              size="sm"
-                              quantity={item.quantity}
-                              onDecrease={() => handleGeneralQtyChange(item.productId!, -1)}
-                              onIncrease={() => handleGeneralQtyChange(item.productId!, 1)}
-                            />
+                              {item.dailyRate != null && (
+                                <p className="font-body text-[12px] text-graphite-500">
+                                  {formatCurrency(item.dailyRate)}/day
+                                </p>
+                              )}
+                            </div>
                             <button
                               type="button"
                               aria-label={`Remove ${item.productName}`}
@@ -670,6 +718,27 @@ export function Enquire() {
                             >
                               <Trash className="h-4 w-4" />
                             </button>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                              Days
+                              <input
+                                type="number"
+                                min={1}
+                                inputMode="numeric"
+                                aria-label={`Number of days for ${item.productName}`}
+                                value={item.numberOfDays ?? ""}
+                                onChange={(e) => handleGeneralDaysChange(item.productId!, e.target.value)}
+                                placeholder="—"
+                                className="w-16 rounded border border-graphite-200 bg-transparent px-2 py-1 font-body text-[13px] text-ink focus:border-accent-500 focus:outline-none dark:border-graphite-700 dark:text-ink-inverted"
+                              />
+                            </label>
+                            <QuantityStepper
+                              size="sm"
+                              quantity={item.quantity}
+                              onDecrease={() => handleGeneralQtyChange(item.productId!, -1)}
+                              onIncrease={() => handleGeneralQtyChange(item.productId!, 1)}
+                            />
                           </div>
                         </li>
                       ))}
@@ -703,7 +772,7 @@ export function Enquire() {
                 />
               </div>
 
-              {isMultiMode ? (
+              {isCartMode ? (
                 <Input
                   label="Number of days"
                   name="numberOfDays"
@@ -714,7 +783,7 @@ export function Enquire() {
                   value={values.numberOfDays}
                   onChange={(e) => setField("numberOfDays", e.target.value)}
                 />
-              ) : (
+              ) : isGeneralMode ? null : (
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Quantity"
@@ -742,9 +811,11 @@ export function Enquire() {
               {estimatedTotal !== null && (
                 <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-950/40">
                   <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                    {isMultiMode
+                    {isCartMode
                       ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
-                      : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
+                      : isGeneralMode
+                        ? "Estimated total"
+                        : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
                   </span>
                   <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
                     {formatCurrency(estimatedTotal)}

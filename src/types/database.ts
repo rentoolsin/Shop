@@ -194,6 +194,7 @@ export interface Database {
           product_name: string;
           daily_rate: number | null;
           quantity: number;
+          number_of_days: number | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["enquiry_items"]["Row"]> & {
