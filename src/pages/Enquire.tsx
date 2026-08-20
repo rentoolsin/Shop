@@ -49,6 +49,12 @@ interface FormValues {
   message: string;
 }
 
+function daysError(value: string): string | undefined {
+  if (!value.trim()) return "Enter number of days.";
+  if (Number(value) <= 0) return "Must be greater than zero.";
+  return undefined;
+}
+
 function buildEmptyForm(state: LocationState): FormValues {
   return {
     name: "",
@@ -61,7 +67,11 @@ function buildEmptyForm(state: LocationState): FormValues {
   };
 }
 
-function validate(values: FormValues, isMultiMode: boolean): Partial<Record<keyof FormValues, string>> {
+function validate(
+  values: FormValues,
+  isMultiMode: boolean,
+  isGeneralMode: boolean,
+): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
   if (!values.name.trim()) errors.name = "Enter your name.";
   if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
@@ -70,6 +80,12 @@ function validate(values: FormValues, isMultiMode: boolean): Partial<Record<keyo
   if (!values.address.trim()) errors.address = "Enter the site address.";
   if (!isMultiMode && values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
+  }
+  // General mode collects a per-tool day count instead (see generalItems
+  // validation in handleSubmit) — the shared field isn't rendered there.
+  if (!isGeneralMode) {
+    const err = daysError(values.numberOfDays);
+    if (err) errors.numberOfDays = err;
   }
   return errors;
 }
@@ -156,6 +172,7 @@ export function Enquire() {
   const nameRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
   const quantityRef = useRef<HTMLInputElement>(null);
+  const numberOfDaysRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
   // Order matters here — mirrors the field order on screen, so whichever
   // invalid field appears first visually is also the one that gets focus.
@@ -163,6 +180,7 @@ export function Enquire() {
     name: nameRef,
     mobile: mobileRef,
     quantity: quantityRef,
+    numberOfDays: numberOfDaysRef,
     address: addressRef,
   };
 
@@ -221,14 +239,17 @@ export function Enquire() {
     e.preventDefault();
     if (submitting) return; // prevent duplicate submissions
 
-    const validationErrors = validate(values, isMultiMode);
+    const validationErrors = validate(values, isMultiMode, isGeneralMode);
     setErrors(validationErrors);
     if (isGeneralMode && generalItems.length === 0) {
       setPickerError("Add at least one tool.");
+    } else if (isGeneralMode && !generalItemsDaysValid) {
+      setPickerError("Enter number of days for every tool.");
     } else {
       setPickerError(undefined);
     }
-    if (Object.keys(validationErrors).length > 0 || (isGeneralMode && generalItems.length === 0)) {
+    const generalDaysInvalid = isGeneralMode && (generalItems.length === 0 || !generalItemsDaysValid);
+    if (Object.keys(validationErrors).length > 0 || generalDaysInvalid) {
       // Move focus (and the viewport) to the first invalid field — without
       // this, a screen-reader user gets no indication anything failed, and
       // a sighted user can miss an error that's scrolled off-screen behind
@@ -470,10 +491,12 @@ export function Enquire() {
                     <div className="flex items-center justify-between gap-2">
                       <label className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
                         Days
+                        <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">*</span>
                         <input
                           type="number"
                           min={1}
                           inputMode="numeric"
+                          required
                           aria-label={`Number of days for ${item.productName}`}
                           value={item.numberOfDays ?? ""}
                           onChange={(e) => handleGeneralDaysChange(item.productId!, e.target.value)}
@@ -523,14 +546,16 @@ export function Enquire() {
 
         {isCartMode ? (
           <Input
+            ref={numberOfDaysRef}
             label="Number of days"
             name="numberOfDays"
             type="number"
             min={1}
             inputMode="numeric"
-            hint="Optional"
+            required
             value={values.numberOfDays}
             onChange={(e) => setField("numberOfDays", e.target.value)}
+            error={errors.numberOfDays}
           />
         ) : isGeneralMode ? null : (
           <div className="grid grid-cols-2 gap-3">
@@ -546,14 +571,16 @@ export function Enquire() {
               error={errors.quantity}
             />
             <Input
+              ref={numberOfDaysRef}
               label="Number of days"
               name="numberOfDays"
               type="number"
               min={1}
               inputMode="numeric"
-              hint="Optional"
+              required
               value={values.numberOfDays}
               onChange={(e) => setField("numberOfDays", e.target.value)}
+              error={errors.numberOfDays}
             />
           </div>
         )}
@@ -728,10 +755,12 @@ export function Enquire() {
                           <div className="flex items-center justify-between gap-2">
                             <label className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
                               Days
+                              <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">*</span>
                               <input
                                 type="number"
                                 min={1}
                                 inputMode="numeric"
+                                required
                                 aria-label={`Number of days for ${item.productName}`}
                                 value={item.numberOfDays ?? ""}
                                 onChange={(e) => handleGeneralDaysChange(item.productId!, e.target.value)}
@@ -785,9 +814,10 @@ export function Enquire() {
                   type="number"
                   min={1}
                   inputMode="numeric"
-                  hint="Optional"
+                  required
                   value={values.numberOfDays}
                   onChange={(e) => setField("numberOfDays", e.target.value)}
+                  error={errors.numberOfDays}
                 />
               ) : isGeneralMode ? null : (
                 <div className="grid grid-cols-2 gap-4">
@@ -807,9 +837,10 @@ export function Enquire() {
                     type="number"
                     min={1}
                     inputMode="numeric"
-                    hint="Optional"
+                    required
                     value={values.numberOfDays}
                     onChange={(e) => setField("numberOfDays", e.target.value)}
+                    error={errors.numberOfDays}
                   />
                 </div>
               )}
