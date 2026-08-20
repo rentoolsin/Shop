@@ -21,6 +21,7 @@ import {
   validateRentalInput,
   describeRentalError,
   deriveDisplayStatus,
+  describeBalance,
   type RentalDisplayStatus,
 } from "../../../utils/rental-calculations";
 import { formatCurrency } from "../../../utils/currency";
@@ -192,13 +193,16 @@ export function RentalsList() {
     setExtendError(null);
   };
 
-  // Pre-fill with the outstanding balance so the common case — customer
-  // settles up in full when they bring the tool back — is just "confirm",
-  // while still letting the admin change or zero it out for partial /
-  // no-payment returns.
+  // Pre-fill with the outstanding amount so the common case — customer
+  // settles up in full (or gets their overpayment back) when the tool
+  // comes back — is just "confirm", while still letting the admin change
+  // or zero it out for partial / no-payment returns. `row.balance` can be
+  // negative here (advance/payments received exceed the rental total),
+  // in which case this pre-fills the refund amount, not an amount to
+  // collect — see `describeBalance`.
   const startReturn = (row: Row) => {
     setReturning(row);
-    setReturnAmount(row.balance > 0 ? String(row.balance) : "");
+    setReturnAmount(row.balance !== 0 ? String(Math.abs(row.balance)) : "");
     setReturnMethod("cash");
     setReturnNotes("");
     setReturnError(null);
@@ -248,6 +252,14 @@ export function RentalsList() {
       setReturnError("Enter a valid amount, or leave it blank if nothing was collected.");
       return;
     }
+    // `returning.balance` < 0 means the advance/payments already received
+    // are more than the rental total — the customer overpaid, so this is
+    // money going back to them rather than money being collected. There's
+    // no "negative payment" in the payment ledger (rental_payments.amount
+    // is checked > 0 — see 0020_rental_payments.sql), so a refund is
+    // recorded by lowering the running `advance` total directly instead,
+    // the same way a manual correction via Edit already works.
+    const isRefund = returning.balance < 0;
     setReturnError(null);
     setSavingReturn(true);
     try {
@@ -257,7 +269,28 @@ export function RentalsList() {
       setSavingReturn(false);
       return;
     }
-    if (amount > 0) {
+    if (amount > 0 && isRefund) {
+      try {
+        const newAdvance = Math.max(0, returning.advance - amount);
+        await updateRental(returning.id, {
+          quantity: returning.quantity,
+          startDate: returning.startDate,
+          returnDate: returning.returnDate,
+          dailyRate: returning.dailyRate,
+          advance: newAdvance,
+        });
+        showToast(`Rental marked returned — ${formatCurrency(amount)} refunded.`, "success");
+      } catch {
+        // Status update already succeeded — don't tell the admin the whole
+        // action failed, or they may retry "Mark returned" on an already-
+        // returned rental. Surface the refund failure on its own so they
+        // know to adjust the advance manually instead.
+        showToast(
+          "Rental marked as returned, but the refund couldn't be recorded — adjust the advance from Edit.",
+          "danger",
+        );
+      }
+    } else if (amount > 0) {
       try {
         await recordRentalPayment({
           rentalId: returning.id,
@@ -600,8 +633,17 @@ export function RentalsList() {
                     <span className="truncate text-graphite-500">
                       {rental.customerName} · {rental.customerMobile}
                     </span>
-                    <span className={rental.balance > 0 ? "flex-shrink-0 font-semibold" : "flex-shrink-0 text-graphite-500"}>
-                      {formatCurrency(rental.balance)} due
+                    <span
+                      className={
+                        describeBalance(rental.balance).isRefund
+                          ? "flex-shrink-0 font-semibold text-state-success-text dark:text-state-success-text-dark"
+                          : rental.balance > 0
+                            ? "flex-shrink-0 font-semibold"
+                            : "flex-shrink-0 text-graphite-500"
+                      }
+                    >
+                      {formatCurrency(describeBalance(rental.balance).amount)}
+                      {describeBalance(rental.balance).isRefund ? " refund" : " due"}
                     </span>
                   </div>
 
@@ -749,8 +791,17 @@ export function RentalsList() {
                         />
                       </TableCell>
                       <TableCell className="text-right font-mono whitespace-nowrap">
-                        <span className={rental.balance > 0 ? "font-semibold" : "text-graphite-500"}>
-                          {formatCurrency(rental.balance)}
+                        <span
+                          className={
+                            describeBalance(rental.balance).isRefund
+                              ? "font-semibold text-state-success-text dark:text-state-success-text-dark"
+                              : rental.balance > 0
+                                ? "font-semibold"
+                                : "text-graphite-500"
+                          }
+                        >
+                          {formatCurrency(describeBalance(rental.balance).amount)}
+                          {describeBalance(rental.balance).isRefund ? " refund" : ""}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
@@ -824,8 +875,16 @@ export function RentalsList() {
                   <span>{formatCurrency(extendTotals.totalRental)}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between font-semibold">
-                  <span>Balance due</span>
-                  <span>{formatCurrency(extendTotals.balance)}</span>
+                  <span>{describeBalance(extendTotals.balance).label}</span>
+                  <span
+                    className={
+                      describeBalance(extendTotals.balance).isRefund
+                        ? "text-state-success-text dark:text-state-success-text-dark"
+                        : undefined
+                    }
+                  >
+                    {formatCurrency(describeBalance(extendTotals.balance).amount)}
+                  </span>
                 </div>
               </div>
             )}
@@ -896,8 +955,16 @@ export function RentalsList() {
                   <span>{formatCurrency(editTotals.totalRental)}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between font-semibold">
-                  <span>Balance due</span>
-                  <span>{formatCurrency(editTotals.balance)}</span>
+                  <span>{describeBalance(editTotals.balance).label}</span>
+                  <span
+                    className={
+                      describeBalance(editTotals.balance).isRefund
+                        ? "text-state-success-text dark:text-state-success-text-dark"
+                        : undefined
+                    }
+                  >
+                    {formatCurrency(describeBalance(editTotals.balance).amount)}
+                  </span>
                 </div>
               </div>
             )}
@@ -992,8 +1059,16 @@ export function RentalsList() {
                   <span>{formatCurrency(viewingLive.advance)}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between font-semibold">
-                  <span>Balance due</span>
-                  <span>{formatCurrency(viewingLive.balance)}</span>
+                  <span>{describeBalance(viewingLive.balance).label}</span>
+                  <span
+                    className={
+                      describeBalance(viewingLive.balance).isRefund
+                        ? "text-state-success-text dark:text-state-success-text-dark"
+                        : undefined
+                    }
+                  >
+                    {formatCurrency(describeBalance(viewingLive.balance).amount)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1148,18 +1223,30 @@ export function RentalsList() {
             </p>
 
             <div className="flex items-center justify-between rounded border border-graphite-300 bg-graphite-100 px-3 py-2 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
-              <span>Balance due</span>
-              <span className="font-semibold">{formatCurrency(returning.balance)}</span>
+              <span>{describeBalance(returning.balance).label}</span>
+              <span
+                className={
+                  describeBalance(returning.balance).isRefund
+                    ? "font-semibold text-state-success-text dark:text-state-success-text-dark"
+                    : "font-semibold"
+                }
+              >
+                {formatCurrency(describeBalance(returning.balance).amount)}
+              </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Amount collected now (₹)"
+                label={describeBalance(returning.balance).isRefund ? "Amount refunded now (₹)" : "Amount collected now (₹)"}
                 type="number"
                 min={0}
                 value={returnAmount}
                 onChange={(e) => setReturnAmount(e.target.value)}
-                hint="Leave blank or 0 if nothing was paid at return."
+                hint={
+                  describeBalance(returning.balance).isRefund
+                    ? "The advance received was more than the rental amount — enter how much you're giving back."
+                    : "Leave blank or 0 if nothing was paid at return."
+                }
               />
               <Select
                 label="Method"

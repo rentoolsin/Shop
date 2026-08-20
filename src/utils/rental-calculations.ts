@@ -52,6 +52,15 @@ export function validateRentalInput(
   input: RentalInput,
   options: { allowAdvanceOverTotal?: boolean } = {},
 ): RentalValidationError[] {
+  // An advance/payment total that ends up bigger than the rental amount is
+  // a normal business case (e.g. the customer paid in full up front and
+  // the rental was later shortened, or they simply overpaid) — not an
+  // input mistake. It's handled at return time by refunding the
+  // difference (see `describeBalance` + the "Mark as returned" flow in
+  // RentalsList.tsx), so this no longer blocks saving by default. Callers
+  // that still want the old strict behavior can opt back in explicitly
+  // with `{ allowAdvanceOverTotal: false }`.
+  const { allowAdvanceOverTotal = true } = options;
   const errors: RentalValidationError[] = [];
 
   if (new Date(input.returnDate) < new Date(input.startDate)) {
@@ -67,7 +76,7 @@ export function validateRentalInput(
     errors.push("ADVANCE_NEGATIVE");
   }
 
-  if (!errors.includes("RETURN_BEFORE_START") && !options.allowAdvanceOverTotal) {
+  if (!errors.includes("RETURN_BEFORE_START") && !allowAdvanceOverTotal) {
     const { totalRental } = calculateRentalTotals(input);
     if (input.advance > totalRental) {
       errors.push("ADVANCE_EXCEEDS_TOTAL");
@@ -82,6 +91,28 @@ export function calculateRentalTotals(input: RentalInput): RentalTotals {
   const totalRental = rentalDays * input.dailyRate * input.quantity;
   const balance = totalRental - input.advance;
   return { rentalDays, totalRental, balance };
+}
+
+/**
+ * A negative `balance` means the advance/payments received exceed the
+ * total rental amount — money owed back to the customer, not from them.
+ * Every screen that renders "Balance due" should go through this instead
+ * of assuming balance is always >= 0, so an overpayment reads as a
+ * refund rather than a (confusing) negative amount due.
+ */
+export interface BalanceDescription {
+  label: "Balance due" | "Refund due";
+  amount: number;
+  isRefund: boolean;
+}
+
+export function describeBalance(balance: number): BalanceDescription {
+  const isRefund = balance < 0;
+  return {
+    label: isRefund ? "Refund due" : "Balance due",
+    amount: Math.abs(balance),
+    isRefund,
+  };
 }
 
 export type RentalDisplayStatus =

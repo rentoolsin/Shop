@@ -8,6 +8,7 @@ import {
   calculateRentalTotals,
   validateRentalInput,
   describeRentalError,
+  describeBalance,
 } from "../../../utils/rental-calculations";
 import { formatCurrency } from "../../../utils/currency";
 import { CustomerPicker } from "../../../components/admin/CustomerPicker";
@@ -281,9 +282,23 @@ export function RentalForm({
             <span>{formatCurrency(totals.totalRental)}</span>
           </div>
           <div className="mt-1 flex items-center justify-between font-mono text-[13px] font-semibold text-ink dark:text-ink-inverted">
-            <span>Balance due</span>
-            <span>{formatCurrency(totals.balance)}</span>
+            <span>{describeBalance(totals.balance).label}</span>
+            <span
+              className={
+                describeBalance(totals.balance).isRefund
+                  ? "text-state-success-text dark:text-state-success-text-dark"
+                  : undefined
+              }
+            >
+              {formatCurrency(describeBalance(totals.balance).amount)}
+            </span>
           </div>
+          {describeBalance(totals.balance).isRefund && (
+            <p className="mt-1 font-body text-[12px] text-graphite-500">
+              Advance received is more than the rental amount — the difference will be refunded when this rental
+              is marked as returned.
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2 pt-2">
