@@ -67,6 +67,7 @@ function validate(values: FormValues, isMultiMode: boolean): Partial<Record<keyo
   if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
     errors.mobile = "Enter a valid mobile number.";
   }
+  if (!values.address.trim()) errors.address = "Enter the site address.";
   if (!isMultiMode && values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
@@ -155,12 +156,14 @@ export function Enquire() {
   const nameRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
   const quantityRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLInputElement>(null);
   // Order matters here — mirrors the field order on screen, so whichever
   // invalid field appears first visually is also the one that gets focus.
   const fieldRefs: Partial<Record<keyof FormValues, typeof nameRef>> = {
     name: nameRef,
     mobile: mobileRef,
     quantity: quantityRef,
+    address: addressRef,
   };
 
   // Both the form and its post-submit confirmation are per-visitor and
@@ -580,12 +583,15 @@ export function Enquire() {
         />
 
         <Input
+          ref={addressRef}
           label="Address"
           name="address"
           autoComplete="street-address"
+          required
           value={values.address}
           onChange={(e) => setField("address", e.target.value)}
-          placeholder="Site address (optional)"
+          error={errors.address}
+          placeholder="Site address"
         />
 
         <Textarea
@@ -836,9 +842,11 @@ export function Enquire() {
                   label="Address"
                   name="address"
                   autoComplete="street-address"
+                  required
                   value={values.address}
                   onChange={(e) => setField("address", e.target.value)}
-                  placeholder="Site address (optional)"
+                  error={errors.address}
+                  placeholder="Site address"
                 />
               </div>
 
