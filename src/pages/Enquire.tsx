@@ -1,12 +1,16 @@
-import { useRef, useState, type FormEvent } from "react";
+import { Trash } from "@phosphor-icons/react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
+import { QuantityStepper } from "../components/ui/QuantityStepper";
 import { useToast } from "../components/ui/Toast";
 import { submitEnquiry, submitCartEnquiry } from "../services/enquiries.service";
+import { fetchAvailableProducts, type AvailableProduct } from "../services/products.service";
 import { formatCurrency } from "../utils/currency";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useCart } from "../hooks/useCart";
@@ -50,13 +54,13 @@ function buildEmptyForm(state: LocationState): FormValues {
   };
 }
 
-function validate(values: FormValues, isCartMode: boolean): Partial<Record<keyof FormValues, string>> {
+function validate(values: FormValues, isMultiMode: boolean): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
   if (!values.name.trim()) errors.name = "Enter your name.";
   if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
     errors.mobile = "Enter a valid mobile number.";
   }
-  if (!isCartMode && values.quantity && Number(values.quantity) <= 0) {
+  if (!isMultiMode && values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
   return errors;
@@ -70,11 +74,67 @@ export function Enquire() {
   const { clearCart } = useCart();
 
   const isCartMode = !!state.cartItems && state.cartItems.length > 0;
+  // No specific product and no cart handed in (e.g. arriving from the
+  // footer, header nav, or a page-level "Send an enquiry" CTA) — let the
+  // person build their own list from whatever's currently in stock instead
+  // of enquiring "blind".
+  const isGeneralMode = !isCartMode && !state.productName;
+  const isMultiMode = isCartMode || isGeneralMode;
 
   const [values, setValues] = useState<FormValues>(() => buildEmptyForm(state));
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  // General-mode tool picker: only currently-available tools are offered,
+  // and the person can add as many as they like before submitting.
+  const [availableTools, setAvailableTools] = useState<AvailableProduct[]>([]);
+  const [availableToolsLoading, setAvailableToolsLoading] = useState(isGeneralMode);
+  const [pickerToolId, setPickerToolId] = useState<string>("");
+  const [generalItems, setGeneralItems] = useState<CartLineState[]>([]);
+  const [pickerError, setPickerError] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!isGeneralMode) return;
+    let cancelled = false;
+    setAvailableToolsLoading(true);
+    fetchAvailableProducts()
+      .then((products) => {
+        if (!cancelled) setAvailableTools(products);
+      })
+      .catch(() => {
+        // Non-fatal — the picker just ends up empty; the person can still
+        // reach RenTools via WhatsApp/phone from the header/footer instead.
+      })
+      .finally(() => {
+        if (!cancelled) setAvailableToolsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isGeneralMode]);
+
+  const handleAddTool = () => {
+    if (!pickerToolId) return;
+    const product = availableTools.find((p) => p.id === pickerToolId);
+    if (!product) return;
+    setGeneralItems((items) => {
+      if (items.some((i) => i.productId === product.id)) return items; // guarded by disabling the option below too
+      return [...items, { productId: product.id, productName: product.name, dailyRate: product.dailyRate, quantity: 1 }];
+    });
+    setPickerToolId("");
+    setPickerError(undefined);
+  };
+
+  const handleRemoveTool = (productId: string) => {
+    setGeneralItems((items) => items.filter((i) => i.productId !== productId));
+  };
+
+  const handleGeneralQtyChange = (productId: string, delta: number) => {
+    setGeneralItems((items) =>
+      items.map((i) => (i.productId === productId ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i)),
+    );
+  };
 
   const nameRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
@@ -108,26 +168,33 @@ export function Enquire() {
   const daysValid = values.numberOfDays !== "" && daysNum > 0;
 
   const singleEstimateValid =
-    !isCartMode && typeof state.dailyRate === "number" && values.quantity !== "" && quantityNum > 0 && daysValid;
+    !isMultiMode && typeof state.dailyRate === "number" && values.quantity !== "" && quantityNum > 0 && daysValid;
   const singleEstimatedTotal = singleEstimateValid ? state.dailyRate! * quantityNum * daysNum : null;
 
-  const cartEstimatedTotal =
-    isCartMode && daysValid
-      ? state.cartItems!.reduce<number | null>((sum, item) => {
+  const multiItems = isCartMode ? state.cartItems! : isGeneralMode ? generalItems : null;
+
+  const multiEstimatedTotal =
+    multiItems && multiItems.length > 0 && daysValid
+      ? multiItems.reduce<number | null>((sum, item) => {
           if (sum === null || item.dailyRate == null) return null;
           return sum + item.dailyRate * item.quantity * daysNum;
         }, 0)
       : null;
 
-  const estimatedTotal = isCartMode ? cartEstimatedTotal : singleEstimatedTotal;
+  const estimatedTotal = isMultiMode ? multiEstimatedTotal : singleEstimatedTotal;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting) return; // prevent duplicate submissions
 
-    const validationErrors = validate(values, isCartMode);
+    const validationErrors = validate(values, isMultiMode);
     setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) {
+    if (isGeneralMode && generalItems.length === 0) {
+      setPickerError("Add at least one tool.");
+    } else {
+      setPickerError(undefined);
+    }
+    if (Object.keys(validationErrors).length > 0 || (isGeneralMode && generalItems.length === 0)) {
       // Move focus (and the viewport) to the first invalid field — without
       // this, a screen-reader user gets no indication anything failed, and
       // a sighted user can miss an error that's scrolled off-screen behind
@@ -157,6 +224,21 @@ export function Enquire() {
           message: values.message.trim() || undefined,
         });
         clearCart();
+      } else if (isGeneralMode) {
+        await submitCartEnquiry({
+          name: values.name.trim(),
+          mobile: values.mobile.trim(),
+          items: generalItems.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            dailyRate: item.dailyRate,
+            quantity: item.quantity,
+          })),
+          requiredDate: values.requiredDate || undefined,
+          numberOfDays: values.numberOfDays ? Number(values.numberOfDays) : undefined,
+          address: values.address.trim() || undefined,
+          message: values.message.trim() || undefined,
+        });
       } else {
         await submitEnquiry({
           name: values.name.trim(),
@@ -184,9 +266,11 @@ export function Enquire() {
   if (submitted) {
     const aboutText = isCartMode
       ? ` about your ${state.cartItems!.length}-item order`
-      : state.productName
-        ? ` about ${state.productName}`
-        : " about your enquiry";
+      : isGeneralMode
+        ? ` about your ${generalItems.length}-item order`
+        : state.productName
+          ? ` about ${state.productName}`
+          : " about your enquiry";
 
     return (
       <div>
@@ -284,6 +368,81 @@ export function Enquire() {
           </div>
         )}
 
+        {isGeneralMode && (
+          <div className="space-y-3">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Select
+                  label="Tool name"
+                  name="toolName"
+                  value={pickerToolId}
+                  disabled={availableToolsLoading}
+                  onChange={(e) => setPickerToolId(e.target.value)}
+                >
+                  <option value="">
+                    {availableToolsLoading
+                      ? "Loading tools…"
+                      : availableTools.length === 0
+                        ? "No tools currently available"
+                        : "Select a tool"}
+                  </option>
+                  {availableTools.map((product) => (
+                    <option
+                      key={product.id}
+                      value={product.id}
+                      disabled={generalItems.some((i) => i.productId === product.id)}
+                    >
+                      {product.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <Button type="button" variant="outline" onClick={handleAddTool} disabled={!pickerToolId}>
+                Add
+              </Button>
+            </div>
+            {pickerError && (
+              <span className="block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+                {pickerError}
+              </span>
+            )}
+            {generalItems.length > 0 && (
+              <ul className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
+                {generalItems.map((item) => (
+                  <li key={item.productId} className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-body text-[13.5px] text-ink dark:text-ink-inverted">
+                        {item.productName}
+                      </p>
+                      {item.dailyRate != null && (
+                        <p className="font-body text-[12px] text-graphite-500">
+                          {formatCurrency(item.dailyRate)}/day
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <QuantityStepper
+                        size="sm"
+                        quantity={item.quantity}
+                        onDecrease={() => handleGeneralQtyChange(item.productId!, -1)}
+                        onIncrease={() => handleGeneralQtyChange(item.productId!, 1)}
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove ${item.productName}`}
+                        onClick={() => handleRemoveTool(item.productId!)}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-graphite-400 hover:bg-graphite-100 hover:text-state-danger dark:hover:bg-graphite-800"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         <Input
           ref={nameRef}
           label="Name"
@@ -310,7 +469,7 @@ export function Enquire() {
           placeholder="10-digit mobile number"
         />
 
-        {isCartMode ? (
+        {isMultiMode ? (
           <Input
             label="Number of days"
             name="numberOfDays"
@@ -350,7 +509,7 @@ export function Enquire() {
         {estimatedTotal !== null && (
           <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-              {isCartMode
+              {isMultiMode
                 ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
                 : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
             </span>
@@ -444,6 +603,81 @@ export function Enquire() {
                 </div>
               )}
 
+              {isGeneralMode && (
+                <div className="space-y-3">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Select
+                        label="Tool name"
+                        name="toolName"
+                        value={pickerToolId}
+                        disabled={availableToolsLoading}
+                        onChange={(e) => setPickerToolId(e.target.value)}
+                      >
+                        <option value="">
+                          {availableToolsLoading
+                            ? "Loading tools…"
+                            : availableTools.length === 0
+                              ? "No tools currently available"
+                              : "Select a tool"}
+                        </option>
+                        {availableTools.map((product) => (
+                          <option
+                            key={product.id}
+                            value={product.id}
+                            disabled={generalItems.some((i) => i.productId === product.id)}
+                          >
+                            {product.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <Button type="button" variant="outline" onClick={handleAddTool} disabled={!pickerToolId}>
+                      Add
+                    </Button>
+                  </div>
+                  {pickerError && (
+                    <span className="block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+                      {pickerError}
+                    </span>
+                  )}
+                  {generalItems.length > 0 && (
+                    <ul className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
+                      {generalItems.map((item) => (
+                        <li key={item.productId} className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate font-body text-[13.5px] text-ink dark:text-ink-inverted">
+                              {item.productName}
+                            </p>
+                            {item.dailyRate != null && (
+                              <p className="font-body text-[12px] text-graphite-500">
+                                {formatCurrency(item.dailyRate)}/day
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-shrink-0 items-center gap-2">
+                            <QuantityStepper
+                              size="sm"
+                              quantity={item.quantity}
+                              onDecrease={() => handleGeneralQtyChange(item.productId!, -1)}
+                              onIncrease={() => handleGeneralQtyChange(item.productId!, 1)}
+                            />
+                            <button
+                              type="button"
+                              aria-label={`Remove ${item.productName}`}
+                              onClick={() => handleRemoveTool(item.productId!)}
+                              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded text-graphite-400 hover:bg-graphite-100 hover:text-state-danger dark:hover:bg-graphite-800"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Name"
@@ -469,7 +703,7 @@ export function Enquire() {
                 />
               </div>
 
-              {isCartMode ? (
+              {isMultiMode ? (
                 <Input
                   label="Number of days"
                   name="numberOfDays"
@@ -508,7 +742,7 @@ export function Enquire() {
               {estimatedTotal !== null && (
                 <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-950/40">
                   <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                    {isCartMode
+                    {isMultiMode
                       ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
                       : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
                   </span>

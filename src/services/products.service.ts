@@ -181,6 +181,53 @@ export async function fetchOutOfStockProducts(): Promise<OutOfStockProduct[]> {
     .map((row) => ({ id: row.id, name: row.name }));
 }
 
+export interface AvailableProduct {
+  id: string;
+  name: string;
+  /** Lowest active-variant daily rate, for the live cost estimate on the Enquire page. Null if no active variant has a rate. */
+  dailyRate: number | null;
+}
+
+/**
+ * Active products with at least one active variant that currently has
+ * available quantity — powers the "Add a tool" picker on the general
+ * (no specific product) Enquire page, so people can only add something
+ * that's actually rentable right now. Mirrors fetchOutOfStockProducts's
+ * shape/approach, just the opposite availability filter.
+ */
+export async function fetchAvailableProducts(): Promise<AvailableProduct[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, product_variants(daily_rate, quantity_total, quantity_reserved, is_active)")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+
+  type RawRow = {
+    id: string;
+    name: string;
+    product_variants:
+      | { daily_rate: number; quantity_total: number; quantity_reserved: number; is_active: boolean }[]
+      | null;
+  };
+
+  return ((data ?? []) as unknown as RawRow[])
+    .map((row) => {
+      const activeVariants = (row.product_variants ?? []).filter((v) => v.is_active);
+      const availableVariants = activeVariants.filter((v) => v.quantity_total - v.quantity_reserved > 0);
+      const rates = availableVariants.map((v) => v.daily_rate);
+      return {
+        id: row.id,
+        name: row.name,
+        dailyRate: rates.length ? Math.min(...rates) : null,
+        hasAvailability: availableVariants.length > 0,
+      };
+    })
+    .filter((row) => row.hasAvailability)
+    .map(({ id, name, dailyRate }) => ({ id, name, dailyRate }));
+}
+
 export async function fetchProductById(id: string): Promise<ProductDetail | null> {
   interface RawProductDetailRow {
     id: string;
