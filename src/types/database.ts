@@ -233,6 +233,9 @@ export interface Database {
           quantity: number | null;
           priority: "low" | "normal" | "high";
           notes: string | null;
+          number_of_days: number | null;
+          rent_from: string | null;
+          rent_to: string | null;
           status: PurchaseRequestStatus;
           created_at: string;
         };

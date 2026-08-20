@@ -23,11 +23,29 @@ interface FormValues {
   mobile: string;
   quantity: string;
   notes: string;
+  /** Only used when the "not listed / general request" option is picked. */
+  customToolName: string;
+  /** Only used when a specific out-of-stock tool is the target of the request. */
+  numberOfDays: string;
+  rentFrom: string;
+  rentTo: string;
 }
 
-const EMPTY_FORM: FormValues = { name: "", mobile: "", quantity: "1", notes: "" };
+const EMPTY_FORM: FormValues = {
+  name: "",
+  mobile: "",
+  quantity: "1",
+  notes: "",
+  customToolName: "",
+  numberOfDays: "",
+  rentFrom: "",
+  rentTo: "",
+};
 
-function validate(values: FormValues): Partial<Record<keyof FormValues, string>> {
+function validate(
+  values: FormValues,
+  { requireCustomToolName, requireRentalWindow }: { requireCustomToolName: boolean; requireRentalWindow: boolean },
+): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
   if (!values.name.trim()) errors.name = "Enter your name.";
   if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
@@ -36,6 +54,24 @@ function validate(values: FormValues): Partial<Record<keyof FormValues, string>>
   if (values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
+
+  if (requireCustomToolName && !values.customToolName.trim()) {
+    errors.customToolName = "Tell us which tool you're looking for.";
+  }
+
+  if (requireRentalWindow) {
+    if (!values.numberOfDays.trim()) {
+      errors.numberOfDays = "Enter number of days.";
+    } else if (Number(values.numberOfDays) <= 0) {
+      errors.numberOfDays = "Must be greater than zero.";
+    }
+    if (!values.rentFrom) errors.rentFrom = "Pick a start date.";
+    if (!values.rentTo) errors.rentTo = "Pick an end date.";
+    if (values.rentFrom && values.rentTo && values.rentTo < values.rentFrom) {
+      errors.rentTo = "End date can't be before the start date.";
+    }
+  }
+
   return errors;
 }
 
@@ -90,13 +126,31 @@ export function RequestPurchase() {
       ? undefined
       : toolOptions.find((p) => p.id === selectedToolId)?.name;
 
+  // "Not listed / general request" is picked — ask them to type the tool
+  // name instead, since we don't have a product to attach the request to.
+  const isOtherToolSelected = isGeneralRequest && selectedToolId === OTHER_TOOL_OPTION;
+
+  // Whenever the request targets a known out-of-stock tool — either handed
+  // in directly via state (from a product page) or picked from the
+  // dropdown — ask how long they'd like to rent it for and the date
+  // window they need it in, so RentTools can prioritise outreach.
+  const isSpecificToolRequest = !isOtherToolSelected;
+
   const nameRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
   const quantityRef = useRef<HTMLInputElement>(null);
+  const customToolNameRef = useRef<HTMLInputElement>(null);
+  const numberOfDaysRef = useRef<HTMLInputElement>(null);
+  const rentFromRef = useRef<HTMLInputElement>(null);
+  const rentToRef = useRef<HTMLInputElement>(null);
   const fieldRefs: Partial<Record<keyof FormValues, typeof nameRef>> = {
     name: nameRef,
     mobile: mobileRef,
     quantity: quantityRef,
+    customToolName: customToolNameRef,
+    numberOfDays: numberOfDaysRef,
+    rentFrom: rentFromRef,
+    rentTo: rentToRef,
   };
 
   useDocumentMeta({
@@ -113,7 +167,10 @@ export function RequestPurchase() {
     e.preventDefault();
     if (submitting) return; // prevent duplicate submissions
 
-    const validationErrors = validate(values);
+    const validationErrors = validate(values, {
+      requireCustomToolName: isOtherToolSelected,
+      requireRentalWindow: isSpecificToolRequest,
+    });
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) {
       const firstErrorField = (Object.keys(validationErrors) as (keyof FormValues)[]).find(
@@ -128,9 +185,14 @@ export function RequestPurchase() {
       await submitPurchaseRequest({
         name: values.name.trim(),
         mobile: values.mobile.trim(),
-        productRequested: state.productName ?? selectedToolName ?? "Not specified",
+        productRequested:
+          state.productName ?? selectedToolName ?? values.customToolName.trim() ?? "Not specified",
         quantity: values.quantity ? Number(values.quantity) : undefined,
         notes: values.notes.trim() || undefined,
+        numberOfDays:
+          isSpecificToolRequest && values.numberOfDays ? Number(values.numberOfDays) : undefined,
+        rentFrom: isSpecificToolRequest ? values.rentFrom || undefined : undefined,
+        rentTo: isSpecificToolRequest ? values.rentTo || undefined : undefined,
       });
       setSubmitted(true);
       showToast("Request sent. RenTools will let you know when it's available.", "success");
@@ -144,9 +206,10 @@ export function RequestPurchase() {
   };
 
   // What we tell the person we're notifying them about — the specific
-  // product passed in via state, or whichever tool they picked from the
-  // dropdown on a general request.
-  const confirmedProductName = state.productName ?? selectedToolName;
+  // product passed in via state, whichever tool they picked from the
+  // dropdown on a general request, or the tool name they typed in.
+  const confirmedProductName =
+    state.productName ?? selectedToolName ?? (values.customToolName.trim() || undefined);
 
   if (submitted) {
     return (
@@ -230,6 +293,64 @@ export function RequestPurchase() {
     </Select>
   );
 
+  // Shown only when "Not listed / general request" is selected — free-text
+  // field so we still know what tool they're after.
+  const customToolNameField = isOtherToolSelected && (
+    <Input
+      ref={customToolNameRef}
+      label="What tool are you looking for?"
+      name="customToolName"
+      required
+      value={values.customToolName}
+      onChange={(e) => setField("customToolName", e.target.value)}
+      error={errors.customToolName}
+      placeholder="e.g. Concrete mixer"
+    />
+  );
+
+  // Shown whenever the request targets a known out-of-stock tool — asks
+  // how many days they need it for and the date window.
+  const rentalWindowFields = isSpecificToolRequest && (
+    <>
+      <Input
+        ref={numberOfDaysRef}
+        label="Number of days"
+        name="numberOfDays"
+        type="number"
+        min={1}
+        inputMode="numeric"
+        required
+        value={values.numberOfDays}
+        onChange={(e) => setField("numberOfDays", e.target.value)}
+        error={errors.numberOfDays}
+        placeholder="e.g. 3"
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          ref={rentFromRef}
+          label="From"
+          name="rentFrom"
+          type="date"
+          required
+          value={values.rentFrom}
+          onChange={(e) => setField("rentFrom", e.target.value)}
+          error={errors.rentFrom}
+        />
+        <Input
+          ref={rentToRef}
+          label="To"
+          name="rentTo"
+          type="date"
+          required
+          min={values.rentFrom || undefined}
+          value={values.rentTo}
+          onChange={(e) => setField("rentTo", e.target.value)}
+          error={errors.rentTo}
+        />
+      </div>
+    </>
+  );
+
   return (
     <div>
       <div className="md:hidden">
@@ -244,6 +365,7 @@ export function RequestPurchase() {
         </p>
 
         {toolNameField}
+        {customToolNameField}
 
         <Input
           ref={nameRef}
@@ -283,6 +405,8 @@ export function RequestPurchase() {
           error={errors.quantity}
         />
 
+        {rentalWindowFields}
+
         <Textarea
           label="Notes"
           name="notes"
@@ -319,6 +443,7 @@ export function RequestPurchase() {
               </p>
 
               {toolNameField}
+              {customToolNameField}
 
               <Input
                 label="Name"
@@ -354,6 +479,8 @@ export function RequestPurchase() {
                 onChange={(e) => setField("quantity", e.target.value)}
                 error={errors.quantity}
               />
+
+              {rentalWindowFields}
 
               <Textarea
                 label="Notes"
