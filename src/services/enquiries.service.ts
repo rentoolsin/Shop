@@ -35,10 +35,10 @@ export interface CartEnquiryItemInput {
   dailyRate?: number | null;
   quantity: number;
   /**
-   * Per-line rental duration (e.g. the general tool picker, where each
-   * tool can need a different number of days). Cart checkout still relies
-   * on `CartEnquiryInput.numberOfDays` (one shared value for every line)
-   * and leaves this undefined.
+   * Per-line rental duration — every line (cart checkout and the general
+   * tool picker alike) carries its own, since different tools often need
+   * different durations. `CartEnquiryInput.numberOfDays` is no longer
+   * used for cart checkout and is kept only for backward compatibility.
    */
   numberOfDays?: number;
 }
@@ -48,6 +48,7 @@ export interface CartEnquiryInput {
   mobile: string;
   items: CartEnquiryItemInput[];
   requiredDate?: string;
+  /** @deprecated Cart lines now each carry their own `numberOfDays` — this shared value is no longer set by the client. */
   numberOfDays?: number;
   address?: string;
   message?: string;

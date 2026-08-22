@@ -6,8 +6,8 @@ import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
 import { QuantityStepper } from "../components/ui/QuantityStepper";
+import { DaysInput } from "../components/ui/DaysInput";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
 import { ProductCard } from "../components/products/ProductCard";
 import { useCart } from "../hooks/useCart";
@@ -26,33 +26,47 @@ function HorizontalScroller({ children }: { children: ReactNode }) {
 }
 
 export function Cart() {
-  const { items, setQuantity, removeItem } = useCart();
+  const { items, setQuantity, setItemDays, removeItem } = useCart();
   const navigate = useNavigate();
-  const [numberOfDays, setNumberOfDays] = useState("");
   const [promoCode, setPromoCode] = useState("");
+  // Turns true the moment someone tries to continue without every line's
+  // day count filled in — flips the missing fields red and shows a
+  // message, rather than silently doing nothing or guessing a duration.
+  const [showDaysErrors, setShowDaysErrors] = useState(false);
   const settings = useSiteSettings();
   const { whatsapp } = settings.status === "success" ? settings.data : SITE_SETTINGS_DEFAULTS;
   const featured = useFeaturedProducts();
 
   useDocumentMeta({ title: "Cart", noindex: true });
 
-  const daysNum = Number(numberOfDays);
-  const daysValid = numberOfDays !== "" && daysNum > 0;
+  // Each line has its own day count now — different tools are often
+  // needed for different durations (e.g. a ladder for one day, a pipe
+  // cutter for three), so a single cart-wide "number of days" field
+  // couldn't express that. `daysValidFor`/`daysNumFor` read straight off
+  // the item itself instead of a shared piece of state.
+  const daysNumFor = (item: (typeof items)[number]) => Number(item.numberOfDays);
+  const daysValidFor = (item: (typeof items)[number]) =>
+    item.numberOfDays != null && item.numberOfDays !== "" && daysNumFor(item) > 0;
 
   const lineTotals = useMemo(
     () =>
       items.map((item) =>
-        daysValid && item.dailyRate != null ? item.dailyRate * item.quantity * daysNum : null,
+        daysValidFor(item) && item.dailyRate != null ? item.dailyRate * item.quantity * daysNumFor(item) : null,
       ),
-    [items, daysValid, daysNum],
+    [items],
   );
-  const grandTotal = daysValid
+  // Only meaningful once every line has its own valid day count — a
+  // partial sum (skipping lines with no days set yet) would understate
+  // the order and look like a price, not an estimate.
+  const allDaysValid = items.length > 0 && items.every(daysValidFor);
+  const grandTotal = allDaysValid
     ? lineTotals.reduce<number | null>((sum, t) => (sum === null || t === null ? null : sum + t), 0)
     : null;
 
-  // Total savings across all lines (quantity-aware) — only counted where an
-  // admin-set "was" rate is actually higher than the current rate, same
-  // rule as the per-card "Save ₹X/day" badge on Products/ProductDetail.
+  // Total savings across all lines with a valid day count (quantity- and
+  // duration-aware) — only counted where an admin-set "was" rate is
+  // actually higher than the current rate, same rule as the per-card
+  // "Save ₹X/day" badge on Products/ProductDetail.
   const totalSavingsPerDay = items.reduce((sum, item) => {
     const saving =
       item.originalDailyRate != null && item.dailyRate != null && item.originalDailyRate > item.dailyRate
@@ -60,8 +74,22 @@ export function Cart() {
         : 0;
     return sum + saving;
   }, 0);
+  const totalSavingsAmount = items.reduce((sum, item) => {
+    if (!daysValidFor(item)) return sum;
+    const saving =
+      item.originalDailyRate != null && item.dailyRate != null && item.originalDailyRate > item.dailyRate
+        ? (item.originalDailyRate - item.dailyRate) * item.quantity * daysNumFor(item)
+        : 0;
+    return sum + saving;
+  }, 0);
 
   const handleCheckout = () => {
+    if (!allDaysValid) {
+      // Stop here rather than sending an incomplete order through —
+      // flip on the per-line red borders and a message instead.
+      setShowDaysErrors(true);
+      return;
+    }
     navigate("/enquire", {
       state: {
         cartItems: items.map((i) => ({
@@ -70,8 +98,8 @@ export function Cart() {
           variantLabel: i.variantLabel,
           dailyRate: i.dailyRate,
           quantity: i.quantity,
+          numberOfDays: i.numberOfDays || undefined,
         })),
-        numberOfDays: daysValid ? numberOfDays : undefined,
       },
     });
   };
@@ -179,7 +207,16 @@ export function Cart() {
               </button>
             </div>
 
-            <div className="mt-3 flex items-center justify-between">
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                Days
+                <DaysInput
+                  value={item.numberOfDays}
+                  onChange={(value) => setItemDays(item.productId, value)}
+                  label={`Number of days for ${item.productName}`}
+                  error={showDaysErrors && !daysValidFor(item)}
+                />
+              </span>
               <QuantityStepper
                 size="sm"
                 quantity={item.quantity}
@@ -195,17 +232,16 @@ export function Cart() {
           </div>
         ))}
 
-        <div className="pt-1">
-          <Input
-            label="Number of days"
-            type="number"
-            min={1}
-            inputMode="numeric"
-            hint="Optional — shows an estimated total. Note: some tools may have a minimum rental period — we'll confirm when you enquire."
-            value={numberOfDays}
-            onChange={(e) => setNumberOfDays(e.target.value)}
-          />
-        </div>
+        {showDaysErrors && !allDaysValid ? (
+          <p className="px-0.5 font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+            Enter the number of days for every tool before continuing.
+          </p>
+        ) : (
+          <p className="px-0.5 font-body text-[12px] text-graphite-500">
+            Set the number of days for each tool above to see its line total. Note: some tools may have a minimum
+            rental period — we'll confirm when you enquire.
+          </p>
+        )}
 
         {/* No automated coupon system — a code goes to a real person on
             WhatsApp along with the cart, rather than a field that "applies"
@@ -245,13 +281,13 @@ export function Cart() {
                 {formatCurrency(totalSavingsPerDay)}/day
               </span>
             </div>
-            {daysValid && (
+            {totalSavingsAmount > 0 && (
               <div className="mt-1 flex items-center justify-between border-t border-savings-border/60 pt-1 dark:border-savings-border-dark/60">
                 <span className="font-body text-[11.5px] text-savings-text dark:text-savings-text-dark">
-                  Total for {daysNum} day{daysNum === 1 ? "" : "s"}
+                  Total savings
                 </span>
                 <span className="font-body text-[12.5px] font-bold text-savings-text dark:text-savings-text-dark">
-                  {formatCurrency(totalSavingsPerDay * daysNum)}
+                  {formatCurrency(totalSavingsAmount)}
                 </span>
               </div>
             )}
@@ -261,7 +297,7 @@ export function Cart() {
         {grandTotal !== null && (
           <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-              Estimated total ({daysNum} day{daysNum === 1 ? "" : "s"})
+              Estimated total
             </span>
             <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
               {formatCurrency(grandTotal)}
@@ -346,6 +382,16 @@ export function Cart() {
                     )}
                   </div>
 
+                  <span className="flex flex-shrink-0 items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                    Days
+                    <DaysInput
+                      value={item.numberOfDays}
+                      onChange={(value) => setItemDays(item.productId, value)}
+                      label={`Number of days for ${item.productName}`}
+                      error={showDaysErrors && !daysValidFor(item)}
+                    />
+                  </span>
+
                   <QuantityStepper
                     size="sm"
                     quantity={item.quantity}
@@ -393,15 +439,16 @@ export function Cart() {
                 Order summary
               </h2>
 
-              <Input
-                label="Number of days"
-                type="number"
-                min={1}
-                inputMode="numeric"
-                hint="Optional — shows an estimated total. We'll confirm any minimum rental period when you enquire."
-                value={numberOfDays}
-                onChange={(e) => setNumberOfDays(e.target.value)}
-              />
+              {showDaysErrors && !allDaysValid ? (
+                <p className="font-body text-[12.5px] text-state-danger-text dark:text-state-danger-text-dark">
+                  Enter the number of days for every tool before continuing.
+                </p>
+              ) : (
+                <p className="font-body text-[12.5px] text-graphite-500">
+                  Set the number of days for each tool in the list to see an estimated total. We'll confirm any
+                  minimum rental period when you enquire.
+                </p>
+              )}
 
               <div className="rounded border border-dashed border-graphite-300 p-3.5 dark:border-graphite-700">
                 <label className="mb-1.5 flex items-center gap-1.5 font-body text-[13px] font-medium text-graphite-600 dark:text-graphite-300">
@@ -438,13 +485,13 @@ export function Cart() {
                       {formatCurrency(totalSavingsPerDay)}/day
                     </span>
                   </div>
-                  {daysValid && (
+                  {totalSavingsAmount > 0 && (
                     <div className="mt-1 flex items-center justify-between border-t border-savings-border/60 pt-1 dark:border-savings-border-dark/60">
                       <span className="font-body text-[11.5px] text-savings-text dark:text-savings-text-dark">
-                        Total for {daysNum} day{daysNum === 1 ? "" : "s"}
+                        Total savings
                       </span>
                       <span className="font-body text-[12.5px] font-bold text-savings-text dark:text-savings-text-dark">
-                        {formatCurrency(totalSavingsPerDay * daysNum)}
+                        {formatCurrency(totalSavingsAmount)}
                       </span>
                     </div>
                   )}
@@ -454,7 +501,7 @@ export function Cart() {
               {grandTotal !== null && (
                 <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-950/40">
                   <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                    Estimated total ({daysNum} day{daysNum === 1 ? "" : "s"})
+                    Estimated total
                   </span>
                   <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
                     {formatCurrency(grandTotal)}

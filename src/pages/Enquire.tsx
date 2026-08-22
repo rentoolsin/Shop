@@ -8,6 +8,7 @@ import { Select } from "../components/ui/Select";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { QuantityStepper } from "../components/ui/QuantityStepper";
+import { DaysInput } from "../components/ui/DaysInput";
 import { useToast } from "../components/ui/Toast";
 import { submitEnquiry, submitCartEnquiry } from "../services/enquiries.service";
 import { fetchAvailableProducts, type AvailableProduct } from "../services/products.service";
@@ -23,9 +24,10 @@ interface CartLineState {
   quantity: number;
   /**
    * Per-tool rental duration, as a raw input string (mirrors
-   * FormValues.numberOfDays). Only populated/used in general-mode (tool
-   * picker) items — cart-mode items keep sharing the top-level
-   * `values.numberOfDays` field instead.
+   * FormValues.numberOfDays). Populated for both general-mode (tool
+   * picker) items and cart-mode items — each tool can need a different
+   * number of days, so this always lives on the line itself rather than
+   * a single shared value for the whole order.
    */
   numberOfDays?: string;
 }
@@ -71,6 +73,7 @@ function validate(
   values: FormValues,
   isMultiMode: boolean,
   isGeneralMode: boolean,
+  isCartMode: boolean,
 ): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
   if (!values.name.trim()) errors.name = "Enter your name.";
@@ -81,9 +84,10 @@ function validate(
   if (!isMultiMode && values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
-  // General mode collects a per-tool day count instead (see generalItems
-  // validation in handleSubmit) — the shared field isn't rendered there.
-  if (!isGeneralMode) {
+  // General mode and cart mode both collect a per-tool day count instead
+  // (see generalItems/cartLineItems validation in handleSubmit) — the
+  // shared field is only rendered for single-product mode.
+  if (!isGeneralMode && !isCartMode) {
     const err = daysError(values.numberOfDays);
     if (err) errors.numberOfDays = err;
   }
@@ -98,6 +102,19 @@ export function Enquire() {
   const { clearCart } = useCart();
 
   const isCartMode = !!state.cartItems && state.cartItems.length > 0;
+  // Local, editable copy of the cart lines handed in from the Cart page —
+  // each line keeps its own day count (set on the Cart page, but still
+  // editable here) rather than sharing one value across the whole order.
+  const [cartLineItems, setCartLineItems] = useState<CartLineState[]>(() => state.cartItems ?? []);
+  const [cartDaysError, setCartDaysError] = useState<string | undefined>(undefined);
+  // Turns true the moment a submit is attempted — used to flip any
+  // still-missing per-tool "Days" fields red, in both cart mode and the
+  // general tool picker, without nagging before the person has tried.
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  const handleCartDaysChange = (index: number, value: string) => {
+    setCartLineItems((items) => items.map((item, i) => (i === index ? { ...item, numberOfDays: value } : item)));
+  };
   // No specific product and no cart handed in (e.g. arriving from the
   // footer, header nav, or a page-level "Send an enquiry" CTA) — let the
   // person build their own list from whatever's currently in stock instead
@@ -198,8 +215,8 @@ export function Enquire() {
   };
 
   // Live cost estimate. Single-product mode needs a known rate + quantity +
-  // days; cart mode sums each line's own rate/quantity against the shared
-  // "number of days" field instead.
+  // days; cart mode and general mode each sum their own lines' rate/
+  // quantity/days instead, since every line can carry a different duration.
   const quantityNum = Number(values.quantity);
   const daysNum = Number(values.numberOfDays);
   const daysValid = values.numberOfDays !== "" && daysNum > 0;
@@ -208,16 +225,17 @@ export function Enquire() {
     !isMultiMode && typeof state.dailyRate === "number" && values.quantity !== "" && quantityNum > 0 && daysValid;
   const singleEstimatedTotal = singleEstimateValid ? state.dailyRate! * quantityNum * daysNum : null;
 
-  // Cart-mode items still share one "number of days" value across every
-  // line (see Cart.tsx). General-mode (tool picker) items each carry their
-  // own — the whole point of this mode is that tools can need different
-  // durations — so the total only firms up once every line has a valid,
-  // positive day count of its own.
+  // Cart-mode items each carry their own day count (set on the Cart page,
+  // editable here too) — same reasoning as general-mode items below:
+  // different tools often need different durations, so the total only
+  // firms up once every line has a valid, positive day count of its own.
+  const cartItemsDaysValid =
+    cartLineItems.length > 0 && cartLineItems.every((item) => Number(item.numberOfDays) > 0);
   const cartEstimatedTotal =
-    isCartMode && state.cartItems!.length > 0 && daysValid
-      ? state.cartItems!.reduce<number | null>((sum, item) => {
+    isCartMode && cartItemsDaysValid
+      ? cartLineItems.reduce<number | null>((sum, item) => {
           if (sum === null || item.dailyRate == null) return null;
-          return sum + item.dailyRate * item.quantity * daysNum;
+          return sum + item.dailyRate * item.quantity * Number(item.numberOfDays);
         }, 0)
       : null;
 
@@ -239,7 +257,8 @@ export function Enquire() {
     e.preventDefault();
     if (submitting) return; // prevent duplicate submissions
 
-    const validationErrors = validate(values, isMultiMode, isGeneralMode);
+    setAttemptedSubmit(true);
+    const validationErrors = validate(values, isMultiMode, isGeneralMode, isCartMode);
     setErrors(validationErrors);
     if (isGeneralMode && generalItems.length === 0) {
       setPickerError("Add at least one tool.");
@@ -248,8 +267,14 @@ export function Enquire() {
     } else {
       setPickerError(undefined);
     }
+    if (isCartMode && !cartItemsDaysValid) {
+      setCartDaysError("Enter number of days for every tool.");
+    } else {
+      setCartDaysError(undefined);
+    }
     const generalDaysInvalid = isGeneralMode && (generalItems.length === 0 || !generalItemsDaysValid);
-    if (Object.keys(validationErrors).length > 0 || generalDaysInvalid) {
+    const cartDaysInvalid = isCartMode && !cartItemsDaysValid;
+    if (Object.keys(validationErrors).length > 0 || generalDaysInvalid || cartDaysInvalid) {
       // Move focus (and the viewport) to the first invalid field — without
       // this, a screen-reader user gets no indication anything failed, and
       // a sighted user can miss an error that's scrolled off-screen behind
@@ -267,14 +292,14 @@ export function Enquire() {
         await submitCartEnquiry({
           name: values.name.trim(),
           mobile: values.mobile.trim(),
-          items: state.cartItems!.map((item) => ({
+          items: cartLineItems.map((item) => ({
             productId: item.productId,
             productName: item.variantLabel ? `${item.productName} (${item.variantLabel})` : item.productName,
             dailyRate: item.dailyRate,
             quantity: item.quantity,
+            numberOfDays: item.numberOfDays ? Number(item.numberOfDays) : undefined,
           })),
           requiredDate: values.requiredDate || undefined,
-          numberOfDays: values.numberOfDays ? Number(values.numberOfDays) : undefined,
           address: values.address.trim() || undefined,
           message: values.message.trim() || undefined,
         });
@@ -320,7 +345,7 @@ export function Enquire() {
 
   if (submitted) {
     const aboutText = isCartMode
-      ? ` about your ${state.cartItems!.length}-item order`
+      ? ` about your ${cartLineItems.length}-item order`
       : isGeneralMode
         ? ` about your ${generalItems.length}-item order`
         : state.productName
@@ -403,20 +428,40 @@ export function Enquire() {
         {isCartMode && (
           <div className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
             <span className="font-body text-[13px] font-medium text-graphite-500">
-              {state.cartItems!.length} item{state.cartItems!.length === 1 ? "" : "s"}
+              {cartLineItems.length} item{cartLineItems.length === 1 ? "" : "s"}
             </span>
-            <ul className="space-y-1.5">
-              {state.cartItems!.map((item, i) => (
-                <li key={i} className="flex items-center justify-between gap-2 font-body text-[13.5px]">
-                  <span className="min-w-0 truncate text-ink dark:text-ink-inverted">
-                    {item.productName}
-                    {item.variantLabel ? ` (${item.variantLabel})` : ""} × {item.quantity}
-                  </span>
-                  {item.dailyRate != null && (
-                    <span className="flex-shrink-0 text-graphite-500">
-                      {formatCurrency(item.dailyRate)}/day
+            {cartDaysError && (
+              <span className="block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+                {cartDaysError}
+              </span>
+            )}
+            <ul className="space-y-2">
+              {cartLineItems.map((item, i) => (
+                <li key={i} className="space-y-1.5 font-body text-[13.5px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-ink dark:text-ink-inverted">
+                      {item.productName}
+                      {item.variantLabel ? ` (${item.variantLabel})` : ""} × {item.quantity}
                     </span>
-                  )}
+                    {item.dailyRate != null && (
+                      <span className="flex-shrink-0 text-graphite-500">
+                        {formatCurrency(item.dailyRate)}/day
+                      </span>
+                    )}
+                  </div>
+                  <span className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                    Days
+                    <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">
+                      *
+                    </span>
+                    <DaysInput
+                      value={item.numberOfDays}
+                      onChange={(value) => handleCartDaysChange(i, value)}
+                      label={`Number of days for ${item.productName}`}
+                      required
+                      error={attemptedSubmit && !(Number(item.numberOfDays) > 0)}
+                    />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -489,21 +534,19 @@ export function Enquire() {
                       </button>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <label className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                      <span className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
                         Days
-                        <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">*</span>
-                        <input
-                          type="number"
-                          min={1}
-                          inputMode="numeric"
+                        <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">
+                          *
+                        </span>
+                        <DaysInput
+                          value={item.numberOfDays}
+                          onChange={(value) => handleGeneralDaysChange(item.productId!, value)}
+                          label={`Number of days for ${item.productName}`}
                           required
-                          aria-label={`Number of days for ${item.productName}`}
-                          value={item.numberOfDays ?? ""}
-                          onChange={(e) => handleGeneralDaysChange(item.productId!, e.target.value)}
-                          placeholder="—"
-                          className="w-16 rounded border border-graphite-200 bg-transparent px-2 py-1 font-body text-[13px] text-ink focus:border-accent-500 focus:outline-none dark:border-graphite-700 dark:text-ink-inverted"
+                          error={attemptedSubmit && !(Number(item.numberOfDays) > 0)}
                         />
-                      </label>
+                      </span>
                       <QuantityStepper
                         size="sm"
                         quantity={item.quantity}
@@ -544,20 +587,7 @@ export function Enquire() {
           placeholder="10-digit mobile number"
         />
 
-        {isCartMode ? (
-          <Input
-            ref={numberOfDaysRef}
-            label="Number of days"
-            name="numberOfDays"
-            type="number"
-            min={1}
-            inputMode="numeric"
-            required
-            value={values.numberOfDays}
-            onChange={(e) => setField("numberOfDays", e.target.value)}
-            error={errors.numberOfDays}
-          />
-        ) : isGeneralMode ? null : (
+        {isMultiMode ? null : (
           <div className="grid grid-cols-2 gap-3">
             <Input
               ref={quantityRef}
@@ -588,11 +618,9 @@ export function Enquire() {
         {estimatedTotal !== null && (
           <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-900">
             <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-              {isCartMode
-                ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
-                : isGeneralMode
-                  ? "Estimated total"
-                  : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
+              {isMultiMode
+                ? "Estimated total"
+                : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
             </span>
             <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
               {formatCurrency(estimatedTotal)}
@@ -667,20 +695,40 @@ export function Enquire() {
               {isCartMode && (
                 <div className="space-y-2 rounded border border-graphite-200 p-3.5 dark:border-graphite-800">
                   <span className="font-body text-[13px] font-medium text-graphite-500">
-                    {state.cartItems!.length} item{state.cartItems!.length === 1 ? "" : "s"}
+                    {cartLineItems.length} item{cartLineItems.length === 1 ? "" : "s"}
                   </span>
-                  <ul className="space-y-1.5">
-                    {state.cartItems!.map((item, i) => (
-                      <li key={i} className="flex items-center justify-between gap-2 font-body text-[13.5px]">
-                        <span className="min-w-0 truncate text-ink dark:text-ink-inverted">
-                          {item.productName}
-                          {item.variantLabel ? ` (${item.variantLabel})` : ""} × {item.quantity}
-                        </span>
-                        {item.dailyRate != null && (
-                          <span className="flex-shrink-0 text-graphite-500">
-                            {formatCurrency(item.dailyRate)}/day
+                  {cartDaysError && (
+                    <span className="block font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+                      {cartDaysError}
+                    </span>
+                  )}
+                  <ul className="space-y-2">
+                    {cartLineItems.map((item, i) => (
+                      <li key={i} className="space-y-1.5 font-body text-[13.5px]">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate text-ink dark:text-ink-inverted">
+                            {item.productName}
+                            {item.variantLabel ? ` (${item.variantLabel})` : ""} × {item.quantity}
                           </span>
-                        )}
+                          {item.dailyRate != null && (
+                            <span className="flex-shrink-0 text-graphite-500">
+                              {formatCurrency(item.dailyRate)}/day
+                            </span>
+                          )}
+                        </div>
+                        <span className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                          Days
+                          <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">
+                            *
+                          </span>
+                          <DaysInput
+                            value={item.numberOfDays}
+                            onChange={(value) => handleCartDaysChange(i, value)}
+                            label={`Number of days for ${item.productName}`}
+                            required
+                            error={attemptedSubmit && !(Number(item.numberOfDays) > 0)}
+                          />
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -753,21 +801,19 @@ export function Enquire() {
                             </button>
                           </div>
                           <div className="flex items-center justify-between gap-2">
-                            <label className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
+                            <span className="flex items-center gap-1.5 font-body text-[12px] text-graphite-500">
                               Days
-                              <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">*</span>
-                              <input
-                                type="number"
-                                min={1}
-                                inputMode="numeric"
+                              <span className="text-state-danger-text dark:text-state-danger-text-dark" aria-hidden="true">
+                                *
+                              </span>
+                              <DaysInput
+                                value={item.numberOfDays}
+                                onChange={(value) => handleGeneralDaysChange(item.productId!, value)}
+                                label={`Number of days for ${item.productName}`}
                                 required
-                                aria-label={`Number of days for ${item.productName}`}
-                                value={item.numberOfDays ?? ""}
-                                onChange={(e) => handleGeneralDaysChange(item.productId!, e.target.value)}
-                                placeholder="—"
-                                className="w-16 rounded border border-graphite-200 bg-transparent px-2 py-1 font-body text-[13px] text-ink focus:border-accent-500 focus:outline-none dark:border-graphite-700 dark:text-ink-inverted"
+                                error={attemptedSubmit && !(Number(item.numberOfDays) > 0)}
                               />
-                            </label>
+                            </span>
                             <QuantityStepper
                               size="sm"
                               quantity={item.quantity}
@@ -807,19 +853,7 @@ export function Enquire() {
                 />
               </div>
 
-              {isCartMode ? (
-                <Input
-                  label="Number of days"
-                  name="numberOfDays"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  required
-                  value={values.numberOfDays}
-                  onChange={(e) => setField("numberOfDays", e.target.value)}
-                  error={errors.numberOfDays}
-                />
-              ) : isGeneralMode ? null : (
+              {isMultiMode ? null : (
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Quantity"
@@ -848,11 +882,9 @@ export function Enquire() {
               {estimatedTotal !== null && (
                 <div className="flex items-center justify-between rounded border border-accent-200 bg-accent-50 px-3.5 py-3 dark:border-accent-500/30 dark:bg-graphite-950/40">
                   <span className="font-body text-[13px] text-graphite-600 dark:text-graphite-300">
-                    {isCartMode
-                      ? `Estimated total (${daysNum} day${daysNum === 1 ? "" : "s"})`
-                      : isGeneralMode
-                        ? "Estimated total"
-                        : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
+                    {isMultiMode
+                      ? "Estimated total"
+                      : `Estimated total (${quantityNum} × ${daysNum} day${daysNum === 1 ? "" : "s"})`}
                   </span>
                   <span className="font-display text-[16px] font-bold text-ink dark:text-ink-inverted">
                     {formatCurrency(estimatedTotal)}

@@ -17,6 +17,12 @@ export interface CartItem {
   /** Admin-set "was" rate snapshot, same convention as ProductCard/ProductDetail — shown struck through with a "Save ₹X/day" badge. Null = no discount. */
   originalDailyRate?: number | null;
   quantity: number;
+  /**
+   * Per-line rental duration, as a raw input string. Each cart line can
+   * need a different number of days, so this lives on the item itself
+   * rather than as one shared value for the whole cart.
+   */
+  numberOfDays?: string;
 }
 
 function readCart(): CartItem[] {
@@ -105,6 +111,14 @@ export function useCart() {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
   }, []);
 
+  /** Sets (or clears, with "") the rental duration for a single cart line. */
+  const setItemDays = useCallback((productId: string, numberOfDays: string) => {
+    isLocalUpdate.current = true;
+    setItems((prev) =>
+      prev.map((i) => (i.productId === productId ? { ...i, numberOfDays } : i)),
+    );
+  }, []);
+
   const clearCart = useCallback(() => {
     isLocalUpdate.current = true;
     setItems([]);
@@ -112,5 +126,5 @@ export function useCart() {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  return { items, totalItems, getQuantity, addItem, setQuantity, removeItem, clearCart };
+  return { items, totalItems, getQuantity, addItem, setQuantity, setItemDays, removeItem, clearCart };
 }
