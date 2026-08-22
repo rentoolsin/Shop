@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAdminEnquiry } from "../../../hooks/useAdminData";
 import { updateEnquiry, type EnquiryFormValues } from "../../../services/admin-enquiries.service";
 import { Input } from "../../../components/ui/Input";
+import { DatePicker } from "../../../components/ui/DatePicker";
 import { Textarea } from "../../../components/ui/Textarea";
 import { Button } from "../../../components/ui/Button";
 import { LoadingState } from "../../../components/ui/LoadingState";
@@ -191,11 +192,10 @@ export function EnquiryForm() {
               onChange={(e) => setField("numberOfDays", e.target.value === "" ? null : Number(e.target.value))}
             />
           </div>
-        )}        <Input
+        )}        <DatePicker
           label="Required from"
-          type="date"
           value={values.requiredDate}
-          onChange={(e) => setField("requiredDate", e.target.value)}
+          onChange={(v) => setField("requiredDate", v)}
         />
         <Input
           label="Address"

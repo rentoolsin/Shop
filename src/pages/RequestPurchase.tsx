@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { DatePicker } from "../components/ui/DatePicker";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
@@ -142,9 +143,9 @@ export function RequestPurchase() {
   const quantityRef = useRef<HTMLInputElement>(null);
   const customToolNameRef = useRef<HTMLInputElement>(null);
   const numberOfDaysRef = useRef<HTMLInputElement>(null);
-  const rentFromRef = useRef<HTMLInputElement>(null);
-  const rentToRef = useRef<HTMLInputElement>(null);
-  const fieldRefs: Partial<Record<keyof FormValues, typeof nameRef>> = {
+  const rentFromRef = useRef<HTMLButtonElement>(null);
+  const rentToRef = useRef<HTMLButtonElement>(null);
+  const fieldRefs: Partial<Record<keyof FormValues, RefObject<HTMLElement>>> = {
     name: nameRef,
     mobile: mobileRef,
     quantity: quantityRef,
@@ -327,25 +328,23 @@ export function RequestPurchase() {
         placeholder="e.g. 3"
       />
       <div className="grid grid-cols-2 gap-3">
-        <Input
+        <DatePicker
           ref={rentFromRef}
           label="From"
           name="rentFrom"
-          type="date"
           required
           value={values.rentFrom}
-          onChange={(e) => setField("rentFrom", e.target.value)}
+          onChange={(v) => setField("rentFrom", v)}
           error={errors.rentFrom}
         />
-        <Input
+        <DatePicker
           ref={rentToRef}
           label="To"
           name="rentTo"
-          type="date"
           required
           min={values.rentFrom || undefined}
           value={values.rentTo}
-          onChange={(e) => setField("rentTo", e.target.value)}
+          onChange={(v) => setField("rentTo", v)}
           error={errors.rentTo}
         />
       </div>

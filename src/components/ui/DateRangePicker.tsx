@@ -1,5 +1,5 @@
 import { Select } from "./Select";
-import { Input } from "./Input";
+import { DatePicker } from "./DatePicker";
 import {
   DATE_RANGE_PRESET_LABEL,
   resolvePresetRange,
@@ -49,20 +49,18 @@ export function DateRangePicker({ preset, range, onChange }: DateRangePickerProp
 
       {preset === "custom" && (
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <Input
-            type="date"
+          <DatePicker
             label="From"
             value={range.from}
             max={range.to || undefined}
-            onChange={(e) => onChange("custom", { ...range, from: e.target.value })}
+            onChange={(v) => onChange("custom", { ...range, from: v })}
             error={rangeError}
           />
-          <Input
-            type="date"
+          <DatePicker
             label="To"
             value={range.to}
             min={range.from || undefined}
-            onChange={(e) => onChange("custom", { ...range, to: e.target.value })}
+            onChange={(v) => onChange("custom", { ...range, to: v })}
           />
         </div>
       )}

@@ -14,6 +14,7 @@ import { formatCurrency } from "../../../utils/currency";
 import { CustomerPicker } from "../../../components/admin/CustomerPicker";
 import { Input } from "../../../components/ui/Input";
 import { Select } from "../../../components/ui/Select";
+import { DatePicker } from "../../../components/ui/DatePicker";
 import { Button } from "../../../components/ui/Button";
 import { useToast } from "../../../components/ui/Toast";
 
@@ -268,17 +269,15 @@ export function RentalForm({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input
+          <DatePicker
             label="Start date"
-            type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={setStartDate}
           />
-          <Input
+          <DatePicker
             label="Return date"
-            type="date"
             value={returnDate}
-            onChange={(e) => setReturnDate(e.target.value)}
+            onChange={setReturnDate}
             error={errors.returnDate}
           />
         </div>

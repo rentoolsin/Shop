@@ -37,6 +37,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { Modal } from "../../../components/ui/Modal";
 import { Input } from "../../../components/ui/Input";
 import { Select } from "../../../components/ui/Select";
+import { DatePicker } from "../../../components/ui/DatePicker";
 import { Pagination } from "../../../components/ui/Pagination";
 import { useToast } from "../../../components/ui/Toast";
 import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } from "../../../components/ui/Table";
@@ -893,11 +894,10 @@ export function RentalsList() {
             <p className="font-body text-[13px] text-graphite-500">
               {extending.customerName} — {extending.productName} ({extending.variantLabel})
             </p>
-            <Input
+            <DatePicker
               label="New return date"
-              type="date"
               value={extendReturnDate}
-              onChange={(e) => setExtendReturnDate(e.target.value)}
+              onChange={setExtendReturnDate}
             />
             <Input
               label="Total advance received (₹)"
@@ -966,17 +966,15 @@ export function RentalsList() {
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Input
+              <DatePicker
                 label="Start date"
-                type="date"
                 value={editStartDate}
-                onChange={(e) => setEditStartDate(e.target.value)}
+                onChange={setEditStartDate}
               />
-              <Input
+              <DatePicker
                 label="Return date"
-                type="date"
                 value={editReturnDate}
-                onChange={(e) => setEditReturnDate(e.target.value)}
+                onChange={setEditReturnDate}
               />
             </div>
             <Input
@@ -1182,11 +1180,10 @@ export function RentalsList() {
                     value={payAmount}
                     onChange={(e) => setPayAmount(e.target.value)}
                   />
-                  <Input
+                  <DatePicker
                     label="Date paid"
-                    type="date"
                     value={payDate}
-                    onChange={(e) => setPayDate(e.target.value)}
+                    onChange={setPayDate}
                   />
                   <div className="col-span-2 md:col-span-1">
                     <Select

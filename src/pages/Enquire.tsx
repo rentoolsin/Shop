@@ -5,6 +5,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { DesktopContainer } from "../components/layout/DesktopHeader";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { DatePicker } from "../components/ui/DatePicker";
 import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { QuantityStepper } from "../components/ui/QuantityStepper";
@@ -718,13 +719,12 @@ export function Enquire() {
           </div>
         )}
 
-        <Input
+        <DatePicker
           label="Required date"
           name="requiredDate"
-          type="date"
           hint="Optional"
           value={values.requiredDate}
-          onChange={(e) => setField("requiredDate", e.target.value)}
+          onChange={(v) => setField("requiredDate", v)}
         />
 
         <Input
@@ -983,13 +983,12 @@ export function Enquire() {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
+                <DatePicker
                   label="Required date"
                   name="requiredDate"
-                  type="date"
                   hint="Optional"
                   value={values.requiredDate}
-                  onChange={(e) => setField("requiredDate", e.target.value)}
+                  onChange={(v) => setField("requiredDate", v)}
                 />
                 <Input
                   label="Address"

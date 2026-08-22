@@ -8,6 +8,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { BottomSheet } from "../components/ui/BottomSheet";
+import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
 import { useProducts } from "../hooks/useProducts";
 import { useCategories } from "../hooks/useCategories";
@@ -218,20 +219,22 @@ export function Products() {
                 </p>
               )}
             </div>
-            <label className="flex items-center gap-2">
-              <span className="font-body text-[13px] text-graphite-500">Sort by</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
-                className="h-10 rounded border border-graphite-200 bg-white px-3 font-body text-[13.5px] text-ink outline-none focus:border-accent-500 dark:border-graphite-800 dark:bg-graphite-900 dark:text-ink-inverted"
-              >
-                {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-                  <option key={key} value={key}>
-                    {SORT_LABELS[key]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0 font-body text-[13px] text-graphite-500">Sort by</span>
+              <div className="w-44">
+                <Select
+                  aria-label="Sort by"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortKey)}
+                >
+                  {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                    <option key={key} value={key}>
+                      {SORT_LABELS[key]}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
           </div>
 
           <div className="mt-8 grid grid-cols-[220px_1fr] gap-10">
