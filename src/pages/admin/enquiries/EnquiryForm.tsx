@@ -8,6 +8,7 @@ import { Button } from "../../../components/ui/Button";
 import { LoadingState } from "../../../components/ui/LoadingState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { useToast } from "../../../components/ui/Toast";
+import { validateName, validateMobile, sanitizeMobile } from "../../../utils/contact-validation";
 
 const EMPTY: EnquiryFormValues = {
   name: "",
@@ -82,8 +83,10 @@ export function EnquiryForm() {
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
-    if (!values.name.trim()) next.name = "Enter a name.";
-    if (!values.mobile.trim()) next.mobile = "Enter a mobile number.";
+    const nameErr = validateName(values.name);
+    if (nameErr) next.name = nameErr;
+    const mobileErr = validateMobile(values.mobile);
+    if (mobileErr) next.mobile = mobileErr;
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -93,7 +96,7 @@ export function EnquiryForm() {
     if (submitting || !validate() || !id) return;
     setSubmitting(true);
     try {
-      await updateEnquiry(id, values);
+      await updateEnquiry(id, { ...values, mobile: sanitizeMobile(values.mobile) });
       showToast("Enquiry updated.", "success");
       navigate(`/admin/enquiries/${id}`);
     } catch {
@@ -118,14 +121,20 @@ export function EnquiryForm() {
         <Input
           ref={nameRef}
           label="Name"
+          name="name"
+          autoComplete="name"
+          required
           value={values.name}
           onChange={(e) => setField("name", e.target.value)}
           error={errors.name}
         />
         <Input
           label="Mobile number"
+          name="mobile"
           type="tel"
           inputMode="tel"
+          autoComplete="tel"
+          required
           value={values.mobile}
           onChange={(e) => setField("mobile", e.target.value)}
           error={errors.mobile}
@@ -190,6 +199,8 @@ export function EnquiryForm() {
         />
         <Input
           label="Address"
+          name="address"
+          autoComplete="street-address"
           value={values.address}
           onChange={(e) => setField("address", e.target.value)}
           hint="Optional."

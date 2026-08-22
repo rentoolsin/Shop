@@ -13,6 +13,7 @@ import { useToast } from "../components/ui/Toast";
 import { submitEnquiry, submitCartEnquiry } from "../services/enquiries.service";
 import { fetchAvailableProducts, type AvailableProduct } from "../services/products.service";
 import { formatCurrency } from "../utils/currency";
+import { validateName, validateMobile, validateAddress, sanitizeMobile } from "../utils/contact-validation";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useCart } from "../hooks/useCart";
 
@@ -121,11 +122,12 @@ function validate(
   isCartMode: boolean,
 ): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
-  if (!values.name.trim()) errors.name = "Enter your name.";
-  if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
-    errors.mobile = "Enter a valid mobile number.";
-  }
-  if (!values.address.trim()) errors.address = "Enter the site address.";
+  const nameErr = validateName(values.name);
+  if (nameErr) errors.name = nameErr;
+  const mobileErr = validateMobile(values.mobile);
+  if (mobileErr) errors.mobile = mobileErr;
+  const addressErr = validateAddress(values.address, { requiredMessage: "Enter the site address." });
+  if (addressErr) errors.address = addressErr;
   if (!isMultiMode && values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
@@ -378,7 +380,7 @@ export function Enquire() {
       if (isCartMode) {
         await submitCartEnquiry({
           name: values.name.trim(),
-          mobile: values.mobile.trim(),
+          mobile: sanitizeMobile(values.mobile),
           items: cartLineItems.map((item) => ({
             productId: item.productId,
             productName: item.variantLabel ? `${item.productName} (${item.variantLabel})` : item.productName,
@@ -394,7 +396,7 @@ export function Enquire() {
       } else if (isGeneralMode) {
         await submitCartEnquiry({
           name: values.name.trim(),
-          mobile: values.mobile.trim(),
+          mobile: sanitizeMobile(values.mobile),
           items: generalItems.map((item) => ({
             productId: item.productId,
             productName: item.productName,
@@ -409,7 +411,7 @@ export function Enquire() {
       } else {
         await submitEnquiry({
           name: values.name.trim(),
-          mobile: values.mobile.trim(),
+          mobile: sanitizeMobile(values.mobile),
           productId: state.productId,
           requestedProductText: state.productName,
           quantity: values.quantity ? Number(values.quantity) : undefined,

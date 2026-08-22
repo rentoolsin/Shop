@@ -7,20 +7,10 @@ import {
 } from "../../services/admin-customers.service";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
+import { validateName, validateMobile, sanitizeMobile } from "../../utils/contact-validation";
 
 const DEBOUNCE_MS = 300;
-const MOBILE_RE = /^\+?[0-9]{10,13}$/;
 const EMPTY_NEW: CustomerFormValues = { name: "", mobile: "", altMobile: "", address: "" };
-
-/**
- * Strips spaces, hyphens, dots, and parens — the formatting people paste
- * numbers in with (e.g. "+91 96555 91196", "91-9655591196") — before
- * validating or searching, so a pasted number with a country code isn't
- * rejected just for having punctuation in it.
- */
-function sanitizeMobile(mobile: string): string {
-  return mobile.trim().replace(/[\s().-]/g, "");
-}
 
 interface CustomerPickerProps {
   /** Currently selected customer, or null if none chosen yet. */
@@ -116,8 +106,10 @@ export function CustomerPicker({
 
   const validateNew = (): boolean => {
     const next: typeof newErrors = {};
-    if (!newValues.name.trim()) next.name = "Enter the customer's name.";
-    if (!MOBILE_RE.test(sanitizeMobile(newValues.mobile))) next.mobile = "Enter a valid mobile number.";
+    const nameErr = validateName(newValues.name);
+    if (nameErr) next.name = nameErr;
+    const mobileErr = validateMobile(newValues.mobile);
+    if (mobileErr) next.mobile = mobileErr;
     setNewErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -232,20 +224,28 @@ export function CustomerPicker({
           <Input
             ref={newNameRef}
             label="Name"
+            name="name"
+            autoComplete="name"
+            required
             value={newValues.name}
             onChange={(e) => setNewValues((v) => ({ ...v, name: e.target.value }))}
             error={newErrors.name}
           />
           <Input
             label="Mobile number"
+            name="mobile"
             type="tel"
             inputMode="tel"
+            autoComplete="tel"
+            required
             value={newValues.mobile}
             onChange={(e) => setNewValues((v) => ({ ...v, mobile: e.target.value }))}
             error={newErrors.mobile}
           />
           <Input
             label="Address"
+            name="address"
+            autoComplete="street-address"
             value={newValues.address}
             onChange={(e) => setNewValues((v) => ({ ...v, address: e.target.value }))}
             hint="Optional."

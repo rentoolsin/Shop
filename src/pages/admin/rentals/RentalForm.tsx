@@ -24,6 +24,8 @@ function todayIso(): string {
 export interface RentalFormProps {
   /** Enquiry this rental is being created from (see EnquiryDetail.tsx "Convert to Rental"). */
   enquiryId?: string;
+  /** Specific line item being converted, for a multi-item enquiry — see admin-rentals.service.ts. */
+  enquiryItemId?: string;
   /** Pre-selects a customer (e.g. matched or newly created from an enquiry's mobile/name). */
   initialCustomer?: AdminCustomer | null;
   /** Forwarded to CustomerPicker when no `initialCustomer` is matched yet. */
@@ -38,12 +40,13 @@ export interface RentalFormProps {
   title?: string;
   submitLabel?: string;
   /** Overrides the default "toast + navigate to /admin/rentals" success behavior. */
-  onCreated?: (rentalId: string) => void;
+  onCreated?: (rentalId: string) => void | Promise<void>;
   onCancel?: () => void;
 }
 
 export function RentalForm({
   enquiryId,
+  enquiryItemId,
   initialCustomer = null,
   initialCustomerQuery,
   initialCustomerName,
@@ -142,10 +145,23 @@ export function RentalForm({
         dailyRate,
         advance,
         enquiryId,
+        enquiryItemId,
       };
       const rentalId = await createRental(values);
       if (onCreated) {
-        onCreated(rentalId);
+        // Awaited (and separately try/caught) so that any error thrown by
+        // the caller's follow-up work — e.g. EnquiryDetail's status update
+        // and navigate() after a multi-item conversion — surfaces instead
+        // of failing silently as an unhandled promise rejection. The
+        // rental itself is already created at this point, so a failure
+        // here must not show "couldn't create this rental" (that would be
+        // wrong) — just log it, since the caller is responsible for its
+        // own user-facing messaging around that follow-up step.
+        try {
+          await onCreated(rentalId);
+        } catch (followUpErr) {
+          console.error("Rental created, but its onCreated follow-up failed:", followUpErr);
+        }
       } else {
         showToast("Rental created.", "success");
         navigate("/admin/rentals");

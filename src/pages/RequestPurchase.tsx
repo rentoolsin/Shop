@@ -9,6 +9,7 @@ import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/Toast";
 import { submitPurchaseRequest } from "../services/purchase-requests.service";
 import { fetchOutOfStockProducts, type OutOfStockProduct } from "../services/products.service";
+import { validateName, validateMobile, sanitizeMobile } from "../utils/contact-validation";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 interface LocationState {
@@ -47,10 +48,10 @@ function validate(
   { requireCustomToolName, requireRentalWindow }: { requireCustomToolName: boolean; requireRentalWindow: boolean },
 ): Partial<Record<keyof FormValues, string>> {
   const errors: Partial<Record<keyof FormValues, string>> = {};
-  if (!values.name.trim()) errors.name = "Enter your name.";
-  if (!/^\+?[0-9]{10,13}$/.test(values.mobile.trim())) {
-    errors.mobile = "Enter a valid mobile number.";
-  }
+  const nameErr = validateName(values.name);
+  if (nameErr) errors.name = nameErr;
+  const mobileErr = validateMobile(values.mobile);
+  if (mobileErr) errors.mobile = mobileErr;
   if (values.quantity && Number(values.quantity) <= 0) {
     errors.quantity = "Quantity must be greater than zero.";
   }
@@ -184,7 +185,7 @@ export function RequestPurchase() {
     try {
       await submitPurchaseRequest({
         name: values.name.trim(),
-        mobile: values.mobile.trim(),
+        mobile: sanitizeMobile(values.mobile),
         productRequested:
           state.productName ?? selectedToolName ?? values.customToolName.trim() ?? "Not specified",
         quantity: values.quantity ? Number(values.quantity) : undefined,

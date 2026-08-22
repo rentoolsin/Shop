@@ -16,15 +16,14 @@ import { Card } from "../../../components/ui/Card";
 import { LoadingState } from "../../../components/ui/LoadingState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { useToast } from "../../../components/ui/Toast";
+import {
+  MOBILE_RE,
+  sanitizeMobile,
+  normalizeMobile,
+  validateName,
+  validateMobile,
+} from "../../../utils/contact-validation";
 
-// Indian mobile numbers: 10 digits, first digit 6-9, optional +91/0 prefix.
-// (Was `/^\+?[0-9]{10,13}$/`, which only checked digit *count* — it let
-// through junk like "888888888888" since that's 12 digits. Anchoring to
-// the real national format also catches accidental extra/missing digits.)
-const MOBILE_RE = /^(?:\+91|91|0)?[6-9]\d{9}$/;
-const ALL_SAME_DIGIT_RE = /^(\d)\1{9}$/;
-const HAS_LETTER_RE = /[A-Za-z]/;
-const MIN_NAME_LENGTH = 2;
 const MATCH_DEBOUNCE_MS = 250;
 const MIN_MATCH_DIGITS = 3;
 
@@ -44,38 +43,22 @@ const EMPTY: CustomerFormValues = {
  * still validate. Without this, MOBILE_RE saw the punctuation as an
  * invalid character and rejected an otherwise-correct number, which is
  * exactly what "won't accept the 91" turned out to be.
+ * (Moved to utils/contact-validation.ts, imported above, so every form
+ * that collects a mobile number sanitizes it the same way.)
  */
-function sanitizeMobile(mobile: string): string {
-  return mobile.trim().replace(/[\s().-]/g, "");
-}
-
-/** Sanitizes, then strips a leading +91/91/0 so we always store/compare the bare 10-digit number. */
-function normalizeMobile(mobile: string): string {
-  return sanitizeMobile(mobile).replace(/^(?:\+91|91|0)/, "");
-}
 
 /** Sync checks only — no network. Used on blur/change for instant feedback, and again on submit as the final gate. */
 function validateField(field: FieldName, values: CustomerFormValues): string | undefined {
-  if (field === "name") {
-    const name = values.name.trim();
-    if (!name) return "Enter the customer's name.";
-    if (name.length < MIN_NAME_LENGTH) return "Name is too short.";
-    if (!HAS_LETTER_RE.test(name)) return "Name must contain letters.";
-  }
-  if (field === "mobile") {
-    const mobile = sanitizeMobile(values.mobile);
-    if (!mobile) return "Enter a mobile number.";
-    if (!MOBILE_RE.test(mobile)) return "Enter a valid 10-digit Indian mobile number.";
-    const bare = normalizeMobile(mobile);
-    if (ALL_SAME_DIGIT_RE.test(bare)) return "That doesn't look like a real number.";
-  }
+  if (field === "name") return validateName(values.name);
+  if (field === "mobile") return validateMobile(values.mobile);
   if (field === "altMobile") {
+    const err = validateMobile(values.altMobile, { optional: true });
+    if (err) return err;
     const altMobile = sanitizeMobile(values.altMobile);
-    if (!altMobile) return undefined; // optional — no value is fine
-    if (!MOBILE_RE.test(altMobile)) return "Enter a valid 10-digit Indian mobile number.";
-    const bare = normalizeMobile(altMobile);
-    if (ALL_SAME_DIGIT_RE.test(bare)) return "That doesn't look like a real number.";
-    if (bare === normalizeMobile(values.mobile)) return "This matches the primary mobile number.";
+    if (!altMobile) return undefined;
+    if (normalizeMobile(altMobile) === normalizeMobile(values.mobile)) {
+      return "This matches the primary mobile number.";
+    }
   }
   return undefined;
 }

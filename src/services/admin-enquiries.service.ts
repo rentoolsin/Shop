@@ -8,6 +8,8 @@ export interface AdminEnquiryItem {
   dailyRate: number | null;
   quantity: number;
   numberOfDays: number | null;
+  /** Set once this item has been converted to a rental — see 0025_enquiry_items_rental_link.sql. */
+  rentalId: string | null;
 }
 
 export interface AdminEnquiry {
@@ -80,9 +82,10 @@ interface RawEnquiryItemRow {
   daily_rate: number | null;
   quantity: number;
   number_of_days: number | null;
+  rental_id: string | null;
 }
 
-const ITEMS_SELECT = "id, product_id, product_name, daily_rate, quantity, number_of_days";
+const ITEMS_SELECT = "id, product_id, product_name, daily_rate, quantity, number_of_days, rental_id";
 
 function toAdminEnquiryItem(row: RawEnquiryItemRow): AdminEnquiryItem {
   return {
@@ -92,6 +95,7 @@ function toAdminEnquiryItem(row: RawEnquiryItemRow): AdminEnquiryItem {
     dailyRate: row.daily_rate,
     quantity: row.quantity,
     numberOfDays: row.number_of_days,
+    rentalId: row.rental_id,
   };
 }
 

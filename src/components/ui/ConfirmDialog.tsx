@@ -6,6 +6,13 @@ interface ConfirmDialogProps {
   title: string;
   description?: string;
   confirmLabel?: string;
+  /**
+   * Visual style of the confirm button. Defaults to "danger" since most
+   * uses of this dialog so far (delete, set-anyway) are destructive or
+   * hard-to-undo. Pass "primary" for confirmations that aren't — e.g.
+   * "Reopen enquiry" — so the button doesn't read as a warning.
+   */
+  confirmVariant?: "danger" | "primary";
   onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
@@ -16,6 +23,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel = "Delete",
+  confirmVariant = "danger",
   onConfirm,
   onCancel,
   loading,
@@ -31,7 +39,7 @@ export function ConfirmDialog({
         <Button variant="secondary" fullWidth onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button variant="danger" fullWidth onClick={onConfirm} disabled={loading}>
+        <Button variant={confirmVariant} fullWidth onClick={onConfirm} disabled={loading}>
           {loading ? "Working…" : confirmLabel}
         </Button>
       </div>

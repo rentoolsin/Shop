@@ -37,6 +37,14 @@ export interface RentalFormValues {
   advance: number;
   /** Set when this rental is created via Enquiry -> Rental conversion (see admin-enquiries.service.ts). */
   enquiryId?: string;
+  /**
+   * Set when this rental is created by converting one specific line item
+   * of a multi-item enquiry (see EnquiryDetail.tsx's item picker). Stamps
+   * that `enquiry_items` row with this rental's id once created, so the
+   * picker knows it's done even after a refresh — see
+   * 0025_enquiry_items_rental_link.sql.
+   */
+  enquiryItemId?: string;
 }
 
 // Shape of a row returned by the joined select below. Cast explicitly
@@ -134,7 +142,23 @@ export async function createRental(values: RentalFormValues): Promise<string> {
     .select("id")
     .single();
   if (error) throw error;
-  return data.id as string;
+  const rentalId = data.id as string;
+
+  if (values.enquiryItemId) {
+    // Best-effort: the rental itself is already created at this point, so a
+    // failure here shouldn't be surfaced as "the rental wasn't created" —
+    // it would only mean the multi-item picker doesn't know this one's
+    // done until the admin sets it manually or the row is re-checked.
+    const { error: itemError } = await supabase
+      .from("enquiry_items")
+      .update({ rental_id: rentalId })
+      .eq("id", values.enquiryItemId);
+    if (itemError) {
+      console.error("Couldn't link enquiry item to its new rental:", itemError);
+    }
+  }
+
+  return rentalId;
 }
 
 /** Extension: push out the return date and/or record additional advance. */
