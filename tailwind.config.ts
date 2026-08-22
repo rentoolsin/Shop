@@ -101,12 +101,21 @@ export default {
         sm: "6px",
         DEFAULT: "6px",
         lg: "6px",
-        // intentionally no "2xl+" blobby radii — restraint per design direction
+        // xl+ reserved for the premium admin dashboard surfaces (hero panel,
+        // KPI/chart cards) — the rest of the app keeps the 6px restraint
+        // above unchanged.
+        xl: "14px",
+        "2xl": "18px",
+        "3xl": "24px",
       },
       boxShadow: {
-        // Subtle, single-layer depth only. No stacked/glow shadows.
+        // Subtle, single-layer depth for everyday app chrome.
         card: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 1px 0 rgb(0 0 0 / 0.03)",
         raised: "0 2px 8px -2px rgb(0 0 0 / 0.10)",
+        // Stacked, softer-edged depth for the premium admin dashboard only.
+        premium: "0 1px 1px 0 rgb(0 0 0 / 0.02), 0 2px 6px -2px rgb(0 0 0 / 0.08), 0 16px 32px -12px rgb(0 0 0 / 0.16)",
+        "premium-lg": "0 24px 64px -20px rgb(0 0 0 / 0.45)",
+        "glow-accent": "0 0 0 1px rgb(240 168 27 / 0.16), 0 8px 28px -6px rgb(240 168 27 / 0.35)",
       },
       spacing: {
         "safe-t": "env(safe-area-inset-top)",
