@@ -69,6 +69,51 @@ function buildEmptyForm(state: LocationState): FormValues {
   };
 }
 
+// This is a route-level page, so React Router unmounts it entirely when the
+// person navigates away and remounts it fresh when they come back — plain
+// useState alone loses everything they'd typed. sessionStorage survives
+// that remount (but not a full browser close), so a name/mobile/etc typed
+// in, then a trip to another page and back, doesn't have to be retyped.
+// Cleared once an enquiry actually goes through (see handleSubmit).
+const DRAFT_STORAGE_KEY = "rentools:enquire-draft";
+
+interface EnquireDraft {
+  values: FormValues;
+  /** Only meaningful in general mode — cart-mode/single-product lines come from location.state instead. */
+  generalItems?: CartLineState[];
+  /** Cart-mode day-count edits made on this page, keyed by productId so they can be reapplied onto whatever cartItems location.state hands back in. */
+  cartItemsDaysByProductId?: Record<string, string>;
+}
+
+function readDraft(): EnquireDraft | null {
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || !parsed.values) return null;
+    return parsed as EnquireDraft;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(draft: EnquireDraft) {
+  try {
+    window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  } catch {
+    // Storage can be unavailable (private browsing, quota) — the draft is a
+    // convenience, not worth surfacing an error for.
+  }
+}
+
+function clearDraft() {
+  try {
+    window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function validate(
   values: FormValues,
   isMultiMode: boolean,
@@ -105,7 +150,19 @@ export function Enquire() {
   // Local, editable copy of the cart lines handed in from the Cart page —
   // each line keeps its own day count (set on the Cart page, but still
   // editable here) rather than sharing one value across the whole order.
-  const [cartLineItems, setCartLineItems] = useState<CartLineState[]>(() => state.cartItems ?? []);
+  // Re-applies any day-count edits saved in the draft (see DRAFT_STORAGE_KEY
+  // above) on top of the fresh lines location.state hands in, so editing a
+  // day count here and then navigating away and back doesn't lose the edit.
+  const [cartLineItems, setCartLineItems] = useState<CartLineState[]>(() => {
+    const base = state.cartItems ?? [];
+    const draftDays = readDraft()?.cartItemsDaysByProductId;
+    if (!draftDays) return base;
+    return base.map((item) =>
+      item.productId && draftDays[item.productId] !== undefined
+        ? { ...item, numberOfDays: draftDays[item.productId] }
+        : item,
+    );
+  });
   const [cartDaysError, setCartDaysError] = useState<string | undefined>(undefined);
   // Turns true the moment a submit is attempted — used to flip any
   // still-missing per-tool "Days" fields red, in both cart mode and the
@@ -122,7 +179,18 @@ export function Enquire() {
   const isGeneralMode = !isCartMode && !state.productName;
   const isMultiMode = isCartMode || isGeneralMode;
 
-  const [values, setValues] = useState<FormValues>(() => buildEmptyForm(state));
+  const [values, setValues] = useState<FormValues>(() => {
+    const empty = buildEmptyForm(state);
+    const draft = readDraft();
+    if (!draft) return empty;
+    return {
+      ...empty,
+      ...draft.values,
+      // A day count carried in via navigation state (e.g. chosen on the
+      // product page just now) should win over an older stored draft.
+      numberOfDays: state.numberOfDays ?? draft.values.numberOfDays ?? empty.numberOfDays,
+    };
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -132,8 +200,27 @@ export function Enquire() {
   const [availableTools, setAvailableTools] = useState<AvailableProduct[]>([]);
   const [availableToolsLoading, setAvailableToolsLoading] = useState(isGeneralMode);
   const [pickerToolId, setPickerToolId] = useState<string>("");
-  const [generalItems, setGeneralItems] = useState<CartLineState[]>([]);
+  const [generalItems, setGeneralItems] = useState<CartLineState[]>(() =>
+    isGeneralMode ? (readDraft()?.generalItems ?? []) : [],
+  );
   const [pickerError, setPickerError] = useState<string | undefined>(undefined);
+
+  // Keep the draft in sync with whatever's currently typed/picked, so a
+  // detour to another page and back restores it. Cleared on successful
+  // submit (see handleSubmit) so a later, unrelated enquiry starts fresh.
+  useEffect(() => {
+    const cartItemsDaysByProductId: Record<string, string> = {};
+    cartLineItems.forEach((item) => {
+      if (item.productId && item.numberOfDays) {
+        cartItemsDaysByProductId[item.productId] = item.numberOfDays;
+      }
+    });
+    writeDraft({
+      values,
+      generalItems: isGeneralMode ? generalItems : undefined,
+      cartItemsDaysByProductId: isCartMode ? cartItemsDaysByProductId : undefined,
+    });
+  }, [values, generalItems, cartLineItems, isGeneralMode, isCartMode]);
 
   useEffect(() => {
     if (!isGeneralMode) return;
@@ -333,6 +420,7 @@ export function Enquire() {
         });
       }
       setSubmitted(true);
+      clearDraft();
       showToast("Enquiry sent. RenTools will get back to you shortly.", "success");
     } catch {
       showToast("Couldn't send your enquiry. Try again.", "danger");

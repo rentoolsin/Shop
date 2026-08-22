@@ -7,7 +7,7 @@ import {
 } from "../services/admin-products.service";
 import { fetchAllCustomers, fetchCustomerById } from "../services/admin-customers.service";
 import { fetchAllRentals, fetchRentalPayments } from "../services/admin-rentals.service";
-import { fetchAllEnquiries, fetchEnquiryById } from "../services/admin-enquiries.service";
+import { fetchAllEnquiries, fetchEnquiryById, fetchNewEnquiriesCount } from "../services/admin-enquiries.service";
 import {
   fetchAllPurchaseRequests,
   fetchPurchaseRequestById,
@@ -81,8 +81,13 @@ export function useAdminEnquiries(query = "") {
 
 export function useAdminEnquiry(id: string | undefined) {
   return useAsyncData(() => (id ? fetchEnquiryById(id) : Promise.resolve(null)), [id], {
-    realtimeTables: ["enquiries"],
+    realtimeTables: ["enquiries", "enquiry_items"],
   });
+}
+
+/** Count of "new" enquiries, for the Requests tab badge — see AdminMobileNav. */
+export function useNewEnquiriesCount() {
+  return useAsyncData(fetchNewEnquiriesCount, [], { realtimeTables: ["enquiries"] });
 }
 
 export function useAdminPurchaseRequests(query = "") {

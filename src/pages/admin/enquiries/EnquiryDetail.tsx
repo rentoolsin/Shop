@@ -5,6 +5,7 @@ import { updateEnquiryStatus, deleteEnquiry } from "../../../services/admin-enqu
 import { useProduct } from "../../../hooks/useProducts";
 import { RentalForm } from "../rentals/RentalForm";
 import { STATUS_LABEL, STATUS_TONE } from "../../../utils/enquiry-status";
+import { formatCurrency } from "../../../utils/currency";
 import type { EnquiryStatus } from "../../../types/database";
 import { Button } from "../../../components/ui/Button";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -163,10 +164,43 @@ export function EnquiryDetail() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
         <div className="max-w-lg lg:max-w-none">
           <div className="space-y-3 rounded border border-graphite-200 bg-white p-4 dark:border-graphite-800 dark:bg-graphite-900">
-            <Detail label="Product" value={e.productName ?? e.requestedProductText ?? "Not specified"} />
-            {e.quantity && <Detail label="Quantity" value={String(e.quantity)} />}
+            {e.items.length > 0 ? (
+              <div>
+                <p className="font-body text-[12px] font-medium uppercase tracking-wide text-graphite-400">
+                  Items ({e.items.length})
+                </p>
+                <ul className="mt-1.5 space-y-1.5">
+                  {e.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 rounded border border-graphite-100 px-3 py-2 dark:border-graphite-800"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-body text-[14px] text-ink dark:text-ink-inverted">
+                          {item.productName}
+                        </p>
+                        {item.dailyRate != null && (
+                          <p className="font-body text-[12px] text-graphite-500">
+                            {formatCurrency(item.dailyRate)}/day
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0 text-right font-mono text-[12px] text-graphite-500">
+                        <p>Qty {item.quantity}</p>
+                        <p>{item.numberOfDays ? `${item.numberOfDays} day${item.numberOfDays === 1 ? "" : "s"}` : "Days not set"}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <>
+                <Detail label="Product" value={e.productName ?? e.requestedProductText ?? "Not specified"} />
+                {e.quantity && <Detail label="Quantity" value={String(e.quantity)} />}
+                {e.numberOfDays && <Detail label="Number of days" value={String(e.numberOfDays)} />}
+              </>
+            )}
             {e.requiredDate && <Detail label="Required from" value={e.requiredDate} />}
-            {e.numberOfDays && <Detail label="Number of days" value={String(e.numberOfDays)} />}
             {e.address && <Detail label="Address" value={e.address} />}
             {e.message && <Detail label="Message" value={e.message} />}
             <Detail label="Submitted" value={new Date(e.createdAt).toLocaleString()} />

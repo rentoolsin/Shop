@@ -70,6 +70,12 @@ export function EnquiryForm() {
     );
   }
 
+  // Multi-item (cart/tool-picker) enquiries store their per-tool quantity
+  // and day count in enquiry_items instead of the fields below — that's
+  // why Quantity/Number of days show up blank for these otherwise. Shown
+  // read-only here rather than blank inputs that don't actually apply.
+  const items = existing.data?.items ?? [];
+
   const setField = <K extends keyof EnquiryFormValues>(field: K, value: EnquiryFormValues[K]) => {
     setValues((v) => ({ ...v, [field]: value }));
   };
@@ -135,25 +141,48 @@ export function EnquiryForm() {
             Optional — free text, separate from any linked catalog product.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Quantity"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={values.quantity ?? ""}
-            onChange={(e) => setField("quantity", e.target.value === "" ? null : Number(e.target.value))}
-          />
-          <Input
-            label="Number of days"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={values.numberOfDays ?? ""}
-            onChange={(e) => setField("numberOfDays", e.target.value === "" ? null : Number(e.target.value))}
-          />
-        </div>
-        <Input
+        {items.length > 0 ? (
+          <div>
+            <p className="mb-1.5 font-body text-[13px] font-medium text-ink dark:text-ink-inverted">
+              Items ({items.length})
+            </p>
+            <ul className="space-y-1.5 rounded border border-graphite-200 p-3 dark:border-graphite-800">
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 font-body text-[13px] text-ink dark:text-ink-inverted"
+                >
+                  <span className="truncate">{item.productName}</span>
+                  <span className="flex-shrink-0 font-mono text-[12px] text-graphite-500">
+                    Qty {item.quantity} · {item.numberOfDays ? `${item.numberOfDays}d` : "days not set"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1 font-body text-[12px] text-graphite-400">
+              Per-item quantity and days were set when the enquiry was submitted and aren't editable here yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Quantity"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={values.quantity ?? ""}
+              onChange={(e) => setField("quantity", e.target.value === "" ? null : Number(e.target.value))}
+            />
+            <Input
+              label="Number of days"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={values.numberOfDays ?? ""}
+              onChange={(e) => setField("numberOfDays", e.target.value === "" ? null : Number(e.target.value))}
+            />
+          </div>
+        )}        <Input
           label="Required from"
           type="date"
           value={values.requiredDate}

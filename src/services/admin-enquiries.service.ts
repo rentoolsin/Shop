@@ -1,6 +1,15 @@
 import { supabase } from "../lib/supabase";
 import type { EnquiryStatus } from "../types/database";
 
+export interface AdminEnquiryItem {
+  id: string;
+  productId: string | null;
+  productName: string;
+  dailyRate: number | null;
+  quantity: number;
+  numberOfDays: number | null;
+}
+
 export interface AdminEnquiry {
   id: string;
   name: string;
@@ -15,6 +24,15 @@ export interface AdminEnquiry {
   message: string | null;
   status: EnquiryStatus;
   createdAt: string;
+  /**
+   * Line items for a multi-item (cart/tool-picker) enquiry — see
+   * supabase/migrations/0013_enquiry_items.sql. Empty for a single-product
+   * enquiry, which keeps using `quantity`/`numberOfDays` above instead.
+   * Only populated by `fetchEnquiryById` (below) — `fetchAllEnquiries`
+   * leaves this empty since the list view only needs the text summary
+   * already in `requestedProductText`.
+   */
+  items: AdminEnquiryItem[];
 }
 
 interface RawEnquiryRow {
@@ -36,7 +54,7 @@ interface RawEnquiryRow {
 const SELECT = "id, name, mobile, product_id, requested_product_text, quantity, required_date, " +
   "number_of_days, address, message, status, created_at, products(name)";
 
-function toAdminEnquiry(row: RawEnquiryRow): AdminEnquiry {
+function toAdminEnquiry(row: RawEnquiryRow, items: AdminEnquiryItem[] = []): AdminEnquiry {
   return {
     id: row.id,
     name: row.name,
@@ -51,7 +69,41 @@ function toAdminEnquiry(row: RawEnquiryRow): AdminEnquiry {
     message: row.message,
     status: row.status,
     createdAt: row.created_at,
+    items,
   };
+}
+
+interface RawEnquiryItemRow {
+  id: string;
+  product_id: string | null;
+  product_name: string;
+  daily_rate: number | null;
+  quantity: number;
+  number_of_days: number | null;
+}
+
+const ITEMS_SELECT = "id, product_id, product_name, daily_rate, quantity, number_of_days";
+
+function toAdminEnquiryItem(row: RawEnquiryItemRow): AdminEnquiryItem {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    productName: row.product_name,
+    dailyRate: row.daily_rate,
+    quantity: row.quantity,
+    numberOfDays: row.number_of_days,
+  };
+}
+
+/** Line items for one enquiry — see AdminEnquiry.items above. */
+export async function fetchEnquiryItems(enquiryId: string): Promise<AdminEnquiryItem[]> {
+  const { data, error } = await supabase
+    .from("enquiry_items")
+    .select(ITEMS_SELECT)
+    .eq("enquiry_id", enquiryId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as RawEnquiryItemRow[]).map(toAdminEnquiryItem);
 }
 
 /**
@@ -75,7 +127,7 @@ export async function fetchAllEnquiries(query?: string): Promise<AdminEnquiry[]>
 
   const { data, error } = await request.order("created_at", { ascending: false });
   if (error) throw error;
-  return ((data ?? []) as unknown as RawEnquiryRow[]).map(toAdminEnquiry);
+  return ((data ?? []) as unknown as RawEnquiryRow[]).map((row) => toAdminEnquiry(row));
 }
 
 export async function fetchEnquiryById(id: string): Promise<AdminEnquiry | null> {
@@ -85,7 +137,24 @@ export async function fetchEnquiryById(id: string): Promise<AdminEnquiry | null>
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data ? toAdminEnquiry(data as unknown as RawEnquiryRow) : null;
+  if (!data) return null;
+  const items = await fetchEnquiryItems(id);
+  return toAdminEnquiry(data as unknown as RawEnquiryRow, items);
+}
+
+/**
+ * Just the count of "new" (not yet contacted/converted/etc) enquiries —
+ * used for the Requests tab badge in AdminMobileNav. `head: true` skips
+ * fetching row data, so this stays cheap to poll/refetch on every
+ * enquiries change even though the admin nav renders on every screen.
+ */
+export async function fetchNewEnquiriesCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("enquiries")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "new");
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export interface EnquiryFormValues {

@@ -4,6 +4,7 @@ import { HomeIcon, RentalsIcon, RequestsIcon, ProductsIcon, CustomersIcon, MoreI
 import { InstallAppBanner } from "../layout/InstallAppBanner";
 import { BottomSheet } from "../ui/BottomSheet";
 import { ADMIN_MORE_ITEMS, AdminMoreLink } from "./more-items";
+import { useNewEnquiriesCount } from "../../hooks/useAdminData";
 
 const ITEMS = [
   { to: "/admin", label: "Home", icon: <HomeIcon size={22} />, end: true },
@@ -31,6 +32,8 @@ export function AdminMobileNav() {
   const [quickPickOpen, setQuickPickOpen] = useState(false);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
+  const newEnquiries = useNewEnquiriesCount();
+  const newEnquiriesCount = newEnquiries.status === "success" ? newEnquiries.data : 0;
 
   const clearPressTimer = () => {
     if (pressTimerRef.current) {
@@ -78,6 +81,7 @@ export function AdminMobileNav() {
         <ul className="flex h-16 items-stretch justify-around">
           {ITEMS.map((item) => {
             const isMore = item.to === "/admin/more";
+            const isRequests = item.to === "/admin/enquiries";
             return (
               <li key={item.to} className="flex-1">
                 <NavLink
@@ -104,11 +108,19 @@ export function AdminMobileNav() {
                     <>
                       <span
                         className={[
-                          "flex h-8 w-12 items-center justify-center rounded transition-colors duration-150 ease-app",
+                          "relative flex h-8 w-12 items-center justify-center rounded transition-colors duration-150 ease-app",
                           isActive ? "bg-graphite-900 text-white dark:bg-white dark:text-graphite-900" : "",
                         ].join(" ")}
                       >
                         {item.icon}
+                        {isRequests && newEnquiriesCount > 0 && (
+                          <span
+                            aria-label={`${newEnquiriesCount} new ${newEnquiriesCount === 1 ? "enquiry" : "enquiries"}`}
+                            className="absolute right-1 top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-state-danger px-1 font-body text-[9px] font-semibold leading-none text-white"
+                          >
+                            {newEnquiriesCount > 99 ? "99+" : newEnquiriesCount}
+                          </span>
+                        )}
                       </span>
                       {item.label}
                     </>
