@@ -1,6 +1,7 @@
 import {
   ArrowLineDown,
   ArrowLineUp,
+  ArrowsDownUp,
   CaretDown,
   CaretUp,
   DotsThreeVertical,
@@ -86,6 +87,10 @@ export function ProductsList() {
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   // Product currently showing its "Move to…" position-picker sheet.
   const [moveMenuProductId, setMoveMenuProductId] = useState<string | null>(null);
+  // Product currently showing its mobile-card "•••" actions sheet (Move /
+  // Edit / Delete collapsed behind one tap target — see the mobile card
+  // markup below for why).
+  const [actionsMenuProductId, setActionsMenuProductId] = useState<string | null>(null);
 
   const allItems = products.status === "success" ? products.data : [];
   const categoryList = categories.status === "success" ? categories.data : [];
@@ -100,6 +105,10 @@ export function ProductsList() {
   // top/up/down/bottom options work off the real order regardless of
   // filtering, search, or pagination.
   const orderIndex = useMemo(() => new Map(allItems.map((p, i) => [p.id, i])), [allItems]);
+  const actionsMenuProduct = useMemo(
+    () => allItems.find((p) => p.id === actionsMenuProductId) ?? null,
+    [allItems, actionsMenuProductId],
+  );
   // Reordering swaps positions in the *true* order above. If the list is
   // filtered or searched, "up"/"down" wouldn't mean what's shown on screen,
   // so Move is only offered when viewing the full, unfiltered list.
@@ -342,24 +351,14 @@ export function ProductsList() {
                     variant{product.variantCount === 1 ? "" : "s"}
                   </p>
                 </div>
-                <div className="flex flex-shrink-0 items-center gap-1">
-                  <MoveButton onClick={() => setMoveMenuProductId(product.id)} disabled={!naturalOrder || reorderingId === product.id} />
-                  <Link
-                    to={`/admin/products/${product.id}/edit`}
-                    aria-label={`Edit ${product.name}`}
-                    className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
-                  >
-                    <PencilIcon />
-                  </Link>
-                  <button
-                    type="button"
-                    aria-label={`Delete ${product.name}`}
-                    onClick={() => setPendingDelete({ id: product.id, name: product.name })}
-                    className="flex h-9 w-9 items-center justify-center rounded text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  aria-label={`Actions for ${product.name}`}
+                  onClick={() => setActionsMenuProductId(product.id)}
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                >
+                  <MoreIcon />
+                </button>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-8">
                 {product.isFeatured && <StatusBadge label="Featured" tone="info" />}
@@ -621,6 +620,57 @@ export function ProductsList() {
           </div>
         )}
       </Modal>
+
+      <BottomSheet
+        open={actionsMenuProductId !== null}
+        onClose={() => setActionsMenuProductId(null)}
+        title={actionsMenuProduct?.name}
+      >
+        <div className="flex flex-col gap-0.5">
+          <button
+            type="button"
+            disabled={!naturalOrder || reorderingId === actionsMenuProductId}
+            onClick={() => {
+              if (!actionsMenuProductId) return;
+              const id = actionsMenuProductId;
+              setActionsMenuProductId(null);
+              setMoveMenuProductId(id);
+            }}
+            title={!naturalOrder ? "Clear search and filters to reorder" : undefined}
+            className={[
+              "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left font-body text-[14px]",
+              !naturalOrder || reorderingId === actionsMenuProductId
+                ? "text-graphite-300 dark:text-graphite-700"
+                : "text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800",
+            ].join(" ")}
+          >
+            <ArrowsDownUp className="h-4 w-4" weight="bold" aria-hidden="true" />
+            Move position
+          </button>
+          {actionsMenuProduct && (
+            <Link
+              to={`/admin/products/${actionsMenuProduct.id}/edit`}
+              onClick={() => setActionsMenuProductId(null)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left font-body text-[14px] text-ink hover:bg-graphite-100 dark:text-ink-inverted dark:hover:bg-graphite-800"
+            >
+              <PencilIcon />
+              Edit
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!actionsMenuProduct) return;
+              setActionsMenuProductId(null);
+              setPendingDelete({ id: actionsMenuProduct.id, name: actionsMenuProduct.name });
+            }}
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left font-body text-[14px] text-state-danger-text hover:bg-graphite-100 dark:text-state-danger-text-dark dark:hover:bg-graphite-800"
+          >
+            <TrashIcon />
+            Delete
+          </button>
+        </div>
+      </BottomSheet>
 
       <BottomSheet
         open={moveMenuProductId !== null}
