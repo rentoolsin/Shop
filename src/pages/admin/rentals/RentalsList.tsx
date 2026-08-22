@@ -6,6 +6,7 @@ import { usePagination } from "../../../hooks/usePagination";
 import {
   extendRental,
   returnRental,
+  recordRentalDiscount,
   cancelRental,
   updateRental,
   deleteRental,
@@ -109,6 +110,11 @@ export function RentalsList() {
   const [returnAmount, setReturnAmount] = useState("");
   const [returnMethod, setReturnMethod] = useState<PaymentMethod>("cash");
   const [returnNotes, setReturnNotes] = useState("");
+  // Amount waived off the calculated rent at return (e.g. tool taken for 4
+  // days @ ₹100/day = ₹400, but only ₹300 collected). Varies rental to
+  // rental — no fixed rule — so it's just an amount the admin types in.
+  const [returnDiscount, setReturnDiscount] = useState("");
+  const [returnDiscountReason, setReturnDiscountReason] = useState("");
   const [returnError, setReturnError] = useState<string | null>(null);
   const [savingReturn, setSavingReturn] = useState(false);
 
@@ -205,8 +211,16 @@ export function RentalsList() {
     setReturnAmount(row.balance !== 0 ? String(Math.abs(row.balance)) : "");
     setReturnMethod("cash");
     setReturnNotes("");
+    setReturnDiscount("");
+    setReturnDiscountReason("");
     setReturnError(null);
   };
+
+  // Balance after any new discount entered in this modal is applied on top
+  // of the rental's existing (already-persisted) discount.
+  const returnAdjustedBalance = returning
+    ? returning.balance - (Number(returnDiscount.trim()) || 0)
+    : 0;
 
   const extendTotals = extending
     ? calculateRentalTotals({
@@ -215,6 +229,7 @@ export function RentalsList() {
         dailyRate: extending.dailyRate,
         quantity: extending.quantity,
         advance: extendAdvance,
+        discount: extending.discount,
       })
     : null;
 
@@ -252,16 +267,37 @@ export function RentalsList() {
       setReturnError("Enter a valid amount, or leave it blank if nothing was collected.");
       return;
     }
-    // `returning.balance` < 0 means the advance/payments already received
-    // are more than the rental total — the customer overpaid, so this is
+    const discountTrimmed = returnDiscount.trim();
+    const discountAmount = discountTrimmed === "" ? 0 : Number(discountTrimmed);
+    if (Number.isNaN(discountAmount) || discountAmount < 0) {
+      setReturnError("Enter a valid discount amount, or leave it blank if none was given.");
+      return;
+    }
+    // `returnAdjustedBalance` < 0 means the advance/payments already
+    // received (after accounting for any discount entered here) are more
+    // than the net rental amount — the customer overpaid, so this is
     // money going back to them rather than money being collected. There's
     // no "negative payment" in the payment ledger (rental_payments.amount
     // is checked > 0 — see 0020_rental_payments.sql), so a refund is
     // recorded by lowering the running `advance` total directly instead,
     // the same way a manual correction via Edit already works.
-    const isRefund = returning.balance < 0;
+    const isRefund = returnAdjustedBalance < 0;
     setReturnError(null);
     setSavingReturn(true);
+    if (discountAmount > 0) {
+      try {
+        await recordRentalDiscount(
+          returning.id,
+          returning.discount,
+          discountAmount,
+          returnDiscountReason.trim() || undefined,
+        );
+      } catch {
+        setReturnError("Couldn't record the discount. Try again.");
+        setSavingReturn(false);
+        return;
+      }
+    }
     try {
       await returnRental(returning.id);
     } catch {
@@ -310,6 +346,8 @@ export function RentalsList() {
           "danger",
         );
       }
+    } else if (discountAmount > 0) {
+      showToast(`Rental marked returned — ${formatCurrency(discountAmount)} discount given.`, "success");
     } else {
       showToast("Rental marked as returned.", "success");
     }
@@ -350,6 +388,7 @@ export function RentalsList() {
         dailyRate: editDailyRate,
         quantity: editQuantity,
         advance: editAdvance,
+        discount: editing.discount,
       })
     : null;
 
@@ -1054,6 +1093,15 @@ export function RentalsList() {
                   <span>Total rental</span>
                   <span>{formatCurrency(viewingLive.totalRental)}</span>
                 </div>
+                {viewingLive.discount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span>
+                      Discount given
+                      {viewingLive.discountReason ? ` (${viewingLive.discountReason})` : ""}
+                    </span>
+                    <span>-{formatCurrency(viewingLive.discount)}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span>Advance / paid so far</span>
                   <span>{formatCurrency(viewingLive.advance)}</span>
@@ -1223,27 +1271,48 @@ export function RentalsList() {
             </p>
 
             <div className="flex items-center justify-between rounded border border-graphite-300 bg-graphite-100 px-3 py-2 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
-              <span>{describeBalance(returning.balance).label}</span>
+              <span>{describeBalance(returnAdjustedBalance).label}</span>
               <span
                 className={
-                  describeBalance(returning.balance).isRefund
+                  describeBalance(returnAdjustedBalance).isRefund
                     ? "font-semibold text-state-success-text dark:text-state-success-text-dark"
                     : "font-semibold"
                 }
               >
-                {formatCurrency(describeBalance(returning.balance).amount)}
+                {formatCurrency(describeBalance(returnAdjustedBalance).amount)}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label={describeBalance(returning.balance).isRefund ? "Amount refunded now (₹)" : "Amount collected now (₹)"}
+                label="Discount given now (₹)"
+                type="number"
+                min={0}
+                value={returnDiscount}
+                onChange={(e) => setReturnDiscount(e.target.value)}
+                hint="If you're not collecting the full amount, e.g. rent for 4 days was ₹400 but only ₹300 was taken."
+              />
+              <Input
+                label="Reason (optional)"
+                value={returnDiscountReason}
+                onChange={(e) => setReturnDiscountReason(e.target.value)}
+                placeholder="e.g. Old customer, goodwill"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label={
+                  describeBalance(returnAdjustedBalance).isRefund
+                    ? "Amount refunded now (₹)"
+                    : "Amount collected now (₹)"
+                }
                 type="number"
                 min={0}
                 value={returnAmount}
                 onChange={(e) => setReturnAmount(e.target.value)}
                 hint={
-                  describeBalance(returning.balance).isRefund
+                  describeBalance(returnAdjustedBalance).isRefund
                     ? "The advance received was more than the rental amount — enter how much you're giving back."
                     : "Leave blank or 0 if nothing was paid at return."
                 }

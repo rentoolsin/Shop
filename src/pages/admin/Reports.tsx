@@ -56,7 +56,10 @@ export function Reports() {
       (acc, r) => {
         acc.rentalCount += 1;
         acc.rentalDays += calculateRentalDays(r.startDate, r.returnDate) * r.quantity;
-        acc.revenue += r.totalRental;
+        // Revenue is measured net of any discount given — a discount is
+        // money deliberately not collected, not still-outstanding balance.
+        acc.revenue += r.netRental;
+        acc.discountsGiven += r.discount;
         acc.advance += r.advance;
         acc.outstanding += r.balance;
         if (r.status === "returned" && r.actualReturnDate && r.actualReturnDate >= range.from && r.actualReturnDate <= range.to) {
@@ -64,7 +67,7 @@ export function Reports() {
         }
         return acc;
       },
-      { rentalCount: 0, rentalDays: 0, revenue: 0, advance: 0, outstanding: 0, returns: 0 },
+      { rentalCount: 0, rentalDays: 0, revenue: 0, discountsGiven: 0, advance: 0, outstanding: 0, returns: 0 },
     );
   }, [filtered, range]);
 
@@ -96,7 +99,7 @@ export function Reports() {
       };
       existing.rentalCount += 1;
       existing.rentalDays += calculateRentalDays(r.startDate, r.returnDate) * r.quantity;
-      existing.revenue += r.totalRental;
+      existing.revenue += r.netRental;
       existing.advance += r.advance;
       existing.outstanding += r.balance;
       if (!existing.lastRentedDate || r.startDate > existing.lastRentedDate) {
@@ -150,6 +153,7 @@ export function Reports() {
             <StatCard label="Rentals" value={summary.rentalCount} />
             <StatCard label="Rental days" value={summary.rentalDays} />
             <StatCard label="Revenue" value={formatCurrency(summary.revenue)} />
+            <StatCard label="Discounts given" value={formatCurrency(summary.discountsGiven)} />
             <StatCard label="Advance collected" value={formatCurrency(summary.advance)} />
             <StatCard label="Outstanding balance" value={formatCurrency(summary.outstanding)} />
             <StatCard label="Returns" value={summary.returns} />

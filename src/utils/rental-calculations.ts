@@ -11,11 +11,21 @@ export interface RentalInput {
   dailyRate: number;
   quantity: number;
   advance: number;
+  /**
+   * Amount waived off the calculated rent (e.g. "took for 4 days at ₹100/day
+   * = ₹400, but we only collected ₹300"). Optional and defaults to 0 — most
+   * rentals have no discount. Varies rental to rental; there's no fixed
+   * percentage or rule, so this is always a plain entered amount.
+   */
+  discount?: number;
 }
 
 export interface RentalTotals {
   rentalDays: number;
+  /** Calculated rent before any discount: dailyRate * rentalDays * quantity. */
   totalRental: number;
+  /** totalRental minus discount — this is what balance is measured against. */
+  netRental: number;
   balance: number;
 }
 
@@ -77,8 +87,8 @@ export function validateRentalInput(
   }
 
   if (!errors.includes("RETURN_BEFORE_START") && !allowAdvanceOverTotal) {
-    const { totalRental } = calculateRentalTotals(input);
-    if (input.advance > totalRental) {
+    const { netRental } = calculateRentalTotals(input);
+    if (input.advance > netRental) {
       errors.push("ADVANCE_EXCEEDS_TOTAL");
     }
   }
@@ -89,8 +99,9 @@ export function validateRentalInput(
 export function calculateRentalTotals(input: RentalInput): RentalTotals {
   const rentalDays = calculateRentalDays(input.startDate, input.returnDate);
   const totalRental = rentalDays * input.dailyRate * input.quantity;
-  const balance = totalRental - input.advance;
-  return { rentalDays, totalRental, balance };
+  const netRental = Math.max(0, totalRental - (input.discount ?? 0));
+  const balance = netRental - input.advance;
+  return { rentalDays, totalRental, netRental, balance };
 }
 
 /**

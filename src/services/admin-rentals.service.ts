@@ -18,7 +18,12 @@ export interface AdminRentalListItem {
   advance: number;
   status: RentalStatus;
   actualReturnDate: string | null;
+  /** Amount waived off the calculated rent, e.g. given at return. See rental-calculations.ts. */
+  discount: number;
+  discountReason: string | null;
   totalRental: number;
+  /** totalRental minus discount — the amount actually owed for the rental. */
+  netRental: number;
   balance: number;
 }
 
@@ -49,6 +54,8 @@ interface RawRentalRow {
   advance: number;
   status: RentalStatus;
   actual_return_date: string | null;
+  discount: number;
+  discount_reason: string | null;
   customers: { id: string; name: string; mobile: string } | null;
   product_variants: {
     id: string;
@@ -58,12 +65,13 @@ interface RawRentalRow {
 }
 
 function toListItem(row: RawRentalRow): AdminRentalListItem {
-  const { totalRental, balance } = calculateRentalTotals({
+  const { totalRental, netRental, balance } = calculateRentalTotals({
     startDate: row.start_date,
     returnDate: row.return_date,
     dailyRate: row.daily_rate,
     quantity: row.quantity,
     advance: row.advance,
+    discount: row.discount,
   });
 
   return {
@@ -82,7 +90,10 @@ function toListItem(row: RawRentalRow): AdminRentalListItem {
     advance: row.advance,
     status: row.status,
     actualReturnDate: row.actual_return_date,
+    discount: row.discount,
+    discountReason: row.discount_reason,
     totalRental,
+    netRental,
     balance,
   };
 }
@@ -92,6 +103,7 @@ export async function fetchAllRentals(): Promise<AdminRentalListItem[]> {
     .from("rentals")
     .select(
       "id, quantity, start_date, return_date, daily_rate, advance, status, actual_return_date, " +
+        "discount, discount_reason, " +
         "customers(id, name, mobile), product_variants(id, label, products(name, image_url))",
     )
     .order("created_at", { ascending: false });
@@ -147,6 +159,30 @@ export async function returnRental(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Adds to a rental's discount — the amount waived off the calculated rent,
+ * e.g. "took for 4 days at ₹100/day = ₹400, but we only collected ₹300".
+ * `amount` is added to any existing discount rather than replacing it, so
+ * calling this more than once (or alongside a manual Edit) accumulates
+ * correctly. `reason`, if given, replaces the stored note.
+ */
+export async function recordRentalDiscount(
+  id: string,
+  currentDiscount: number,
+  amount: number,
+  reason?: string,
+): Promise<void> {
+  if (amount <= 0) return;
+  const { error } = await supabase
+    .from("rentals")
+    .update({
+      discount: currentDiscount + amount,
+      ...(reason ? { discount_reason: reason } : {}),
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function cancelRental(id: string): Promise<void> {
   const { error } = await supabase.from("rentals").update({ status: "cancelled" }).eq("id", id);
   if (error) throw error;
@@ -158,6 +194,9 @@ export interface RentalUpdateValues {
   returnDate: string;
   dailyRate: number;
   advance: number;
+  /** Optional — omit to leave the stored discount unchanged. */
+  discount?: number;
+  discountReason?: string | null;
 }
 
 /**
@@ -176,6 +215,8 @@ export async function updateRental(id: string, values: RentalUpdateValues): Prom
       return_date: values.returnDate,
       daily_rate: values.dailyRate,
       advance: values.advance,
+      ...(values.discount !== undefined ? { discount: values.discount } : {}),
+      ...(values.discountReason !== undefined ? { discount_reason: values.discountReason } : {}),
     })
     .eq("id", id);
   if (error) throw error;

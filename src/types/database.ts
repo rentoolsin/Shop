@@ -135,6 +135,8 @@ export interface Database {
           actual_return_date: string | null;
           enquiry_id: string | null;
           created_at: string;
+          discount: number;
+          discount_reason: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["rentals"]["Row"]> & {
           customer_id: string;
