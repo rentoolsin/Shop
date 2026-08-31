@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategories } from "../../../hooks/useCategories";
 import { useProducts, useProduct } from "../../../hooks/useProducts";
@@ -69,14 +69,31 @@ export function RentalForm({
   const [categoryId, setCategoryId] = useState(initialCategoryId);
   const [productId, setProductId] = useState(initialProductId);
   const [variantId, setVariantId] = useState("");
-  const [quantity, setQuantity] = useState(initialQuantity);
+  // Kept as free-typed text (not number) so the field can be fully cleared
+  // while editing — a controlled number input whose state defaults to 0
+  // can never show as empty, since deleting the last digit just re-renders
+  // "0" right back in. Parsed to a number below for calculations/submit.
+  const [quantityInput, setQuantityInput] = useState(String(initialQuantity));
   const [startDate, setStartDate] = useState(initialStartDate ?? todayIso());
   const [returnDate, setReturnDate] = useState(initialReturnDate ?? initialStartDate ?? todayIso());
-  const [dailyRate, setDailyRate] = useState(0);
-  const [advance, setAdvance] = useState(0);
+  const [dailyRateInput, setDailyRateInput] = useState("0");
+  const [advanceInput, setAdvanceInput] = useState("0");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [skipProductReset, setSkipProductReset] = useState(!!initialProductId);
+  // Set right before a product->category auto-sync (see below) so the
+  // category-reset effect that follows knows this categoryId change came
+  // from picking a product, not from the admin touching the Category
+  // dropdown, and shouldn't wipe the product/variant back out.
+  const syncingCategoryFromProduct = useRef(false);
+
+  const parseNumeric = (value: string): number => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const quantity = parseNumeric(quantityInput);
+  const dailyRate = parseNumeric(dailyRateInput);
+  const advance = parseNumeric(advanceInput);
 
   const products = useProducts({ categoryId: categoryId || undefined });
   const product = useProduct(productId || undefined);
@@ -86,16 +103,33 @@ export function RentalForm({
 
   // Category changed -> the product/variant chosen under it no longer applies.
   // Skipped on the very first run so an `initialCategoryId` (enquiry conversion
-  // pre-fill) isn't immediately wiped out before the admin touches anything.
+  // pre-fill) isn't immediately wiped out before the admin touches anything,
+  // and skipped when the change came from the product->category auto-sync
+  // below (that sync should never itself clear the product it's syncing to).
   useEffect(() => {
     if (skipProductReset) {
       setSkipProductReset(false);
+      return;
+    }
+    if (syncingCategoryFromProduct.current) {
+      syncingCategoryFromProduct.current = false;
       return;
     }
     setProductId("");
     setVariantId("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId]);
+
+  // Product picked directly (e.g. while "All categories" is selected) ->
+  // reflect its actual category in the Category field, instead of leaving
+  // it showing "All categories" / a stale category.
+  useEffect(() => {
+    if (product.status === "success" && product.data && product.data.categoryId !== categoryId) {
+      syncingCategoryFromProduct.current = true;
+      setCategoryId(product.data.categoryId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.status, product.data]);
 
   // Product changed -> the variant chosen under it no longer applies.
   useEffect(() => {
@@ -105,7 +139,7 @@ export function RentalForm({
   // Picking a variant prefills its rate; the field stays editable afterward
   // in case of a negotiated rate.
   useEffect(() => {
-    if (selectedVariant) setDailyRate(selectedVariant.dailyRate);
+    if (selectedVariant) setDailyRateInput(String(selectedVariant.dailyRate));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variantId]);
 
@@ -253,8 +287,8 @@ export function RentalForm({
             type="number"
             min={1}
             inputMode="numeric"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
+            value={quantityInput}
+            onChange={(e) => setQuantityInput(e.target.value)}
             error={errors.quantity}
             hint={selectedVariant ? `${selectedVariant.availableQuantity} available` : undefined}
           />
@@ -262,8 +296,8 @@ export function RentalForm({
             label="Daily rate (₹)"
             type="number"
             min={0}
-            value={dailyRate}
-            onChange={(e) => setDailyRate(Number(e.target.value))}
+            value={dailyRateInput}
+            onChange={(e) => setDailyRateInput(e.target.value)}
             error={errors.dailyRate}
           />
         </div>
@@ -286,8 +320,8 @@ export function RentalForm({
           label="Advance received (₹)"
           type="number"
           min={0}
-          value={advance}
-          onChange={(e) => setAdvance(Number(e.target.value))}
+          value={advanceInput}
+          onChange={(e) => setAdvanceInput(e.target.value)}
           error={errors.advance}
         />
 
