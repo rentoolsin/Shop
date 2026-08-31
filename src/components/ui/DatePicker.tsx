@@ -90,7 +90,13 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(functio
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(() => (selected ?? today).getFullYear());
   const [viewMonth, setViewMonth] = useState(() => (selected ?? today).getMonth());
+  // Popup placement flips to whichever side actually has room, computed
+  // fresh each time it opens (see below) — see the comment on the popup
+  // wrapper for why this can't just be a fixed "always open downward".
+  const [openUpward, setOpenUpward] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -109,6 +115,53 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(functio
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [open]);
+
+  // Decide which way the popup should open. On mobile, form fields are
+  // frequently within a screen-height or two of the fixed bottom nav/tab
+  // bar (z-40): a popup that always drops downward can render partly (or
+  // entirely) underneath that bar, making its lower rows of dates visible
+  // but unclickable since the nav bar sits on top and eats the taps. So on
+  // every open we measure real space against the viewport — not just the
+  // trigger's position in the page — and flip up/left as needed. Re-runs
+  // on resize/orientation change while open, since rotating the phone or
+  // the on-screen keyboard appearing changes the viewport height.
+  useEffect(() => {
+    if (!open) return;
+    const PLACEMENT_ESTIMATE_HEIGHT = 336;
+    const PLACEMENT_ESTIMATE_WIDTH = 256;
+    const VIEWPORT_MARGIN = 8;
+
+    function recomputePlacement() {
+      const triggerEl = rootRef.current;
+      if (!triggerEl) return;
+      const rect = triggerEl.getBoundingClientRect();
+      const popupHeight = popupRef.current?.offsetHeight || PLACEMENT_ESTIMATE_HEIGHT;
+      const popupWidth = popupRef.current?.offsetWidth || PLACEMENT_ESTIMATE_WIDTH;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // Prefer opening downward (the natural reading direction); only flip
+      // up if there truly isn't room below but there is above.
+      setOpenUpward(spaceBelow < popupHeight + VIEWPORT_MARGIN && spaceAbove > spaceBelow);
+
+      const spaceRight = viewportWidth - rect.left;
+      setAlignRight(spaceRight < popupWidth + VIEWPORT_MARGIN && rect.right >= popupWidth);
+    }
+
+    recomputePlacement();
+    // Measure again after the popup has actually mounted/rendered, since
+    // its real height depends on content (e.g. which month is showing).
+    const raf = requestAnimationFrame(recomputePlacement);
+    window.addEventListener("resize", recomputePlacement);
+    window.addEventListener("scroll", recomputePlacement, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", recomputePlacement);
+      window.removeEventListener("scroll", recomputePlacement, true);
+    };
+  }, [open, viewMonth, viewYear]);
 
   const isDisabledDate = (date: Date) => {
     if (minDate && date < minDate) return true;
@@ -188,9 +241,16 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(functio
 
         {open && (
           <div
+            ref={popupRef}
             role="dialog"
             aria-label={label ?? "Choose date"}
-            className="absolute z-20 mt-1 w-64 rounded border border-graphite-200 bg-white p-3 shadow-raised dark:border-graphite-800 dark:bg-graphite-900"
+            className={[
+              // z-50 so the popup always sits above the admin/customer fixed
+              // bottom nav bars (z-40) instead of getting tapped through.
+              "absolute z-50 w-64 rounded border border-graphite-200 bg-white p-3 shadow-raised dark:border-graphite-800 dark:bg-graphite-900",
+              openUpward ? "bottom-full mb-1" : "top-full mt-1",
+              alignRight ? "right-0" : "left-0",
+            ].join(" ")}
           >
             <div className="flex items-center justify-between">
               <button
