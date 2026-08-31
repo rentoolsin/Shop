@@ -53,6 +53,8 @@ export function ProductForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const variantRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [pendingScrollIndex, setPendingScrollIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (existing.status === "success" && existing.data) {
@@ -67,6 +69,17 @@ export function ProductForm() {
   useEffect(() => {
     if (!isEdit) nameRef.current?.focus();
   }, [isEdit]);
+
+  // After a new variant row is added it lands at the bottom of the list,
+  // which is usually below the fold (and can end up hidden behind the
+  // sticky Cancel/Save bar). Scroll it into view once it's rendered so
+  // the admin sees it immediately instead of having to scroll manually.
+  useEffect(() => {
+    if (pendingScrollIndex === null) return;
+    const node = variantRefs.current[pendingScrollIndex];
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setPendingScrollIndex(null);
+  }, [pendingScrollIndex, values.variants.length]);
 
   if (isEdit && existing.status === "loading") return <LoadingState label="Loading product…" />;
   if (isEdit && existing.status === "error") {
@@ -98,6 +111,7 @@ export function ProductForm() {
     setValues((v) => {
       const last = v.variants[v.variants.length - 1];
       const next: AdminVariant = last ? { ...last, id: null } : emptyVariant();
+      setPendingScrollIndex(v.variants.length);
       return { ...v, variants: [...v.variants, next] };
     });
   };
@@ -159,11 +173,14 @@ export function ProductForm() {
       <h1 className="mb-4 font-display text-[20px] font-bold text-ink dark:text-ink-inverted">
         {isEdit ? "Edit product" : "New product"}
       </h1>
-      {/* pb-32 leaves enough room for the sticky Cancel/Save bar (~70px) plus
-          its gap above the mobile tab bar, so it never overlaps the last
-          field's content on a short page; md:pb-10 is enough once the bar
-          sits flush at the bottom (no tab bar to clear) at that breakpoint. */}
-      <form onSubmit={handleSubmit} className="space-y-4 pb-32 md:pb-10" noValidate>
+      {/* No extra trailing padding needed here: `position: sticky` never
+          overlaps sibling content the way a `fixed` bar would, so the
+          Cancel/Save bar can't cover the last field even without dead space
+          reserved after it. AdminLayout's <main> already adds its own
+          pb-16/md:pb-6 below every admin page to clear the fixed mobile tab
+          bar — adding another block of padding here just doubled up on
+          that and left a large empty gap below the buttons on short forms. */}
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input ref={nameRef} label="Name" value={values.name} onChange={(e) => handleNameChange(e.target.value)} error={errors.name} />
         <Input
           label="Slug"
@@ -229,7 +246,8 @@ export function ProductForm() {
             {values.variants.map((variant, index) => (
               <div
                 key={variant.id ?? `new-${index}`}
-                className="rounded border border-graphite-200 p-3 dark:border-graphite-800"
+                ref={(el) => (variantRefs.current[index] = el)}
+                className="rounded border border-graphite-200 p-3 dark:border-graphite-800 scroll-mt-20"
               >
                 <div className="grid grid-cols-2 gap-2">
                   <Input
@@ -294,7 +312,7 @@ export function ProductForm() {
             gap (bottom-[76px], vs. the bar's own h-16/64px) so it doesn't
             look flush/cramped against it, and drops back to flush-bottom
             (md:bottom-0) once that tab bar is hidden at md+. */}
-        <div className="sticky bottom-[76px] z-10 -mx-4 flex gap-2 rounded-lg border-t border-graphite-200 bg-white/95 px-4 py-3 pb-safe-b shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95 sm:-mx-6 sm:px-6 md:bottom-0 md:rounded-none md:shadow-none lg:-mx-8 lg:px-8">
+        <div className="sticky bottom-[76px] z-10 -mx-4 flex gap-2 rounded-lg border-t border-graphite-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm dark:border-graphite-800 dark:bg-graphite-950/95 sm:-mx-6 sm:px-6 md:bottom-0 md:rounded-none md:shadow-none lg:-mx-8 lg:px-8">
           <Button variant="secondary" fullWidth type="button" onClick={() => navigate("/admin/products")}>
             Cancel
           </Button>

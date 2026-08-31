@@ -1,4 +1,4 @@
-import { Plus, Users } from "@phosphor-icons/react";
+import { Check, Copy, Plus, Users } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminCustomers } from "../../../hooks/useAdminData";
@@ -28,6 +28,7 @@ export function CustomersList() {
   const { showToast } = useToast();
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const items = customers.status === "success" ? customers.data : [];
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(items, {
@@ -38,6 +39,19 @@ export function CustomersList() {
     const timer = window.setTimeout(() => setDebounced(input), DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [input]);
+
+  const handleCopyMobile = async (customer: { id: string; mobile: string }) => {
+    try {
+      await navigator.clipboard.writeText(customer.mobile);
+      setCopiedId(customer.id);
+      showToast("Mobile number copied.", "success");
+      window.setTimeout(() => {
+        setCopiedId((current) => (current === customer.id ? null : current));
+      }, 1500);
+    } catch {
+      showToast("Couldn't copy the mobile number.", "danger");
+    }
+  };
 
   const handleDelete = async () => {
     if (!pendingDelete) return;
@@ -118,7 +132,21 @@ export function CustomersList() {
                   <p className="font-body text-[14px] font-medium text-ink dark:text-ink-inverted">
                     {customer.name}
                   </p>
-                  <p className="font-mono text-[12px] text-graphite-400">{customer.mobile}</p>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="font-mono text-[12px] text-graphite-400">{customer.mobile}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMobile(customer)}
+                      aria-label={`Copy ${customer.mobile}`}
+                      className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-graphite-400 transition-colors hover:bg-graphite-100 hover:text-ink active:scale-[0.95] dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
+                    >
+                      {copiedId === customer.id ? (
+                        <Check className="h-3.5 w-3.5 text-state-success" weight="bold" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" weight="regular" />
+                      )}
+                    </button>
+                  </span>
                   <p className="mt-0.5 truncate font-body text-[12px] text-graphite-400">
                     {customer.address || "No address"}
                   </p>
@@ -152,7 +180,23 @@ export function CustomersList() {
                 {pageItems.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell className="font-mono text-[12px] text-graphite-500">{customer.mobile}</TableCell>
+                    <TableCell className="font-mono text-[12px] text-graphite-500">
+                      <span className="inline-flex items-center gap-1.5">
+                        {customer.mobile}
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMobile(customer)}
+                          aria-label={`Copy ${customer.mobile}`}
+                          className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-graphite-400 transition-colors hover:bg-graphite-100 hover:text-ink active:scale-[0.95] dark:hover:bg-graphite-800 dark:hover:text-ink-inverted"
+                        >
+                          {copiedId === customer.id ? (
+                            <Check className="h-3.5 w-3.5 text-state-success" weight="bold" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" weight="regular" />
+                          )}
+                        </button>
+                      </span>
+                    </TableCell>
                     <TableCell className="max-w-[280px] truncate text-graphite-500 dark:text-graphite-400">
                       {customer.address || "—"}
                     </TableCell>

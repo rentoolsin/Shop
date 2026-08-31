@@ -1,4 +1,4 @@
-import { Calendar, Plus, ArrowsClockwise, PencilSimple, DotsThreeVertical, CheckCircle } from "@phosphor-icons/react";
+import { Calendar, Plus, ArrowsClockwise, Phone, PencilSimple, DotsThreeVertical, CheckCircle } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminRentals, useAdminRentalPayments } from "../../../hooks/useAdminData";
@@ -78,6 +78,10 @@ function RefreshIcon({ spinning }: { spinning?: boolean }) {
 
 function PencilIcon() {
   return <PencilSimple className="h-4 w-4" weight="light" aria-hidden="true" />;
+}
+
+function CallIcon() {
+  return <Phone className="h-4 w-4" weight="light" aria-hidden="true" />;
 }
 
 function MoreIcon() {
@@ -703,6 +707,13 @@ export function RentalsList() {
                         Mark returned
                       </Button>
                     )}
+                    <a
+                      href={`tel:${rental.customerMobile}`}
+                      aria-label={`Call ${rental.customerName}`}
+                      className="flex h-9 w-9 items-center justify-center rounded text-graphite-500 hover:bg-graphite-100 dark:text-graphite-400 dark:hover:bg-graphite-800"
+                    >
+                      <CallIcon />
+                    </a>
                     <button
                       type="button"
                       onClick={() => startEdit(rental)}
