@@ -137,6 +137,8 @@ export interface Database {
           created_at: string;
           discount: number;
           discount_reason: string | null;
+          /** Groups rentals created together in one multi-tool checkout. See 0027_rentals_checkout_group.sql. */
+          checkout_group_id: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["rentals"]["Row"]> & {
           customer_id: string;

@@ -97,6 +97,27 @@ function rentalReference(id: string) {
   return `RNT-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
+/**
+ * Small "part of a N-tool checkout" note shown on a rental that was created
+ * together with others for the same customer (see RentalForm's "+ Add
+ * another tool"). Purely informational — each sibling rental still has its
+ * own independent status/dates/balance and its own row/card with its own
+ * actions; this just helps the admin recognize "oh, this was part of that
+ * same visit" at a glance instead of hunting by customer name.
+ */
+function CheckoutGroupNote({ current, siblings }: { current: AdminRentalListItem; siblings: AdminRentalListItem[] }) {
+  const others = siblings.filter((s) => s.id !== current.id);
+  if (others.length === 0) return null;
+  const names = others.slice(0, 2).map((s) => s.productName);
+  const extra = others.length - names.length;
+  return (
+    <span className="block font-body text-[11px] text-graphite-400">
+      + {names.join(", ")}
+      {extra > 0 ? ` and ${extra} more` : ""} this visit
+    </span>
+  );
+}
+
 type Row = AdminRentalListItem & { displayStatus: RentalDisplayStatus };
 
 export function RentalsList() {
@@ -157,6 +178,22 @@ export function RentalsList() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const data = useMemo(() => (rentals.status === "success" ? rentals.data : []), [rentals]);
+
+  // Rentals created together as one multi-tool checkout (see RentalForm's
+  // "+ Add another tool" and createRentalCheckout) share a checkoutGroupId.
+  // Grouped from the *unfiltered* `data`, not the paginated/filtered rows,
+  // so a sibling tool still counts even if it's on another page or hidden
+  // by the current status filter/search.
+  const checkoutGroups = useMemo(() => {
+    const map = new Map<string, AdminRentalListItem[]>();
+    for (const r of data) {
+      if (!r.checkoutGroupId) continue;
+      const arr = map.get(r.checkoutGroupId);
+      if (arr) arr.push(r);
+      else map.set(r.checkoutGroupId, [r]);
+    }
+    return map;
+  }, [data]);
 
   const rows: Row[] = useMemo(() => {
     return data
@@ -662,6 +699,12 @@ export function RentalsList() {
                       >
                         {rentalReference(rental.id)}
                       </button>
+                      {rental.checkoutGroupId && (
+                        <CheckoutGroupNote
+                          current={rental}
+                          siblings={checkoutGroups.get(rental.checkoutGroupId) ?? []}
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -825,6 +868,12 @@ export function RentalsList() {
                               {rentalReference(rental.id)}
                               {rental.variantLabel ? ` · ${rental.variantLabel}` : ""}
                             </span>
+                            {rental.checkoutGroupId && (
+                              <CheckoutGroupNote
+                                current={rental}
+                                siblings={checkoutGroups.get(rental.checkoutGroupId) ?? []}
+                              />
+                            )}
                           </span>
                         </button>
                       </TableCell>

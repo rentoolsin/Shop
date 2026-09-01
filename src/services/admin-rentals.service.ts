@@ -25,6 +25,14 @@ export interface AdminRentalListItem {
   /** totalRental minus discount — the amount actually owed for the rental. */
   netRental: number;
   balance: number;
+  /**
+   * Set when this rental was created alongside other rentals in one
+   * multi-tool checkout (same customer, same "New rental" submission) —
+   * see `createRentalCheckout` and 0027_rentals_checkout_group.sql. Rentals
+   * that share this value are grouped for display only; each still has its
+   * own independent status/dates/balance.
+   */
+  checkoutGroupId: string | null;
 }
 
 export interface RentalFormValues {
@@ -45,6 +53,8 @@ export interface RentalFormValues {
    * 0025_enquiry_items_rental_link.sql.
    */
   enquiryItemId?: string;
+  /** See `AdminRentalListItem.checkoutGroupId`. Usually set via `createRentalCheckout`, not passed by hand. */
+  checkoutGroupId?: string;
 }
 
 // Shape of a row returned by the joined select below. Cast explicitly
@@ -64,6 +74,7 @@ interface RawRentalRow {
   actual_return_date: string | null;
   discount: number;
   discount_reason: string | null;
+  checkout_group_id: string | null;
   customers: { id: string; name: string; mobile: string } | null;
   product_variants: {
     id: string;
@@ -103,6 +114,7 @@ function toListItem(row: RawRentalRow): AdminRentalListItem {
     totalRental,
     netRental,
     balance,
+    checkoutGroupId: row.checkout_group_id,
   };
 }
 
@@ -111,7 +123,7 @@ export async function fetchAllRentals(): Promise<AdminRentalListItem[]> {
     .from("rentals")
     .select(
       "id, quantity, start_date, return_date, daily_rate, advance, status, actual_return_date, " +
-        "discount, discount_reason, " +
+        "discount, discount_reason, checkout_group_id, " +
         "customers(id, name, mobile), product_variants(id, label, products(name, image_url))",
     )
     .order("created_at", { ascending: false });
@@ -138,6 +150,7 @@ export async function createRental(values: RentalFormValues): Promise<string> {
       advance: values.advance,
       status: "active",
       enquiry_id: values.enquiryId ?? null,
+      checkout_group_id: values.checkoutGroupId ?? null,
     })
     .select("id")
     .single();
@@ -159,6 +172,63 @@ export async function createRental(values: RentalFormValues): Promise<string> {
   }
 
   return rentalId;
+}
+
+export interface RentalCheckoutLine {
+  variantId: string;
+  quantity: number;
+  startDate: string;
+  returnDate: string;
+  dailyRate: number;
+  /** Only the first line's advance is actually charged — see `createRentalCheckout`. */
+  advance: number;
+}
+
+/**
+ * Creates several rentals at once for the same customer — e.g. one visit
+ * where they take a drill, a ladder, and a generator together — and stamps
+ * them all with the same `checkout_group_id` (client-generated, since
+ * there's no parent row to hand one back) purely so the admin UI can show
+ * them as one checkout. Each resulting rental is otherwise a completely
+ * normal, independent row: its own status, dates, and balance, extendable
+ * or returnable on its own from that point on (see 0027_rentals_checkout_
+ * group.sql for why this doesn't use a shared parent/line-item table).
+ *
+ * The advance received is collected once for the whole checkout, so it's
+ * recorded against the first line only rather than split across tools —
+ * matches how a single payment is actually taken in person. Every other
+ * line is created with advance 0.
+ *
+ * For a single line, prefer `createRental` directly — this still works for
+ * one line, but generates a group id you don't need.
+ */
+export async function createRentalCheckout(
+  customerId: string,
+  lines: RentalCheckoutLine[],
+): Promise<{ rentalIds: string[]; checkoutGroupId: string | null }> {
+  if (lines.length === 0) throw new Error("createRentalCheckout requires at least one line.");
+
+  const checkoutGroupId = lines.length > 1 ? crypto.randomUUID() : null;
+
+  const { data, error } = await supabase
+    .from("rentals")
+    .insert(
+      lines.map((line, i) => ({
+        customer_id: customerId,
+        variant_id: line.variantId,
+        quantity: line.quantity,
+        start_date: line.startDate,
+        return_date: line.returnDate,
+        daily_rate: line.dailyRate,
+        advance: i === 0 ? line.advance : 0,
+        status: "active" as const,
+        checkout_group_id: checkoutGroupId,
+      })),
+    )
+    .select("id");
+  if (error) throw error;
+
+  return { rentalIds: (data ?? []).map((row) => row.id as string), checkoutGroupId };
 }
 
 /** Extension: push out the return date and/or record additional advance. */
