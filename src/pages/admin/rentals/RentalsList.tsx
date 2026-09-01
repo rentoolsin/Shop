@@ -1,4 +1,12 @@
-import { Calendar, Plus, ArrowsClockwise, Phone, PencilSimple, DotsThreeVertical, CheckCircle } from "@phosphor-icons/react";
+import {
+  Calendar,
+  Plus,
+  ArrowsClockwise,
+  Phone,
+  PencilSimple,
+  DotsThreeVertical,
+  CheckCircle,
+} from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminRentals, useAdminRentalPayments } from "../../../hooks/useAdminData";
@@ -27,7 +35,7 @@ import {
 } from "../../../utils/rental-calculations";
 import { formatCurrency } from "../../../utils/currency";
 import { Button } from "../../../components/ui/Button";
-import { Card } from "../../../components/ui/Card";
+import { PremiumCard } from "../../../components/admin/PremiumCard";
 import { SearchBar } from "../../../components/ui/SearchBar";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
@@ -563,17 +571,18 @@ export function RentalsList() {
         <h1 className="font-display text-[26px] font-extrabold tracking-tight text-ink dark:text-ink-inverted">
           Rentals
         </h1>
-        <Link to="/admin/rentals/new">
-          <Button size="md">
-            <PlusIcon />
-            New rental
-          </Button>
+        <Link
+          to="/admin/rentals/new"
+          className="flex items-center gap-1.5 rounded bg-gradient-to-b from-accent-400 to-accent-500 px-3.5 py-2.5 font-body text-[13px] font-semibold text-graphite-950 shadow-glow-accent transition-transform duration-150 ease-app hover:-translate-y-0.5 active:translate-y-0"
+        >
+          <PlusIcon />
+          New rental
         </Link>
       </div>
 
       {/* Rentals / Sync statuses segmented row */}
       <div className="mb-4 flex items-center gap-1 rounded bg-graphite-100 p-1 dark:bg-graphite-800">
-        <span className="flex h-11 flex-1 items-center justify-center gap-2 rounded bg-white font-body text-[13.5px] font-semibold text-ink shadow-card dark:bg-graphite-900 dark:text-ink-inverted">
+        <span className="flex h-11 flex-1 items-center justify-center gap-2 rounded bg-white font-body text-[13.5px] font-semibold text-ink shadow-premium dark:bg-graphite-900 dark:text-ink-inverted">
           <CalendarIcon className="h-4 w-4" />
           Rentals
         </span>
@@ -610,7 +619,7 @@ export function RentalsList() {
       {rentals.status === "loading" && (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+            <Skeleton key={i} className="h-24 w-full rounded" />
           ))}
         </div>
       )}
@@ -622,7 +631,7 @@ export function RentalsList() {
       {rentals.status === "success" && rows.length === 0 && (
         <EmptyState
           size="lg"
-          className="shadow-card"
+          className="shadow-premium"
           icon={<CalendarIcon className="h-9 w-9" />}
           title={data.length === 0 ? "No rentals yet" : "No rentals matched"}
           description={
@@ -659,18 +668,18 @@ export function RentalsList() {
             {pageItems.map((rental) => {
               const actionable = rental.displayStatus !== "returned" && rental.displayStatus !== "cancelled";
               return (
-                <Card key={rental.id} className="p-3">
+                <PremiumCard key={rental.id} interactive className="p-3">
                   <div className="flex items-start gap-3">
                     <button
                       type="button"
                       onClick={() => setViewing(rental)}
                       aria-label={`View details for ${rental.productName}`}
-                      className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800"
+                      className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gradient-to-br from-graphite-700 to-graphite-900 dark:from-graphite-600 dark:to-graphite-800"
                     >
                       {rental.productImageUrl ? (
                         <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <span className="font-display text-[14px] text-graphite-400">
+                        <span className="font-display text-[14px] text-white">
                           {rental.productName.charAt(0)}
                         </span>
                       )}
@@ -782,7 +791,7 @@ export function RentalsList() {
                             className="fixed inset-0 z-10 cursor-default"
                             onClick={() => setOpenMenuId(null)}
                           />
-                          <div className="absolute right-0 top-10 z-20 w-40 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900">
+                          <div className="absolute right-0 top-10 z-20 w-40 overflow-hidden rounded border border-graphite-200 bg-white py-1 shadow-premium dark:border-graphite-800 dark:bg-graphite-900">
                             {actionable && (
                               <button
                                 type="button"
@@ -822,7 +831,7 @@ export function RentalsList() {
                       )}
                     </div>
                   </div>
-                </Card>
+                </PremiumCard>
               );
             })}
           </div>
@@ -851,11 +860,11 @@ export function RentalsList() {
                           onClick={() => setViewing(rental)}
                           className="flex min-w-0 items-center gap-3 text-left"
                         >
-                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800">
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gradient-to-br from-graphite-700 to-graphite-900 dark:from-graphite-600 dark:to-graphite-800">
                             {rental.productImageUrl ? (
                               <img src={rental.productImageUrl} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              <span className="font-display text-[13px] text-graphite-400">
+                              <span className="font-display text-[13px] text-white">
                                 {rental.productName.charAt(0)}
                               </span>
                             )}
@@ -968,7 +977,7 @@ export function RentalsList() {
               hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
             />
             {extendTotals && (
-              <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+              <div className="rounded border border-graphite-200/70 bg-gradient-to-br from-graphite-50 to-graphite-100 p-3 font-mono text-[13px] text-ink shadow-premium dark:border-white/[0.06] dark:from-graphite-800 dark:to-graphite-900 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
                   <span>{extendTotals.rentalDays} day{extendTotals.rentalDays === 1 ? "" : "s"}</span>
                   <span>{formatCurrency(extendTotals.totalRental)}</span>
@@ -1046,7 +1055,7 @@ export function RentalsList() {
               hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
             />
             {editTotals && (
-              <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+              <div className="rounded border border-graphite-200/70 bg-gradient-to-br from-graphite-50 to-graphite-100 p-3 font-mono text-[13px] text-ink shadow-premium dark:border-white/[0.06] dark:from-graphite-800 dark:to-graphite-900 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
                   <span>{editTotals.rentalDays} day{editTotals.rentalDays === 1 ? "" : "s"}</span>
                   <span>{formatCurrency(editTotals.totalRental)}</span>
@@ -1084,11 +1093,11 @@ export function RentalsList() {
         {viewingLive && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-graphite-100 dark:bg-graphite-800">
+              <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gradient-to-br from-graphite-700 to-graphite-900 dark:from-graphite-600 dark:to-graphite-800">
                 {viewingLive.productImageUrl ? (
                   <img src={viewingLive.productImageUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <span className="font-display text-[18px] text-graphite-400">
+                  <span className="font-display text-[18px] text-white">
                     {viewingLive.productName.charAt(0)}
                   </span>
                 )}
@@ -1109,7 +1118,7 @@ export function RentalsList() {
                 the "lg" modal width gives them room to breathe instead of
                 one long single column of rows. */}
             <div className="space-y-4 md:grid md:grid-cols-2 md:items-start md:gap-3 md:space-y-0">
-              <div className="space-y-1.5 rounded border border-graphite-200 p-3 font-body text-[13px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
+              <div className="space-y-1.5 rounded border border-graphite-200/70 bg-white p-3 font-body text-[13px] text-ink shadow-premium dark:border-white/[0.06] dark:bg-graphite-900 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
                   <span className="text-graphite-500">Customer</span>
                   <span>{viewingLive.customerName}</span>
@@ -1146,7 +1155,7 @@ export function RentalsList() {
                 </div>
               </div>
 
-              <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+              <div className="rounded border border-graphite-200/70 bg-gradient-to-br from-graphite-50 to-graphite-100 p-3 font-mono text-[13px] text-ink shadow-premium dark:border-white/[0.06] dark:from-graphite-800 dark:to-graphite-900 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
                   <span>Total rental</span>
                   <span>{formatCurrency(viewingLive.totalRental)}</span>
@@ -1183,7 +1192,7 @@ export function RentalsList() {
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
 
               {unitemizedAdvance > 0 && (
-                <p className="rounded border border-graphite-200 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-graphite-800 dark:bg-graphite-800/60 dark:text-graphite-400">
+                <p className="rounded border border-graphite-200/70 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-white/[0.06] dark:bg-graphite-800/60 dark:text-graphite-400">
                   {formatCurrency(unitemizedAdvance)} of the advance isn't itemized below — likely entered directly
                   via Edit/Extend rather than "Record a payment".
                 </p>
@@ -1207,7 +1216,7 @@ export function RentalsList() {
               )}
 
               {payments.status === "success" && payments.data.length > 0 && (
-                <div className="divide-y divide-graphite-100 rounded border border-graphite-200 dark:divide-graphite-800 dark:border-graphite-800">
+                <div className="divide-y divide-graphite-100 rounded border border-graphite-200/70 shadow-premium dark:divide-graphite-800 dark:border-white/[0.06]">
                   {payments.data.map((p) => (
                     <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 font-body text-[12.5px] text-ink dark:text-ink-inverted">
                       <div className="min-w-0">
@@ -1230,7 +1239,7 @@ export function RentalsList() {
                 </div>
               )}
 
-              <div className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800">
+              <div className="space-y-2 rounded border border-graphite-200/70 bg-white p-3 shadow-premium dark:border-white/[0.06] dark:bg-graphite-900">
                 <p className="font-body text-[12px] font-medium text-graphite-500">Record a payment</p>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <Input
@@ -1327,7 +1336,7 @@ export function RentalsList() {
               released and today's date recorded as the return date.
             </p>
 
-            <div className="flex items-center justify-between rounded border border-graphite-300 bg-graphite-100 px-3 py-2 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
+            <div className="flex items-center justify-between rounded border border-graphite-200/70 bg-gradient-to-br from-graphite-50 to-graphite-100 px-3 py-2 font-mono text-[13px] text-ink shadow-premium dark:border-white/[0.06] dark:from-graphite-800 dark:to-graphite-900 dark:text-ink-inverted">
               <span>{describeBalance(returnAdjustedBalance).label}</span>
               <span
                 className={

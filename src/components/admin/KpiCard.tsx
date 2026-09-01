@@ -44,12 +44,12 @@ export function KpiCard({ label, value, icon, to, tone = "neutral", delta, inver
 
   const content = (
     <>
-      <span className={["absolute inset-x-0 top-0 h-[3px] rounded-t-2xl bg-gradient-to-r", TOP_BAR_TONE[tone]].join(" ")} />
+      <span className={["absolute inset-x-0 top-0 h-[3px] rounded-t bg-gradient-to-r", TOP_BAR_TONE[tone]].join(" ")} />
 
       <div className="mb-4 flex items-start justify-between">
         <span
           className={[
-            "flex h-10 w-10 items-center justify-center rounded-xl shadow-[0_4px_12px_-2px_rgb(0_0_0_/_0.25)]",
+            "flex h-10 w-10 items-center justify-center rounded shadow-[0_4px_12px_-2px_rgb(0_0_0_/_0.25)]",
             ICON_TILE_TONE[tone],
           ].join(" ")}
         >
@@ -79,7 +79,7 @@ export function KpiCard({ label, value, icon, to, tone = "neutral", delta, inver
   );
 
   const className =
-    "group relative overflow-hidden rounded-2xl border border-graphite-200/70 bg-white p-4 shadow-premium transition-all duration-200 ease-app dark:border-white/[0.06] dark:bg-graphite-900" +
+    "group relative overflow-hidden rounded border border-graphite-200/70 bg-white p-4 shadow-premium transition-all duration-200 ease-app dark:border-white/[0.06] dark:bg-graphite-900" +
     (to ? " hover:-translate-y-0.5 hover:border-graphite-300 hover:shadow-premium-lg dark:hover:border-white/[0.12]" : "");
 
   if (to) {

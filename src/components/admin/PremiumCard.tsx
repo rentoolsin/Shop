@@ -15,7 +15,7 @@ export function PremiumCard({ interactive, className = "", ...rest }: PremiumCar
   return (
     <div
       className={[
-        "rounded-2xl border border-graphite-200/70 bg-white shadow-premium",
+        "rounded border border-graphite-200/70 bg-white shadow-premium",
         "dark:border-white/[0.06] dark:bg-graphite-900",
         interactive
           ? "transition-all duration-200 ease-app hover:-translate-y-0.5 hover:border-graphite-300 hover:shadow-premium-lg dark:hover:border-white/[0.12]"
