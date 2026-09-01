@@ -5,20 +5,19 @@ interface PremiumCardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Elevated surface for the redesigned admin Dashboard — larger radius,
- * layered shadow, and a hairline border. Deliberately kept separate from
- * the shared `ui/Card` (rounded-6px, single-layer shadow) which the rest
- * of the admin app relies on, so this "ultra premium" treatment stays
- * scoped to the Dashboard instead of rippling into every list/detail page.
+ * Elevated surface for the redesigned admin Dashboard — layered shadow, but
+ * using the same 6px radius and border color as the shared `ui/Card` for
+ * visual consistency across the admin app. Only the shadow treatment stays
+ * scoped to the Dashboard.
  */
 export function PremiumCard({ interactive, className = "", ...rest }: PremiumCardProps) {
   return (
     <div
       className={[
-        "rounded-2xl border border-graphite-200/70 bg-white shadow-premium",
-        "dark:border-white/[0.06] dark:bg-graphite-900",
+        "rounded border border-graphite-200/80 bg-white shadow-premium",
+        "dark:border-graphite-800 dark:bg-graphite-900",
         interactive
-          ? "transition-all duration-200 ease-app hover:-translate-y-0.5 hover:border-graphite-300 hover:shadow-premium-lg dark:hover:border-white/[0.12]"
+          ? "transition-all duration-200 ease-app hover:-translate-y-0.5 hover:border-graphite-300 hover:shadow-premium-lg dark:hover:border-graphite-700"
           : "",
         className,
       ].join(" ")}

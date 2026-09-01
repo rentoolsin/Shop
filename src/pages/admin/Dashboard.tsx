@@ -249,7 +249,7 @@ export function Dashboard() {
             icon={<CalendarCheck className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {overdueCount !== null ? (
           <KpiCard
@@ -260,7 +260,7 @@ export function Dashboard() {
             icon={<Warning className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {newEnquiryCount !== null ? (
           <KpiCard
@@ -271,7 +271,7 @@ export function Dashboard() {
             icon={<ClipboardText className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {openPurchaseRequestCount !== null ? (
           <KpiCard
@@ -281,7 +281,7 @@ export function Dashboard() {
             icon={<Tag className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
       </div>
 
@@ -295,7 +295,7 @@ export function Dashboard() {
             icon={<Stack className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {outstandingBalance !== null ? (
           <KpiCard
@@ -305,7 +305,7 @@ export function Dashboard() {
             icon={<HandCoins className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {monthly !== null && rentalsDelta !== null ? (
           <KpiCard
@@ -316,7 +316,7 @@ export function Dashboard() {
             delta={{ value: rentalsDelta, note: "vs last month" }}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {monthly !== null && revenueDelta !== null ? (
           <KpiCard
@@ -328,7 +328,7 @@ export function Dashboard() {
             delta={{ value: revenueDelta, note: "vs last month" }}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
       </div>
 
@@ -347,7 +347,7 @@ export function Dashboard() {
             </p>
           </div>
           {revenueTrend === null ? (
-            <Skeleton className="h-[240px] w-full rounded-xl" />
+            <Skeleton className="h-[240px] w-full rounded" />
           ) : (
             <AreaTrendChart
               data={revenueTrend}
@@ -361,7 +361,7 @@ export function Dashboard() {
         <PremiumCard className="p-5 sm:p-6">
           <p className="mb-5 font-body text-[13px] font-semibold text-ink dark:text-ink-inverted">Rental status mix</p>
           {statusBreakdown === null ? (
-            <Skeleton className="h-[172px] w-full rounded-xl" />
+            <Skeleton className="h-[172px] w-full rounded" />
           ) : (
             <DonutChart
               data={statusBreakdown}
@@ -383,7 +383,7 @@ export function Dashboard() {
             icon={<UsersThree className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {products.status === "success" ? (
           <KpiCard
@@ -393,7 +393,7 @@ export function Dashboard() {
             icon={<Package className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
         {categories.status === "success" ? (
           <KpiCard
@@ -403,7 +403,7 @@ export function Dashboard() {
             icon={<Tag className="h-5 w-5" weight="bold" />}
           />
         ) : (
-          <Skeleton className="h-[128px] w-full rounded-2xl" />
+          <Skeleton className="h-[128px] w-full rounded" />
         )}
       </div>
 
@@ -414,7 +414,7 @@ export function Dashboard() {
             Most rented this month
           </p>
           {topRentedProducts === null ? (
-            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded" />
           ) : (
             <BarListChart data={topRentedProducts} tone="accent" emptyLabel="No rentals yet this month." />
           )}
@@ -425,7 +425,7 @@ export function Dashboard() {
             Most requested unavailable products
           </p>
           {mostRequestedUnavailable === null ? (
-            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded" />
           ) : (
             <BarListChart data={mostRequestedUnavailable} tone="danger" emptyLabel="No purchase requests yet." />
           )}
@@ -449,9 +449,9 @@ export function Dashboard() {
       <PremiumCard className="overflow-hidden">
         {recentRentals === null ? (
           <div className="space-y-2 p-4">
-            <Skeleton className="h-14 w-full rounded-xl" />
-            <Skeleton className="h-14 w-full rounded-xl" />
-            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-14 w-full rounded" />
+            <Skeleton className="h-14 w-full rounded" />
+            <Skeleton className="h-14 w-full rounded" />
           </div>
         ) : recentRentals.length === 0 ? (
           <p className="p-5 font-body text-[13px] text-graphite-400">No rentals yet.</p>
@@ -477,7 +477,7 @@ export function Dashboard() {
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span
-                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-body text-[12px] font-bold text-white"
+                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded font-body text-[12px] font-bold text-white"
                         style={{ backgroundColor: avatarColor(r.customerName) }}
                       >
                         {initials(r.customerName)}

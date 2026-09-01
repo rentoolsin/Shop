@@ -11,6 +11,7 @@ import { fetchAllEnquiries, fetchEnquiryById, fetchNewEnquiriesCount } from "../
 import {
   fetchAllPurchaseRequests,
   fetchPurchaseRequestById,
+  fetchOpenPurchaseRequestsCount,
 } from "../services/admin-purchase-requests.service";
 import {
   fetchAllHomepageSections,
@@ -94,6 +95,11 @@ export function useAdminPurchaseRequests(query = "") {
   return useAsyncData(() => fetchAllPurchaseRequests(query), [query], {
     realtimeTables: ["purchase_requests"],
   });
+}
+
+/** Count of open ("requested"/"sourcing") purchase requests, for the More tab / quick-pick sheet badge — see AdminMobileNav. */
+export function useOpenPurchaseRequestsCount() {
+  return useAsyncData(fetchOpenPurchaseRequestsCount, [], { realtimeTables: ["purchase_requests"] });
 }
 
 export function useAdminPurchaseRequest(id: string | undefined) {

@@ -33,7 +33,7 @@ export function DashboardHero({ chips }: DashboardHeroProps) {
   const firstName = session?.user.email?.split("@")[0]?.replace(/[._-]+/g, " ") ?? "there";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-graphite-900 via-graphite-900 to-graphite-950 px-5 py-6 shadow-premium-lg sm:px-8 sm:py-8">
+    <div className="relative overflow-hidden rounded bg-gradient-to-br from-graphite-900 via-graphite-900 to-graphite-950 px-5 py-6 shadow-premium-lg sm:px-8 sm:py-8">
       {/* Decorative ambient glows — purely visual, clipped by the panel's own overflow-hidden. */}
       <div
         aria-hidden="true"
@@ -64,14 +64,14 @@ export function DashboardHero({ chips }: DashboardHeroProps) {
         <div className="flex flex-shrink-0 items-center gap-2">
           <Link
             to="/admin/purchase-requests/new"
-            className="hidden items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3.5 py-2.5 font-body text-[13px] font-medium text-white backdrop-blur-sm transition-colors duration-150 ease-app hover:bg-white/10 sm:flex"
+            className="hidden items-center gap-1.5 rounded border border-white/15 bg-white/5 px-3.5 py-2.5 font-body text-[13px] font-medium text-white backdrop-blur-sm transition-colors duration-150 ease-app hover:bg-white/10 sm:flex"
           >
             <Plus className="h-4 w-4" weight="bold" />
             Purchase request
           </Link>
           <Link
             to="/admin/rentals/new"
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-400 to-accent-500 px-3.5 py-2.5 font-body text-[13px] font-semibold text-graphite-950 shadow-glow-accent transition-transform duration-150 ease-app hover:-translate-y-0.5 active:translate-y-0"
+            className="flex items-center gap-1.5 rounded bg-gradient-to-b from-accent-400 to-accent-500 px-3.5 py-2.5 font-body text-[13px] font-semibold text-graphite-950 shadow-glow-accent transition-transform duration-150 ease-app hover:-translate-y-0.5 active:translate-y-0"
           >
             <Plus className="h-4 w-4" weight="bold" />
             New rental
@@ -83,9 +83,9 @@ export function DashboardHero({ chips }: DashboardHeroProps) {
         {chips.map((chip) => (
           <div
             key={chip.label}
-            className="flex min-w-[132px] flex-1 items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 backdrop-blur-sm sm:flex-none"
+            className="flex min-w-[132px] flex-1 items-center gap-2.5 rounded border border-white/10 bg-white/[0.04] px-3.5 py-2.5 backdrop-blur-sm sm:flex-none"
           >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-white/10 text-white">
               {chip.icon}
             </span>
             <div className="min-w-0">

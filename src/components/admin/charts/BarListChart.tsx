@@ -42,7 +42,7 @@ export function BarListChart({
         <li key={item.label + i} className="flex items-center gap-3">
           <span
             className={[
-              "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold",
+              "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded font-mono text-[11px] font-bold",
               RANK_CHIP_TONE[tone],
             ].join(" ")}
           >

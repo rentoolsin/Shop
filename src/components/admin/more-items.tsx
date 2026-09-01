@@ -70,7 +70,14 @@ function ChevronRight() {
 }
 
 /** A single "More" destination row — used both in the full More page list and the quick-pick sheet. */
-export function AdminMoreLink({ to, label, description, icon, onNavigate }: AdminMoreItem & { onNavigate?: () => void }) {
+export function AdminMoreLink({
+  to,
+  label,
+  description,
+  icon,
+  badgeCount,
+  onNavigate,
+}: AdminMoreItem & { badgeCount?: number; onNavigate?: () => void }) {
   return (
     <Link
       to={to}
@@ -84,6 +91,14 @@ export function AdminMoreLink({ to, label, description, icon, onNavigate }: Admi
         <span className="block font-body text-[14px] font-medium text-ink dark:text-ink-inverted">{label}</span>
         <span className="block truncate font-body text-[12px] text-graphite-500">{description}</span>
       </span>
+      {!!badgeCount && badgeCount > 0 && (
+        <span
+          aria-label={`${badgeCount} open`}
+          className="flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-state-danger px-1.5 font-body text-[11px] font-semibold leading-none text-white"
+        >
+          {badgeCount > 99 ? "99+" : badgeCount}
+        </span>
+      )}
       <ChevronRight />
     </Link>
   );

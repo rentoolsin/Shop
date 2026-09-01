@@ -1,11 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
+import { useOpenPurchaseRequestsCount } from "../../hooks/useAdminData";
 import { Card } from "../../components/ui/Card";
 import { ADMIN_MORE_ITEMS, AdminMoreLink } from "../../components/admin/more-items";
 
 export function AdminMore() {
   const { signOut, session } = useAuth();
   const navigate = useNavigate();
+  const openPurchaseRequests = useOpenPurchaseRequestsCount();
+  const openPurchaseRequestsCount = openPurchaseRequests.status === "success" ? openPurchaseRequests.data : 0;
 
   const handleSignOut = async () => {
     await signOut();
@@ -18,7 +21,11 @@ export function AdminMore() {
 
       <Card className="mb-4 divide-y divide-graphite-100 overflow-hidden dark:divide-graphite-800">
         {ADMIN_MORE_ITEMS.map((item) => (
-          <AdminMoreLink key={item.to} {...item} />
+          <AdminMoreLink
+            key={item.to}
+            {...item}
+            badgeCount={item.to === "/admin/purchase-requests" ? openPurchaseRequestsCount : undefined}
+          />
         ))}
       </Card>
 

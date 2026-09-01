@@ -4,7 +4,7 @@ import { HomeIcon, RentalsIcon, RequestsIcon, ProductsIcon, CustomersIcon, MoreI
 import { InstallAppBanner } from "../layout/InstallAppBanner";
 import { BottomSheet } from "../ui/BottomSheet";
 import { ADMIN_MORE_ITEMS, AdminMoreLink } from "./more-items";
-import { useNewEnquiriesCount } from "../../hooks/useAdminData";
+import { useNewEnquiriesCount, useOpenPurchaseRequestsCount } from "../../hooks/useAdminData";
 
 const ITEMS = [
   { to: "/admin", label: "Home", icon: <HomeIcon size={22} />, end: true },
@@ -34,6 +34,11 @@ export function AdminMobileNav() {
   const longPressFiredRef = useRef(false);
   const newEnquiries = useNewEnquiriesCount();
   const newEnquiriesCount = newEnquiries.status === "success" ? newEnquiries.data : 0;
+  // Purchase Requests has no top-level tab of its own — it lives behind
+  // "More" — so its open count badges the More tab itself (and the row
+  // inside the quick-pick sheet) instead of a dedicated nav slot.
+  const openPurchaseRequests = useOpenPurchaseRequestsCount();
+  const openPurchaseRequestsCount = openPurchaseRequests.status === "success" ? openPurchaseRequests.data : 0;
 
   const clearPressTimer = () => {
     if (pressTimerRef.current) {
@@ -121,6 +126,14 @@ export function AdminMobileNav() {
                             {newEnquiriesCount > 99 ? "99+" : newEnquiriesCount}
                           </span>
                         )}
+                        {isMore && openPurchaseRequestsCount > 0 && (
+                          <span
+                            aria-label={`${openPurchaseRequestsCount} open purchase ${openPurchaseRequestsCount === 1 ? "request" : "requests"}`}
+                            className="absolute right-1 top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-state-danger px-1 font-body text-[9px] font-semibold leading-none text-white"
+                          >
+                            {openPurchaseRequestsCount > 99 ? "99+" : openPurchaseRequestsCount}
+                          </span>
+                        )}
                       </span>
                       {item.label}
                     </>
@@ -135,7 +148,12 @@ export function AdminMobileNav() {
       <BottomSheet open={quickPickOpen} onClose={() => setQuickPickOpen(false)} title="More">
         <div className="-mx-5 divide-y divide-graphite-100 dark:divide-graphite-800">
           {ADMIN_MORE_ITEMS.map((item) => (
-            <AdminMoreLink key={item.to} {...item} onNavigate={() => setQuickPickOpen(false)} />
+            <AdminMoreLink
+              key={item.to}
+              {...item}
+              badgeCount={item.to === "/admin/purchase-requests" ? openPurchaseRequestsCount : undefined}
+              onNavigate={() => setQuickPickOpen(false)}
+            />
           ))}
         </div>
       </BottomSheet>

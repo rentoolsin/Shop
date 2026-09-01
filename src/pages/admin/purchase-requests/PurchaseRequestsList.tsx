@@ -31,6 +31,23 @@ const PRIORITY_TONE: Record<PurchaseRequestPriority, "neutral" | "warning" | "da
   high: "danger",
 };
 
+// Requests still being worked (requested/sourcing) float to the top, ahead
+// of ones already closed out (fulfilled/declined); within a status, higher
+// priority requests come first so an urgent one doesn't get lost among
+// several low-priority requests filed the same day.
+const STATUS_SORT_PRIORITY: Record<PurchaseRequestStatus, number> = {
+  requested: 0,
+  sourcing: 1,
+  fulfilled: 2,
+  declined: 3,
+};
+
+const PRIORITY_SORT_PRIORITY: Record<PurchaseRequestPriority, number> = {
+  high: 0,
+  normal: 1,
+  low: 2,
+};
+
 function CalendarIcon() {
   return <ClipboardText className="h-6 w-6" weight="light" />;
 }
@@ -89,7 +106,13 @@ export function PurchaseRequestsList() {
   const data = useMemo(() => (requests.status === "success" ? requests.data : []), [requests]);
 
   const rows: AdminPurchaseRequest[] = useMemo(() => {
-    return data.filter((r) => statusFilter === "all" || r.status === statusFilter);
+    return data
+      .filter((r) => statusFilter === "all" || r.status === statusFilter)
+      .sort((a, b) => {
+        const statusDiff = STATUS_SORT_PRIORITY[a.status] - STATUS_SORT_PRIORITY[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        return PRIORITY_SORT_PRIORITY[a.priority] - PRIORITY_SORT_PRIORITY[b.priority];
+      });
   }, [data, statusFilter]);
 
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(rows, {

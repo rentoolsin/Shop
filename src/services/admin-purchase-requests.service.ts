@@ -17,6 +17,23 @@ export interface AdminPurchaseRequest {
   createdAt: string;
 }
 
+/**
+ * Count of open (not yet resolved) purchase requests — "requested" or
+ * "sourcing" — mirrors the same statuses the Dashboard's "Open purchase
+ * requests" KPI tile counts. Used for the More tab / quick-pick sheet
+ * badge in AdminMobileNav, since Purchase Requests has no top-level nav
+ * slot of its own. `head: true` skips fetching row data so this stays
+ * cheap to poll on every screen the admin nav renders on.
+ */
+export async function fetchOpenPurchaseRequestsCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("purchase_requests")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["requested", "sourcing"]);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export interface PurchaseRequestFormValues {
   productRequested: string;
   customerId: string | null;

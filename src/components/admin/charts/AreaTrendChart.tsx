@@ -80,7 +80,7 @@ export function AreaTrendChart({
   if (data.length === 0 || data.every((d) => d.value === 0)) {
     return (
       <div
-        className="flex items-center justify-center rounded-xl border border-dashed border-graphite-200 font-body text-[13px] text-graphite-400 dark:border-graphite-800"
+        className="flex items-center justify-center rounded border border-dashed border-graphite-200 font-body text-[13px] text-graphite-400 dark:border-graphite-800"
         style={{ height }}
       >
         {emptyLabel}
@@ -103,7 +103,7 @@ export function AreaTrendChart({
     <div className="relative">
       {hovered && hoveredPoint && (
         <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-xl border border-graphite-200 bg-white px-3 py-2 shadow-premium-lg dark:border-graphite-700 dark:bg-graphite-800"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 rounded border border-graphite-200 bg-white px-3 py-2 shadow-premium-lg dark:border-graphite-700 dark:bg-graphite-800"
           style={{
             left: `${(hoveredPoint.x / WIDTH) * 100}%`,
             top: Math.max(0, (hoveredPoint.y / height) * 100 - 16) + "%",

@@ -58,6 +58,28 @@ const STATUS_TONE: Record<RentalDisplayStatus, "neutral" | "success" | "warning"
   cancelled: "neutral",
 };
 
+// Rows needing action float to the top; rentals that are already settled
+// (returned/cancelled) sink to the bottom so a page of mostly-closed-out
+// rentals doesn't bury the couple that still need attention today.
+const STATUS_SORT_PRIORITY: Record<RentalDisplayStatus, number> = {
+  overdue: 0,
+  due_today: 1,
+  active: 2,
+  returned: 3,
+  cancelled: 4,
+};
+
+/** Balance text color, weighted by how urgent the underlying rental is — an
+ * amount due on an overdue/due-today rental should read as more pressing
+ * than the same amount on a rental that isn't due for weeks yet. */
+function balanceToneClass(displayStatus: RentalDisplayStatus, balance: number, isRefund: boolean): string {
+  if (isRefund) return "font-semibold text-state-success-text dark:text-state-success-text-dark";
+  if (balance <= 0) return "text-graphite-500";
+  if (displayStatus === "overdue") return "font-semibold text-state-danger-text dark:text-state-danger-text-dark";
+  if (displayStatus === "due_today") return "font-semibold text-state-warning-text dark:text-state-warning-text-dark";
+  return "font-semibold";
+}
+
 function CalendarIcon({ className = "h-6 w-6" }: { className?: string }) {
   return <Calendar className={className} weight="light" />;
 }
@@ -203,7 +225,8 @@ export function RentalsList() {
         const q = query.trim().toLowerCase();
         if (!q) return true;
         return r.customerName.toLowerCase().includes(q) || r.customerMobile.includes(q);
-      });
+      })
+      .sort((a, b) => STATUS_SORT_PRIORITY[a.displayStatus] - STATUS_SORT_PRIORITY[b.displayStatus]);
   }, [data, statusFilter, query]);
 
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(rows, {
@@ -681,7 +704,7 @@ export function RentalsList() {
                         <button
                           type="button"
                           onClick={() => setViewing(rental)}
-                          className="block min-w-0 truncate text-left font-display text-[14px] font-bold uppercase tracking-tight text-ink hover:underline dark:text-ink-inverted"
+                          className="block min-w-0 text-left font-display text-[14px] font-bold uppercase leading-snug tracking-tight text-ink hover:underline dark:text-ink-inverted"
                         >
                           {rental.productName}
                         </button>
@@ -721,13 +744,14 @@ export function RentalsList() {
                       {rental.customerName} · {rental.customerMobile}
                     </span>
                     <span
-                      className={
-                        describeBalance(rental.balance).isRefund
-                          ? "flex-shrink-0 font-semibold text-state-success-text dark:text-state-success-text-dark"
-                          : rental.balance > 0
-                            ? "flex-shrink-0 font-semibold"
-                            : "flex-shrink-0 text-graphite-500"
-                      }
+                      className={[
+                        "flex-shrink-0",
+                        balanceToneClass(
+                          rental.displayStatus,
+                          rental.balance,
+                          describeBalance(rental.balance).isRefund,
+                        ),
+                      ].join(" ")}
                     >
                       {formatCurrency(describeBalance(rental.balance).amount)}
                       {describeBalance(rental.balance).isRefund ? " refund" : " due"}
@@ -861,7 +885,7 @@ export function RentalsList() {
                             )}
                           </span>
                           <span className="min-w-0">
-                            <span className="block truncate font-display text-[13px] font-bold uppercase tracking-tight text-ink hover:underline dark:text-ink-inverted">
+                            <span className="block font-display text-[13px] font-bold uppercase leading-snug tracking-tight text-ink hover:underline dark:text-ink-inverted">
                               {rental.productName}
                             </span>
                             <span className="block font-mono text-[11px] text-graphite-400">
@@ -892,13 +916,11 @@ export function RentalsList() {
                       </TableCell>
                       <TableCell className="text-right font-mono whitespace-nowrap">
                         <span
-                          className={
-                            describeBalance(rental.balance).isRefund
-                              ? "font-semibold text-state-success-text dark:text-state-success-text-dark"
-                              : rental.balance > 0
-                                ? "font-semibold"
-                                : "text-graphite-500"
-                          }
+                          className={balanceToneClass(
+                            rental.displayStatus,
+                            rental.balance,
+                            describeBalance(rental.balance).isRefund,
+                          )}
                         >
                           {formatCurrency(describeBalance(rental.balance).amount)}
                           {describeBalance(rental.balance).isRefund ? " refund" : ""}

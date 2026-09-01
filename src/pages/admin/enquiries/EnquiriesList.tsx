@@ -22,6 +22,17 @@ import { Table, TableHead, TableHeaderCell, TableBody, TableRow, TableCell } fro
 
 const DEBOUNCE_MS = 300;
 
+// Enquiries still needing a response float to the top; ones already worked
+// through (contacted → not-available/closed/converted) sink down, so a
+// page mixed with old resolved enquiries doesn't bury a fresh "new" one.
+const STATUS_SORT_PRIORITY: Record<EnquiryStatus, number> = {
+  new: 0,
+  contacted: 1,
+  not_available: 2,
+  closed: 3,
+  converted: 4,
+};
+
 function EnquiryIcon() {
   return <ChatText className="h-6 w-6" weight="light" />;
 }
@@ -77,7 +88,9 @@ export function EnquiriesList() {
   const data = useMemo(() => (enquiries.status === "success" ? enquiries.data : []), [enquiries]);
 
   const rows: AdminEnquiry[] = useMemo(() => {
-    return data.filter((e) => statusFilter === "all" || e.status === statusFilter);
+    return data
+      .filter((e) => statusFilter === "all" || e.status === statusFilter)
+      .sort((a, b) => STATUS_SORT_PRIORITY[a.status] - STATUS_SORT_PRIORITY[b.status]);
   }, [data, statusFilter]);
 
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(rows, {

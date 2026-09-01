@@ -2,6 +2,7 @@ import { CaretLeft, ClipboardText, Question, Layout, SignOut, MapPin, Gear as Se
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
+import { useNewEnquiriesCount, useOpenPurchaseRequestsCount } from "../../hooks/useAdminData";
 import { useToast } from "../ui/Toast";
 import { AdminMobileNav } from "./AdminMobileNav";
 import { HomeIcon, RequestsIcon, RentalsIcon, CustomersIcon, ProductsIcon, MoreIcon } from "./nav-icons";
@@ -86,6 +87,18 @@ export function AdminLayout() {
   const [collapsed, setCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
   );
+  // Same "new"/open counts the mobile nav badges — see AdminMobileNav —
+  // surfaced here too since the desktop sidebar lists Enquiries and
+  // Purchase Requests as their own top-level items rather than tucking
+  // one behind "More".
+  const newEnquiries = useNewEnquiriesCount();
+  const newEnquiriesCount = newEnquiries.status === "success" ? newEnquiries.data : 0;
+  const openPurchaseRequests = useOpenPurchaseRequestsCount();
+  const openPurchaseRequestsCount = openPurchaseRequests.status === "success" ? openPurchaseRequests.data : 0;
+  const NAV_BADGE_COUNTS: Record<string, number> = {
+    "/admin/enquiries": newEnquiriesCount,
+    "/admin/purchase-requests": openPurchaseRequestsCount,
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -128,26 +141,49 @@ export function AdminLayout() {
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 py-4">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              title={collapsed ? item.label : undefined}
-              className={({ isActive }) =>
-                [
-                  "flex h-11 items-center gap-2.5 rounded font-body text-[13.5px] font-medium transition-colors duration-150 ease-app",
-                  collapsed ? "justify-center px-0" : "px-3",
-                  isActive
-                    ? "bg-graphite-900 text-white dark:bg-white dark:text-graphite-900"
-                    : "text-graphite-600 hover:bg-graphite-100 dark:text-graphite-300 dark:hover:bg-graphite-800",
-                ].join(" ")
-              }
-            >
-              {item.icon}
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const badgeCount = NAV_BADGE_COUNTS[item.to] ?? 0;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                title={collapsed ? item.label : undefined}
+                className={({ isActive }) =>
+                  [
+                    "flex h-11 items-center gap-2.5 rounded font-body text-[13.5px] font-medium transition-colors duration-150 ease-app",
+                    collapsed ? "justify-center px-0" : "px-3",
+                    isActive
+                      ? "bg-graphite-900 text-white dark:bg-white dark:text-graphite-900"
+                      : "text-graphite-600 hover:bg-graphite-100 dark:text-graphite-300 dark:hover:bg-graphite-800",
+                  ].join(" ")
+                }
+              >
+                <span className="relative flex-shrink-0">
+                  {item.icon}
+                  {collapsed && badgeCount > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-state-danger"
+                    />
+                  )}
+                </span>
+                {!collapsed && (
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                    <span className="truncate">{item.label}</span>
+                    {badgeCount > 0 && (
+                      <span
+                        aria-label={`${badgeCount} open`}
+                        className="flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-state-danger px-1.5 font-body text-[11px] font-semibold leading-none text-white"
+                      >
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {collapsed && (
