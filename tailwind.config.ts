@@ -101,14 +101,12 @@ export default {
         sm: "6px",
         DEFAULT: "6px",
         lg: "6px",
-        // Border radius is kept uniform at 6px everywhere, including the
-        // admin Dashboard's and Rentals page's "premium" surfaces (hero
-        // panel, KPI/chart cards, totals panels) — those surfaces still
-        // read as elevated via `shadow-premium`/gradients, just not via
-        // a larger corner radius than the rest of the app.
-        xl: "6px",
-        "2xl": "6px",
-        "3xl": "6px",
+        // xl+ reserved for the premium admin dashboard surfaces (hero panel,
+        // KPI/chart cards) — the rest of the app keeps the 6px restraint
+        // above unchanged.
+        xl: "14px",
+        "2xl": "18px",
+        "3xl": "24px",
       },
       boxShadow: {
         // Subtle, single-layer depth for everyday app chrome.
