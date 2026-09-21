@@ -2,7 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useOpenPurchaseRequestsCount } from "../../hooks/useAdminData";
 import { Card } from "../../components/ui/Card";
-import { ADMIN_MORE_ITEMS, AdminMoreLink } from "../../components/admin/more-items";
+import { ADMIN_MORE_ITEMS } from "../../components/admin/more-items";
+import { AdminMoreLink } from "../../components/admin/AdminMoreLink";
 
 export function AdminMore() {
   const { signOut, session } = useAuth();

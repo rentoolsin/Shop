@@ -3,7 +3,8 @@ import { NavLink } from "react-router-dom";
 import { HomeIcon, RentalsIcon, RequestsIcon, ProductsIcon, CustomersIcon, MoreIcon } from "./nav-icons";
 import { InstallAppBanner } from "../layout/InstallAppBanner";
 import { BottomSheet } from "../ui/BottomSheet";
-import { ADMIN_MORE_ITEMS, AdminMoreLink } from "./more-items";
+import { ADMIN_MORE_ITEMS } from "./more-items";
+import { AdminMoreLink } from "./AdminMoreLink";
 import { useNewEnquiriesCount, useOpenPurchaseRequestsCount } from "../../hooks/useAdminData";
 
 const ITEMS = [

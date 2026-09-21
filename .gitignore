@@ -11,3 +11,7 @@ dev-dist
 npm-debug.log*
 .vscode/*
 !.vscode/extensions.json
+
+.vite
+env
+Rentools.zip

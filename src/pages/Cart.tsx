@@ -10,7 +10,7 @@ import { QuantityStepper } from "../components/ui/QuantityStepper";
 import { DaysInput } from "../components/ui/DaysInput";
 import { WhatsAppIcon } from "../components/icons/WhatsAppIcon";
 import { ProductCard } from "../components/products/ProductCard";
-import { useCart } from "../hooks/useCart";
+import { useCart, type CartItem } from "../hooks/useCart";
 import { useFeaturedProducts } from "../hooks/useProducts";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { SITE_SETTINGS_DEFAULTS } from "../utils/site-settings";
@@ -25,6 +25,15 @@ function HorizontalScroller({ children }: { children: ReactNode }) {
   );
 }
 
+// Each line has its own day count — different tools are often needed for
+// different durations (e.g. a ladder for one day, a pipe cutter for three),
+// so a single cart-wide "number of days" field couldn't express that.
+// `daysValidFor`/`daysNumFor` read straight off the item itself instead of a
+// shared piece of state. They're pure, so they live outside the component.
+const daysNumFor = (item: CartItem) => Number(item.numberOfDays);
+const daysValidFor = (item: CartItem) =>
+  item.numberOfDays != null && item.numberOfDays !== "" && daysNumFor(item) > 0;
+
 export function Cart() {
   const { items, setQuantity, setItemDays, removeItem } = useCart();
   const navigate = useNavigate();
@@ -38,15 +47,6 @@ export function Cart() {
   const featured = useFeaturedProducts();
 
   useDocumentMeta({ title: "Cart", noindex: true });
-
-  // Each line has its own day count now — different tools are often
-  // needed for different durations (e.g. a ladder for one day, a pipe
-  // cutter for three), so a single cart-wide "number of days" field
-  // couldn't express that. `daysValidFor`/`daysNumFor` read straight off
-  // the item itself instead of a shared piece of state.
-  const daysNumFor = (item: (typeof items)[number]) => Number(item.numberOfDays);
-  const daysValidFor = (item: (typeof items)[number]) =>
-    item.numberOfDays != null && item.numberOfDays !== "" && daysNumFor(item) > 0;
 
   const lineTotals = useMemo(
     () =>

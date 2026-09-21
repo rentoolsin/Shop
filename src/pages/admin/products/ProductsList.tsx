@@ -12,7 +12,7 @@ import {
   Trash,
   Wrench,
 } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminProducts, useAdminCategories, useAdminProduct } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
@@ -92,11 +92,18 @@ export function ProductsList() {
   // markup below for why).
   const [actionsMenuProductId, setActionsMenuProductId] = useState<string | null>(null);
 
-  const allItems = products.status === "success" ? products.data : [];
-  const categoryList = categories.status === "success" ? categories.data : [];
+  // `data` is only non-null once loaded, so `?? []` matches the old
+  // status check. Memoised so the fallback `[]` is one stable array rather
+  // than a new one every render (which would re-run every memo below).
+  const productsData = products.data;
+  const categoriesData = categories.data;
+  const allItems = useMemo(() => productsData ?? [], [productsData]);
+  const categoryList = useMemo(() => categoriesData ?? [], [categoriesData]);
 
-  const categoryName = (categoryId: string) =>
-    categoryList.find((c) => c.id === categoryId)?.name ?? "—";
+  const categoryName = useCallback(
+    (categoryId: string) => categoryList.find((c) => c.id === categoryId)?.name ?? "—",
+    [categoryList],
+  );
 
   // `allItems` is already fetched in sort_order/created_at order — the same
   // order the storefront home page uses — so the S.No shown here already
@@ -126,7 +133,7 @@ export function ProductsList() {
         categoryName(product.categoryId).toLowerCase().includes(q)
       );
     });
-  }, [allItems, search, categoryFilter, statusFilter, categoryList]);
+  }, [allItems, search, categoryFilter, statusFilter, categoryName]);
 
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(items, {
     resetKey: `${search}-${categoryFilter}-${statusFilter}`,

@@ -49,5 +49,26 @@ export default defineConfig({
   build: {
     target: "es2020",
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Keep the big, rarely-changing libraries in their own chunks so the
+        // entry chunk stays small (under Vite's 500 kB warning) and returning
+        // visitors only re-download app code after a deploy, not React or
+        // Supabase. Phosphor icons are deliberately left out: the admin area
+        // is lazy-loaded, and forcing every icon into one shared chunk would
+        // make public visitors download admin-only icons too.
+        manualChunks(id) {
+          const path = id.replace(/\\/g, "/");
+          if (!path.includes("/node_modules/")) return undefined;
+          if (/\/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(path)) {
+            return "react-vendor";
+          }
+          if (/\/node_modules\/(@supabase\/|iceberg-js\/)/.test(path)) {
+            return "supabase";
+          }
+          return undefined;
+        },
+      },
+    },
   },
 });

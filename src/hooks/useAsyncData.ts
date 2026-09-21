@@ -101,7 +101,6 @@ export function useAsyncData<T>(
       if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tablesKey, silentRefetch]);
 
   return { ...state, refetch: run };
