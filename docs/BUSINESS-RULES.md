@@ -4,7 +4,11 @@
 
 - Rental days are **inclusive**: 13 Aug → 15 Aug = 3 days.
 - `Total Rental = Rental Days × Daily Rate × Quantity`
-- `Balance = Total Rental − Advance`
+- `Net Rental = Total Rental − Discount` — the discount is a plain amount
+  the admin enters (default 0, no fixed rule). It can be given when marking
+  a rental returned (added to any earlier discount) or set from Edit rental
+  (replaces the stored discount).
+- `Balance = Net Rental − Advance`. A negative balance is a refund due.
 - Mirrored at the DB layer by `rental_days()` / `rental_total()` in
   `0001_init_schema.sql`. The DB is the enforcement layer; the frontend
   functions are for instant UX feedback only.
@@ -15,6 +19,7 @@
 - Quantity must be > 0.
 - Daily rate cannot be negative.
 - Advance cannot be negative.
+- Discount cannot be negative or more than the calculated rent (Total Rental).
 - Advance cannot exceed total (unless explicitly overridden — not yet
   exposed in any UI).
 

@@ -142,6 +142,92 @@ function CheckoutGroupNote({ current, siblings }: { current: AdminRentalListItem
 
 type Row = AdminRentalListItem & { displayStatus: RentalDisplayStatus };
 
+type PaymentsState = ReturnType<typeof useAdminRentalPayments>;
+
+/**
+ * How much of `advance` isn't backed by an itemized ledger entry. `advance`
+ * is one running total that can also be typed in directly (Edit/Extend, or
+ * lowered by a refund at return — see 0020_rental_payments.sql), so it can
+ * legitimately be higher than the sum of the logged payments.
+ */
+function unitemizedAmount(advance: number, payments: PaymentsState): number {
+  if (payments.status !== "success") return 0;
+  const itemized = payments.data.reduce((sum, p) => sum + p.amount, 0);
+  const gap = Math.round((advance - itemized) * 100) / 100;
+  return gap > 0 ? gap : 0;
+}
+
+/**
+ * A rental's payment ledger. Shared by the details popup (which passes
+ * `onRemove` so each row gets a Remove button) and the Edit popup (which
+ * doesn't, so it's a read-only reference while adjusting advance/discount).
+ */
+function PaymentHistoryList({
+  payments,
+  unitemized,
+  onRemove,
+  removingId,
+}: {
+  payments: PaymentsState;
+  unitemized: number;
+  onRemove?: (paymentId: string) => void;
+  removingId?: string | null;
+}) {
+  return (
+    <>
+      {unitemized > 0 && (
+        <p className="rounded border border-graphite-200 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-graphite-800 dark:bg-graphite-800/60 dark:text-graphite-400">
+          {formatCurrency(unitemized)} of the advance isn't itemized below — likely entered directly
+          via Edit/Extend rather than "Record a payment".
+        </p>
+      )}
+
+      {payments.status === "loading" && (
+        <div className="space-y-1.5">
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+        </div>
+      )}
+
+      {payments.status === "error" && (
+        <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
+          Couldn't load payment history.
+        </p>
+      )}
+
+      {payments.status === "success" && payments.data.length === 0 && (
+        <p className="font-body text-[12px] text-graphite-400">No payments logged yet.</p>
+      )}
+
+      {payments.status === "success" && payments.data.length > 0 && (
+        <div className="divide-y divide-graphite-100 rounded border border-graphite-200 dark:divide-graphite-800 dark:border-graphite-800">
+          {payments.data.map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 font-body text-[12.5px] text-ink dark:text-ink-inverted">
+              <div className="min-w-0">
+                <p className="font-mono font-semibold">{formatCurrency(p.amount)}</p>
+                <p className="truncate text-graphite-400">
+                  {p.paymentDate} · {paymentMethodLabel(p.method)}
+                  {p.notes ? ` · ${p.notes}` : ""}
+                </p>
+              </div>
+              {onRemove && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(p.id)}
+                  disabled={removingId === p.id}
+                  className="flex-shrink-0 font-body text-[12px] font-medium text-state-danger-text hover:underline disabled:opacity-60 dark:text-state-danger-text-dark"
+                >
+                  {removingId === p.id ? "Removing…" : "Remove"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 export function RentalsList() {
   const rentals = useAdminRentals();
   const { showToast } = useToast();
@@ -175,6 +261,11 @@ export function RentalsList() {
   const [editReturnDate, setEditReturnDate] = useState("");
   const [editDailyRate, setEditDailyRate] = useState(0);
   const [editAdvance, setEditAdvance] = useState(0);
+  // Kept as the raw input strings so the fields can be blank; parsed on
+  // save. Unlike "Discount given now" in the Mark-returned popup (which is
+  // *added* to the existing discount), this is the rental's total discount.
+  const [editDiscount, setEditDiscount] = useState("");
+  const [editDiscountReason, setEditDiscountReason] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -183,7 +274,9 @@ export function RentalsList() {
 
   const [viewing, setViewing] = useState<Row | null>(null);
 
-  const payments = useAdminRentalPayments(viewing?.id);
+  // The details popup and the Edit popup both show the ledger, and only
+  // one of them is ever open at a time — one subscription serves both.
+  const payments = useAdminRentalPayments(viewing?.id ?? editing?.id);
   const [payAmount, setPayAmount] = useState("");
   const [payDate, setPayDate] = useState("");
   const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
@@ -250,12 +343,10 @@ export function RentalsList() {
   // differ (e.g. an advance taken before this feature existed, or a manual
   // correction). Surface that gap instead of leaving the balance math
   // silently unexplained against what's listed.
-  const unitemizedAdvance = useMemo(() => {
-    if (!viewingLive || payments.status !== "success") return 0;
-    const itemized = payments.data.reduce((sum, p) => sum + p.amount, 0);
-    const gap = Math.round((viewingLive.advance - itemized) * 100) / 100;
-    return gap > 0 ? gap : 0;
-  }, [viewingLive, payments]);
+  const unitemizedAdvance = useMemo(
+    () => (viewingLive ? unitemizedAmount(viewingLive.advance, payments) : 0),
+    [viewingLive, payments],
+  );
 
   const startExtend = (row: Row) => {
     setExtending(row);
@@ -443,8 +534,15 @@ export function RentalsList() {
     setEditReturnDate(row.returnDate);
     setEditDailyRate(row.dailyRate);
     setEditAdvance(row.advance);
+    setEditDiscount(row.discount > 0 ? String(row.discount) : "");
+    setEditDiscountReason(row.discountReason ?? "");
     setEditError(null);
   };
+
+  // Live value for the summary box; the strict check (and its message)
+  // happens in handleEditSave.
+  const parsedEditDiscount = Number(editDiscount.trim() || 0);
+  const editDiscountValue = Number.isFinite(parsedEditDiscount) && parsedEditDiscount > 0 ? parsedEditDiscount : 0;
 
   const editTotals = editing
     ? calculateRentalTotals({
@@ -453,18 +551,25 @@ export function RentalsList() {
         dailyRate: editDailyRate,
         quantity: editQuantity,
         advance: editAdvance,
-        discount: editing.discount,
+        discount: editDiscountValue,
       })
     : null;
 
   const handleEditSave = async () => {
     if (!editing || savingEdit) return;
+    const discountTrimmed = editDiscount.trim();
+    const discountAmount = discountTrimmed === "" ? 0 : Number(discountTrimmed);
+    if (!Number.isFinite(discountAmount)) {
+      setEditError("Enter a valid discount amount, or leave it blank if none was given.");
+      return;
+    }
     const businessErrors = validateRentalInput({
       startDate: editStartDate,
       returnDate: editReturnDate,
       dailyRate: editDailyRate,
       quantity: editQuantity,
       advance: editAdvance,
+      discount: discountAmount,
     });
     if (businessErrors.length > 0) {
       setEditError(describeRentalError(businessErrors[0]));
@@ -478,6 +583,9 @@ export function RentalsList() {
         returnDate: editReturnDate,
         dailyRate: editDailyRate,
         advance: editAdvance,
+        discount: discountAmount,
+        // A reason only makes sense alongside a discount.
+        discountReason: discountAmount > 0 ? editDiscountReason.trim() || null : null,
       });
       showToast("Rental updated.", "success");
       setEditing(null);
@@ -1067,11 +1175,39 @@ export function RentalsList() {
               onChange={(e) => setEditAdvance(Number(e.target.value))}
               hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
             />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Discount (₹)"
+                type="number"
+                min={0}
+                inputMode="decimal"
+                value={editDiscount}
+                onChange={(e) => setEditDiscount(e.target.value)}
+                placeholder="0"
+                hint="Total amount waived off the rent — replaces any earlier discount."
+              />
+              <Input
+                label="Reason (optional)"
+                value={editDiscountReason}
+                onChange={(e) => setEditDiscountReason(e.target.value)}
+                placeholder="e.g. Old customer, goodwill"
+              />
+            </div>
             {editTotals && (
               <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
                 <div className="flex items-center justify-between">
                   <span>{editTotals.rentalDays} day{editTotals.rentalDays === 1 ? "" : "s"}</span>
                   <span>{formatCurrency(editTotals.totalRental)}</span>
+                </div>
+                {editDiscountValue > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span>Discount</span>
+                    <span>-{formatCurrency(editDiscountValue)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span>Received</span>
+                  <span>{formatCurrency(editAdvance)}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between font-semibold">
                   <span>{describeBalance(editTotals.balance).label}</span>
@@ -1087,6 +1223,13 @@ export function RentalsList() {
                 </div>
               </div>
             )}
+            <div className="space-y-2 border-t border-graphite-200 pt-3 dark:border-graphite-800">
+              <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
+              <PaymentHistoryList payments={payments} unitemized={unitemizedAmount(editAdvance, payments)} />
+              <p className="font-body text-[12px] text-graphite-400">
+                To add or remove a payment, open the rental's details.
+              </p>
+            </div>
             {editError && (
               <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{editError}</p>
             )}
@@ -1204,53 +1347,12 @@ export function RentalsList() {
             <div className="space-y-2 border-t border-graphite-200 pt-4 dark:border-graphite-800">
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
 
-              {unitemizedAdvance > 0 && (
-                <p className="rounded border border-graphite-200 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-graphite-800 dark:bg-graphite-800/60 dark:text-graphite-400">
-                  {formatCurrency(unitemizedAdvance)} of the advance isn't itemized below — likely entered directly
-                  via Edit/Extend rather than "Record a payment".
-                </p>
-              )}
-
-              {payments.status === "loading" && (
-                <div className="space-y-1.5">
-                  <Skeleton className="h-9 w-full" />
-                  <Skeleton className="h-9 w-full" />
-                </div>
-              )}
-
-              {payments.status === "error" && (
-                <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">
-                  Couldn't load payment history.
-                </p>
-              )}
-
-              {payments.status === "success" && payments.data.length === 0 && (
-                <p className="font-body text-[12px] text-graphite-400">No payments logged yet.</p>
-              )}
-
-              {payments.status === "success" && payments.data.length > 0 && (
-                <div className="divide-y divide-graphite-100 rounded border border-graphite-200 dark:divide-graphite-800 dark:border-graphite-800">
-                  {payments.data.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 font-body text-[12.5px] text-ink dark:text-ink-inverted">
-                      <div className="min-w-0">
-                        <p className="font-mono font-semibold">{formatCurrency(p.amount)}</p>
-                        <p className="truncate text-graphite-400">
-                          {p.paymentDate} · {paymentMethodLabel(p.method)}
-                          {p.notes ? ` · ${p.notes}` : ""}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePayment(p.id)}
-                        disabled={deletingPaymentId === p.id}
-                        className="flex-shrink-0 font-body text-[12px] font-medium text-state-danger-text hover:underline disabled:opacity-60 dark:text-state-danger-text-dark"
-                      >
-                        {deletingPaymentId === p.id ? "Removing…" : "Remove"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <PaymentHistoryList
+                payments={payments}
+                unitemized={unitemizedAdvance}
+                onRemove={handleDeletePayment}
+                removingId={deletingPaymentId}
+              />
 
               <div className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800">
                 <p className="font-body text-[12px] font-medium text-graphite-500">Record a payment</p>

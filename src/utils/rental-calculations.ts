@@ -34,7 +34,9 @@ export type RentalValidationError =
   | "QUANTITY_NOT_POSITIVE"
   | "RATE_NEGATIVE"
   | "ADVANCE_NEGATIVE"
-  | "ADVANCE_EXCEEDS_TOTAL";
+  | "ADVANCE_EXCEEDS_TOTAL"
+  | "DISCOUNT_NEGATIVE"
+  | "DISCOUNT_EXCEEDS_TOTAL";
 
 const VALIDATION_MESSAGES: Record<RentalValidationError, string> = {
   RETURN_BEFORE_START:
@@ -43,6 +45,8 @@ const VALIDATION_MESSAGES: Record<RentalValidationError, string> = {
   RATE_NEGATIVE: "Daily rental price cannot be negative.",
   ADVANCE_NEGATIVE: "Advance cannot be negative.",
   ADVANCE_EXCEEDS_TOTAL: "Advance cannot exceed the total rental amount.",
+  DISCOUNT_NEGATIVE: "Discount cannot be negative.",
+  DISCOUNT_EXCEEDS_TOTAL: "Discount cannot be more than the calculated rent for these dates.",
 };
 
 export function describeRentalError(code: RentalValidationError): string {
@@ -84,6 +88,19 @@ export function validateRentalInput(
   }
   if (input.advance < 0) {
     errors.push("ADVANCE_NEGATIVE");
+  }
+
+  // The discount is a plain entered amount (see `RentalInput.discount`), so
+  // the only sanity rules are: not negative, and not more than the rent it's
+  // being taken off of.
+  const discount = input.discount ?? 0;
+  if (discount < 0) {
+    errors.push("DISCOUNT_NEGATIVE");
+  } else if (discount > 0 && !errors.includes("RETURN_BEFORE_START")) {
+    const { totalRental } = calculateRentalTotals({ ...input, discount: 0 });
+    if (discount > totalRental) {
+      errors.push("DISCOUNT_EXCEEDS_TOTAL");
+    }
   }
 
   if (!errors.includes("RETURN_BEFORE_START") && !allowAdvanceOverTotal) {
