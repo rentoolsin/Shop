@@ -342,7 +342,7 @@ export function Dashboard() {
               </p>
               <p className="mt-0.5 font-body text-[11.5px] text-graphite-400">Grouped by rental start date</p>
             </div>
-            <p className="font-mono text-[16px] font-bold text-ink dark:text-ink-inverted">
+            <p className="font-mono text-[16px] font-semibold text-ink dark:text-ink-inverted">
               {revenueTrend ? formatCurrency(revenueTrend.reduce((s, d) => s + d.value, 0)) : ""}
             </p>
           </div>
@@ -477,7 +477,7 @@ export function Dashboard() {
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span
-                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded font-body text-[12px] font-bold text-white"
+                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded font-body text-[12px] font-semibold text-white"
                         style={{ backgroundColor: avatarColor(r.customerName) }}
                       >
                         {initials(r.customerName)}

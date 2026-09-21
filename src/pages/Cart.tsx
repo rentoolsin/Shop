@@ -191,7 +191,7 @@ export function Cart() {
                       </span>
                     )}
                     {item.originalDailyRate != null && item.originalDailyRate > item.dailyRate && (
-                      <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                      <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10px] font-semibold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
                         Save {formatCurrency(item.originalDailyRate - item.dailyRate)}/day
                       </span>
                     )}
@@ -286,7 +286,7 @@ export function Cart() {
                 <span className="font-body text-[11.5px] text-savings-text dark:text-savings-text-dark">
                   Total savings
                 </span>
-                <span className="font-body text-[12.5px] font-bold text-savings-text dark:text-savings-text-dark">
+                <span className="font-body text-[12.5px] font-semibold text-savings-text dark:text-savings-text-dark">
                   {formatCurrency(totalSavingsAmount)}
                 </span>
               </div>
@@ -374,7 +374,7 @@ export function Cart() {
                           </span>
                         )}
                         {item.originalDailyRate != null && item.originalDailyRate > item.dailyRate && (
-                          <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                          <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-semibold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
                             Save {formatCurrency(item.originalDailyRate - item.dailyRate)}/day
                           </span>
                         )}
@@ -490,7 +490,7 @@ export function Cart() {
                       <span className="font-body text-[11.5px] text-savings-text dark:text-savings-text-dark">
                         Total savings
                       </span>
-                      <span className="font-body text-[12.5px] font-bold text-savings-text dark:text-savings-text-dark">
+                      <span className="font-body text-[12.5px] font-semibold text-savings-text dark:text-savings-text-dark">
                         {formatCurrency(totalSavingsAmount)}
                       </span>
                     </div>

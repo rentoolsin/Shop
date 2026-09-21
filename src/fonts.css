@@ -1,0 +1,79 @@
+/* Self-hosted fonts — replaces the Google Fonts <link> in index.html.
+ *
+ * Why self-hosted: the app is installable as a PWA and used in shops with
+ * weak/patchy signal. Fetching from fonts.googleapis.com means the admin
+ * can briefly render in the system fallback font and then reflow once the
+ * Google request completes, and that request can simply fail offline.
+ * Bundling the files lets Vite fingerprint and cache them with the rest of
+ * the app's assets, so they work offline after the first load.
+ *
+ * Files are the same latin, woff2, `font-display: swap` subsets Google
+ * Fonts was serving (sourced from @fontsource), so rendering is unchanged —
+ * only where the bytes come from. Only the weights actually used in
+ * tailwind.config.ts are included: Manrope 500/700/800, Inter 400/500/600,
+ * IBM Plex Mono 500/600.
+ */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/inter-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/inter-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/fonts/inter-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/manrope-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/manrope-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./assets/fonts/manrope-800.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/ibm-plex-mono-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./assets/fonts/ibm-plex-mono-600.woff2") format("woff2");
+}

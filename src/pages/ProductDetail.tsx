@@ -329,7 +329,7 @@ export function ProductDetail() {
                 )}
                 {activeVariant.originalDailyRate != null &&
                   activeVariant.originalDailyRate > activeVariant.dailyRate && (
-                    <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                    <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[10.5px] font-semibold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
                       Save {formatCurrency(activeVariant.originalDailyRate - activeVariant.dailyRate)}/day
                     </span>
                   )}
@@ -598,7 +598,7 @@ export function ProductDetail() {
                       )}
                       {activeVariant.originalDailyRate != null &&
                         activeVariant.originalDailyRate > activeVariant.dailyRate && (
-                          <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[11px] font-bold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
+                          <span className="inline-flex w-fit items-center rounded-full border border-savings-border bg-savings-bg px-2 py-0.5 font-body text-[11px] font-semibold text-savings-text dark:border-savings-border-dark dark:bg-savings-bg-dark dark:text-savings-text-dark">
                             Save {formatCurrency(activeVariant.originalDailyRate - activeVariant.dailyRate)}/day
                           </span>
                         )}

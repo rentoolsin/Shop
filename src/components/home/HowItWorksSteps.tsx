@@ -33,10 +33,10 @@ export function HowItWorksSteps({ steps }: HowItWorksStepsProps) {
             <span className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-graphite-100 shadow-card dark:bg-graphite-800/80">
               <Icon className="h-5 w-5 text-ink dark:text-ink-inverted" weight="regular" />
             </span>
-            <span className="mt-2 font-mono text-[12px] font-bold text-accent-500">
+            <span className="mt-2 font-mono text-[12px] font-semibold text-accent-500">
               {String(index + 1).padStart(2, "0")}
             </span>
-            <p className="mt-1 font-body text-[12.5px] font-bold leading-tight text-ink dark:text-ink-inverted">
+            <p className="mt-1 font-body text-[12.5px] font-semibold leading-tight text-ink dark:text-ink-inverted">
               {step.title}
             </p>
             <p className="mt-1 font-body text-[10.5px] leading-snug text-graphite-500">

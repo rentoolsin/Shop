@@ -73,7 +73,7 @@ export function BottomNavigation() {
                       {showBadge && (
                         <span
                           aria-hidden="true"
-                          className="absolute -right-0.5 -top-3.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-graphite-900 px-1 font-body text-[10px] font-bold leading-none text-white ring-2 ring-white dark:bg-white dark:text-graphite-900 dark:ring-graphite-900"
+                          className="absolute -right-0.5 -top-3.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-graphite-900 px-1 font-body text-[10px] font-semibold leading-none text-white ring-2 ring-white dark:bg-white dark:text-graphite-900 dark:ring-graphite-900"
                         >
                           {badgeLabel}
                         </span>
@@ -95,7 +95,7 @@ export function BottomNavigation() {
                       {showBadge && (
                         <span
                           aria-hidden="true"
-                          className="absolute -right-1 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[9.5px] font-bold leading-none text-white ring-2 ring-white dark:ring-graphite-900"
+                          className="absolute -right-1 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-accent-500 px-1 font-body text-[9.5px] font-semibold leading-none text-white ring-2 ring-white dark:ring-graphite-900"
                         >
                           {badgeLabel}
                         </span>

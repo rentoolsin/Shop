@@ -92,7 +92,7 @@ export function DonutChart({
 
         {centerValue && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <p className="font-mono text-[24px] font-bold leading-none tracking-tight text-ink dark:text-ink-inverted">
+            <p className="font-mono text-[24px] font-semibold leading-none tracking-tight text-ink dark:text-ink-inverted">
               {hovered ? nonZero.find((d) => d.label === hovered)?.value : centerValue}
             </p>
             {centerLabel && (

@@ -25,7 +25,7 @@ export function CategoryCard({ id, name, imageUrl }: CategoryCardProps) {
           </span>
         )}
       </span>
-      <span className="line-clamp-2 px-1.5 pb-3 pt-2 text-center font-body text-[12.5px] font-bold leading-tight text-ink dark:text-ink-inverted">
+      <span className="line-clamp-2 px-1.5 pb-3 pt-2 text-center font-body text-[12.5px] font-semibold leading-tight text-ink dark:text-ink-inverted">
         {name}
       </span>
     </Link>

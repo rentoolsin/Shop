@@ -393,6 +393,14 @@ export interface Database {
         };
         Returns: string;
       };
+      set_rental_advance: {
+        Args: {
+          p_rental_id: string;
+          p_new_total: number;
+          p_reason?: string | null;
+        };
+        Returns: void;
+      };
       delete_rental_payment: {
         Args: {
           p_payment_id: string;

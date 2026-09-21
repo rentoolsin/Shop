@@ -70,7 +70,7 @@ export function KpiCard({ label, value, icon, to, tone = "neutral", delta, inver
         )}
       </div>
 
-      <p className="font-mono text-[28px] font-bold leading-none tracking-tight text-ink dark:text-ink-inverted">
+      <p className="font-mono text-[28px] font-semibold leading-none tracking-tight text-ink dark:text-ink-inverted">
         {value}
       </p>
       <p className="mt-2 font-body text-[13px] font-medium text-graphite-500">{label}</p>

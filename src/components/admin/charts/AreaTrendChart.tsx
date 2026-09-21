@@ -109,7 +109,7 @@ export function AreaTrendChart({
             top: Math.max(0, (hoveredPoint.y / height) * 100 - 16) + "%",
           }}
         >
-          <p className="whitespace-nowrap font-mono text-[13px] font-bold text-ink dark:text-ink-inverted">
+          <p className="whitespace-nowrap font-mono text-[13px] font-semibold text-ink dark:text-ink-inverted">
             {formatValue(hovered.value)}
           </p>
           <p className="whitespace-nowrap font-body text-[10px] text-graphite-500">{hovered.label}</p>
