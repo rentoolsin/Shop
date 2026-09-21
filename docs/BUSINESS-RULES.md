@@ -37,11 +37,21 @@
   mistake), so the history always shows what actually happened.
 - The payment ledger is the only way money on a rental changes. The DB
   rejects any direct change to `advance` (`0029_single_source_payments.sql`).
-  Typing a new value into **Advance received** (Edit / Extend) is turned into
-  a dated payment (higher) or refund (lower) via `set_rental_advance`;
-  lowering requires a reason.
+  In **Edit rental**, payments and refunds are recorded from the Payment
+  history section (saved immediately, independent of Save changes); the
+  received amount there is read-only. In **Extend rental**, typing a new total
+  received is turned into a dated payment (higher) or refund (lower) via
+  `set_rental_advance`; lowering requires a reason.
 - An advance entered when a rental is created is logged automatically as
   "Advance at booking".
+
+## Rental reference
+
+- Every rental has a short sequential number shown as `RNT-0001`, `RNT-0002`, …
+  (`rentals.rental_number`, `0032_rental_number.sql`). It is assigned by the
+  database when the rental is created, never changes, and is never reused —
+  deleting a rental leaves a gap.
+- The rentals list search finds a rental by this number ("RNT-0012" or just "12").
 
 ## Inventory
 
@@ -70,6 +80,6 @@ without re-entry — not yet implemented (admin portal doesn't exist yet).
 
 ## Customers
 
-Looked up by mobile number; selecting an existing customer should
+Looked up by name or mobile number (partial matches work); selecting an existing customer should
 auto-populate their info rather than creating a duplicate — not yet
 implemented (no admin UI yet).

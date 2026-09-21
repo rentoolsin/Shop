@@ -7,6 +7,7 @@ import { useProduct } from "../../../hooks/useProducts";
 import { RentalForm } from "../rentals/RentalForm";
 import { STATUS_LABEL, STATUS_TONE, ENQUIRY_STATUS_TRANSITIONS, REOPEN_TARGET_STATUS } from "../../../utils/enquiry-status";
 import { formatCurrency } from "../../../utils/currency";
+import { toLocalISODate } from "../../../utils/date-range";
 import type { EnquiryStatus } from "../../../types/database";
 import { Button } from "../../../components/ui/Button";
 import { StatusBadge } from "../../../components/ui/StatusBadge";
@@ -35,7 +36,7 @@ function computeReturnDate(requiredDate: string, numberOfDays: number | null): s
   if (!numberOfDays || numberOfDays <= 1) return requiredDate;
   const d = new Date(requiredDate + "T00:00:00");
   d.setDate(d.getDate() + numberOfDays - 1);
-  return d.toISOString().slice(0, 10);
+  return toLocalISODate(d);
 }
 
 /** "Convert to Rental" screen state. See the state machine notes below. */

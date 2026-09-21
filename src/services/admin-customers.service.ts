@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { sanitizeMobile } from "../utils/contact-validation";
 
 export interface AdminCustomer {
   id: string;
@@ -72,6 +73,37 @@ export async function searchCustomersByMobile(mobile: string): Promise<AdminCust
     .ilike("mobile", `%${q}%`)
     .order("created_at", { ascending: false })
     .limit(6);
+  if (error) throw error;
+  return (data ?? []).map(toAdminCustomer);
+}
+
+/**
+ * Customer lookup for the pickers (new rental, purchase request): matches a
+ * partial name OR partial mobile number, so the admin can type either
+ * "Senthil" or "72006". Returns at most 8, newest first.
+ */
+export async function searchCustomers(query: string): Promise<AdminCustomer[]> {
+  const q = query.trim();
+  if (!q) return [];
+  // Drop characters that would break PostgREST's or() syntax or act as LIKE
+  // wildcards (comma, parens, %, *, _, quotes, backslash).
+  const clean = (s: string) => s.replace(/[,()%*_"\\]/g, " ").trim();
+
+  const name = clean(q);
+  const digits = clean(sanitizeMobile(q));
+
+  const filters: string[] = [];
+  if (name) filters.push(`name.ilike.%${name}%`);
+  // Mobile numbers have no letters, so only search them when the text has digits.
+  if (/\d/.test(digits)) filters.push(`mobile.ilike.%${digits}%`);
+  if (filters.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("customers")
+    .select("id, name, mobile, alt_mobile, address, created_at")
+    .or(filters.join(","))
+    .order("created_at", { ascending: false })
+    .limit(8);
   if (error) throw error;
   return (data ?? []).map(toAdminCustomer);
 }

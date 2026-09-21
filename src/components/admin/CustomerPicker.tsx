@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  searchCustomersByMobile,
+  searchCustomers,
   createCustomer,
   type AdminCustomer,
   type CustomerFormValues,
@@ -10,6 +10,15 @@ import { Button } from "../ui/Button";
 import { validateName, validateMobile, sanitizeMobile } from "../../utils/contact-validation";
 
 const DEBOUNCE_MS = 300;
+const HAS_LETTER_RE = /[A-Za-z]/;
+const LOOKS_LIKE_MOBILE_RE = /^[+\d\s().-]+$/;
+
+/** A single letter would match half the customer list, so names need 2+ characters; digits can start at 1. */
+function isSearchable(query: string): boolean {
+  const q = query.trim();
+  if (!q) return false;
+  return HAS_LETTER_RE.test(q) ? q.length >= 2 : true;
+}
 const EMPTY_NEW: CustomerFormValues = { name: "", mobile: "", altMobile: "", address: "" };
 
 interface CustomerPickerProps {
@@ -17,7 +26,7 @@ interface CustomerPickerProps {
   value: AdminCustomer | null;
   onChange: (customer: AdminCustomer | null) => void;
   /**
-   * Pre-fills and immediately searches by this mobile number on mount —
+   * Pre-fills and immediately searches by this text (a mobile number or a name) on mount —
    * used by enquiry → rental conversion to jump straight to "does this
    * enquiry's mobile already match a customer?" instead of an empty box.
    */
@@ -29,7 +38,7 @@ interface CustomerPickerProps {
 }
 
 /**
- * Search-by-mobile → select → auto-populate, or create-inline if no match.
+ * Search by name or mobile → select → auto-populate, or create-inline if no match.
  * Implements the customer lookup behavior described in BUSINESS-RULES.md.
  * Kept generic (not rental-specific) — reused as-is for enquiry → rental
  * conversion (see EnquiryDetail.tsx) via `initialQuery`/`initialName`.
@@ -53,12 +62,12 @@ export function CustomerPicker({
   const newNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(sanitizeMobile(query)), DEBOUNCE_MS);
+    const timer = window.setTimeout(() => setDebounced(query.trim()), DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [query]);
 
   useEffect(() => {
-    if (!debounced.trim()) {
+    if (!isSearchable(debounced)) {
       setResults([]);
       setSearchError(false);
       return;
@@ -66,7 +75,7 @@ export function CustomerPicker({
     let cancelled = false;
     setSearching(true);
     setSearchError(false);
-    searchCustomersByMobile(debounced)
+    searchCustomers(debounced)
       .then((data) => {
         if (!cancelled) setResults(data);
       })
@@ -94,9 +103,11 @@ export function CustomerPicker({
   };
 
   const startCreate = () => {
+    // Carry over what was typed: digits become the mobile number, letters the name.
+    const typedIsMobile = LOOKS_LIKE_MOBILE_RE.test(debounced);
     setNewValues({
-      name: initialName ?? "",
-      mobile: debounced || sanitizeMobile(initialQuery ?? ""),
+      name: initialName ?? (debounced && !typedIsMobile ? debounced : ""),
+      mobile: typedIsMobile ? sanitizeMobile(debounced) : sanitizeMobile(initialQuery ?? ""),
       altMobile: "",
       address: "",
     });
@@ -156,13 +167,14 @@ export function CustomerPicker({
   return (
     <div>
       <Input
-        label="Customer mobile number"
-        type="tel"
-        inputMode="tel"
+        label="Find customer"
+        type="search"
+        inputMode="text"
+        autoComplete="off"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search by mobile number"
-        hint={!creating ? "Type a few digits to find an existing customer." : undefined}
+        placeholder="Search by name or mobile number"
+        hint={!creating ? "Type a name or a few digits of the mobile number." : undefined}
         autoFocus={autoFocus}
       />
 
@@ -176,7 +188,7 @@ export function CustomerPicker({
         </p>
       )}
 
-      {!searching && !searchError && debounced.trim() && results.length > 0 && (
+      {!searching && !searchError && isSearchable(debounced) && results.length > 0 && (
         <div className="mt-2 divide-y divide-graphite-200 rounded border border-graphite-200 dark:divide-graphite-800 dark:border-graphite-800">
           {results.map((customer) => (
             <button
@@ -198,7 +210,7 @@ export function CustomerPicker({
         </div>
       )}
 
-      {!searching && !searchError && debounced.trim() && results.length === 0 && !creating && (
+      {!searching && !searchError && isSearchable(debounced) && results.length === 0 && !creating && (
         <div className="mt-2 flex items-center justify-between gap-3 rounded border border-dashed border-graphite-300 px-3 py-2 dark:border-graphite-700">
           <p className="font-body text-[13px] text-graphite-500">
             No customer matches "{debounced}".
@@ -209,7 +221,7 @@ export function CustomerPicker({
         </div>
       )}
 
-      {!creating && !debounced.trim() && (
+      {!creating && !isSearchable(debounced) && (
         <button
           type="button"
           onClick={startCreate}

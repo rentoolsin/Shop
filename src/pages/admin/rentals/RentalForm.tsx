@@ -23,9 +23,10 @@ import { Select } from "../../../components/ui/Select";
 import { DatePicker } from "../../../components/ui/DatePicker";
 import { Button } from "../../../components/ui/Button";
 import { useToast } from "../../../components/ui/Toast";
+import { todayISO } from "../../../utils/date-range";
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayISO();
 }
 
 function parseNumeric(value: string): number {

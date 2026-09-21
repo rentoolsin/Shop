@@ -141,6 +141,8 @@ export interface Database {
           discount_reason: string | null;
           /** Groups rentals created together in one multi-tool checkout. See 0027_rentals_checkout_group.sql. */
           checkout_group_id: string | null;
+          /** Sequential number shown as RNT-0001. Assigned by the DB, never changes. See 0032_rental_number.sql. */
+          rental_number: number;
         };
         Insert: Partial<Database["public"]["Tables"]["rentals"]["Row"]> & {
           customer_id: string;

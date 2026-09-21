@@ -1,9 +1,12 @@
 import { supabase } from "../lib/supabase";
 import type { PaymentKind, PaymentMethod, RentalStatus } from "../types/database";
 import { calculateRentalTotals } from "../utils/rental-calculations";
+import { todayISO } from "../utils/date-range";
 
 export interface AdminRentalListItem {
   id: string;
+  /** Sequential number, shown as RNT-0001 (see 0032_rental_number.sql). */
+  rentalNumber: number;
   customerId: string;
   customerName: string;
   customerMobile: string;
@@ -65,6 +68,7 @@ export interface RentalFormValues {
 // joins already used elsewhere in the codebase.
 interface RawRentalRow {
   id: string;
+  rental_number: number;
   quantity: number;
   start_date: string;
   return_date: string;
@@ -95,6 +99,7 @@ function toListItem(row: RawRentalRow): AdminRentalListItem {
 
   return {
     id: row.id,
+    rentalNumber: row.rental_number,
     customerId: row.customers?.id ?? "",
     customerName: row.customers?.name ?? "Unknown customer",
     customerMobile: row.customers?.mobile ?? "",
@@ -123,7 +128,7 @@ export async function fetchAllRentals(): Promise<AdminRentalListItem[]> {
     .from("rentals")
     .select(
       "id, quantity, start_date, return_date, daily_rate, advance, status, actual_return_date, " +
-        "discount, discount_reason, checkout_group_id, " +
+        "rental_number, discount, discount_reason, checkout_group_id, " +
         "customers(id, name, mobile), product_variants(id, label, products(name, image_url))",
     )
     .order("created_at", { ascending: false });
@@ -267,7 +272,7 @@ export async function extendRental(
 }
 
 export async function returnRental(id: string): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const { error } = await supabase
     .from("rentals")
     .update({ status: "returned", actual_return_date: today })
@@ -309,16 +314,15 @@ export interface RentalUpdateValues {
   startDate: string;
   returnDate: string;
   dailyRate: number;
-  advance: number;
-  /** Required by the DB when `advance` is being lowered. */
-  advanceReason?: string;
   /** Optional — omit to leave the stored discount unchanged. */
   discount?: number;
   discountReason?: string | null;
 }
 
 /**
- * Full edit of a rental's core terms (quantity, dates, rate, advance).
+ * Full edit of a rental's core terms (quantity, dates, rate, discount).
+ * Money received is not edited here — it changes only by recording a payment
+ * or refund (see `recordRentalPayment` / `recordRentalRefund`).
  * Product/variant/customer are intentionally not editable here — swapping
  * those out from under an existing rental would bypass the inventory
  * trigger's original allocation, so those fields stay fixed for the life
@@ -337,9 +341,6 @@ export async function updateRental(id: string, values: RentalUpdateValues): Prom
     })
     .eq("id", id);
   if (error) throw error;
-  // `advance` is never written directly (guarded in the DB by 0029) — any
-  // change is logged as a payment or refund.
-  await setRentalAdvance(id, values.advance, values.advanceReason);
 }
 
 /** Permanently removes a rental record (distinct from `cancelRental`, which just changes status). */

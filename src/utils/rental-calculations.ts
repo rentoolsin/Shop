@@ -5,6 +5,8 @@
  * supabase/migrations/0001_init_schema.sql, which is the enforcement layer.
  */
 
+import { toLocalISODate } from "./date-range";
+
 export interface RentalInput {
   startDate: string; // ISO date, e.g. "2026-08-13"
   returnDate: string; // ISO date
@@ -165,7 +167,9 @@ export function deriveDisplayStatus(
   today: Date = new Date(),
 ): RentalDisplayStatus {
   if (status !== "active") return status;
-  const todayStr = today.toISOString().slice(0, 10);
+  // Local calendar date, not UTC — `toISOString()` would make "today" the previous
+  // day for the first hours after midnight in any timezone ahead of UTC (e.g. IST).
+  const todayStr = toLocalISODate(today);
   if (returnDate < todayStr) return "overdue";
   if (returnDate === todayStr) return "due_today";
   return "active";

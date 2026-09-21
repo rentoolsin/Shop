@@ -180,7 +180,7 @@ export function Select({
             anchorRef={rootRef}
             popupRef={popupRef}
             matchAnchorWidth
-            maxHeight={240}
+            maxHeight={320}
             className="rounded border border-graphite-200 bg-white p-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900"
           >
           <ul

@@ -18,6 +18,7 @@ import {
 } from "../../../services/admin-rentals.service";
 import type { PaymentKind, PaymentMethod } from "../../../types/database";
 import {
+  calculateRentalDays,
   calculateRentalTotals,
   validateRentalInput,
   describeRentalError,
@@ -26,6 +27,7 @@ import {
   type RentalDisplayStatus,
 } from "../../../utils/rental-calculations";
 import { formatCurrency } from "../../../utils/currency";
+import { toLocalISODate } from "../../../utils/date-range";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { SearchBar } from "../../../components/ui/SearchBar";
@@ -58,16 +60,6 @@ const STATUS_TONE: Record<RentalDisplayStatus, "neutral" | "success" | "warning"
   cancelled: "neutral",
 };
 
-// Rows needing action float to the top; rentals that are already settled
-// (returned/cancelled) sink to the bottom so a page of mostly-closed-out
-// rentals doesn't bury the couple that still need attention today.
-const STATUS_SORT_PRIORITY: Record<RentalDisplayStatus, number> = {
-  overdue: 0,
-  due_today: 1,
-  active: 2,
-  returned: 3,
-  cancelled: 4,
-};
 
 /** Balance text color, weighted by how urgent the underlying rental is — an
  * amount due on an overdue/due-today rental should read as more pressing
@@ -114,9 +106,27 @@ function CheckCircleIcon() {
   return <CheckCircle className="h-4 w-4" weight="light" aria-hidden="true" />;
 }
 
-/** Friendly display reference for a rental — derived from the real record id, never invented. */
-function rentalReference(id: string) {
-  return `RNT-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+/** Display reference for a rental, e.g. RNT-0012 — the DB-assigned sequential number (0032), never invented. */
+function rentalReference(rentalNumber: number) {
+  return `RNT-${String(rentalNumber).padStart(4, "0")}`;
+}
+
+/**
+ * Does the search text refer to this rental by its number? Accepts the bare
+ * number ("12", exact), the reference with any number of leading zeros
+ * ("RNT-12", "rnt0012"), or the start of a reference ("rnt-001" also matches
+ * 0010–0019).
+ */
+function matchesRentalReference(rentalNumber: number, query: string): boolean {
+  const compact = query.replace(/[\s-]/g, "").toLowerCase();
+  if (!compact) return false;
+  if (compact.startsWith("rnt")) {
+    const rest = compact.slice(3);
+    if (/^\d+$/.test(rest) && Number(rest) === rentalNumber) return true;
+    return rentalReference(rentalNumber).replace("-", "").toLowerCase().startsWith(compact);
+  }
+  if (/^\d+$/.test(compact)) return Number(compact) === rentalNumber;
+  return false;
 }
 
 /**
@@ -141,6 +151,78 @@ function CheckoutGroupNote({ current, siblings }: { current: AdminRentalListItem
 }
 
 type Row = AdminRentalListItem & { displayStatus: RentalDisplayStatus };
+
+/**
+ * List order: rows that need action float to the top, closed-out ones sink.
+ *   1. Overdue — most days late first
+ *   2. Due today — biggest balance first
+ *   3. Returned, but money still to settle (balance due, or a refund owed) —
+ *      most recently returned first, so a fresh return with unpaid rent isn't
+ *      buried under every active rental
+ *   4. Active — returning soonest first
+ *   5. Returned and fully settled — most recently returned first
+ *   6. Cancelled
+ * Ties keep the database order (newest created first).
+ */
+/** Returned, but money is still open — rent still owed, or a refund still to hand back. */
+function isUnsettledReturn(r: Row): boolean {
+  return r.displayStatus === "returned" && Math.abs(r.balance) >= 0.005;
+}
+
+type StatusFilter = "all" | RentalDisplayStatus | "to_settle";
+
+/** Filter dropdown order — same priority as the list itself, most urgent first. */
+const STATUS_FILTER_OPTIONS: { value: Exclude<StatusFilter, "all">; label: string }[] = [
+  { value: "overdue", label: STATUS_LABEL.overdue },
+  { value: "due_today", label: STATUS_LABEL.due_today },
+  { value: "to_settle", label: "Returned – to settle" },
+  { value: "active", label: STATUS_LABEL.active },
+  { value: "returned", label: STATUS_LABEL.returned },
+  { value: "cancelled", label: STATUS_LABEL.cancelled },
+];
+
+function sortRank(r: Row): number {
+  switch (r.displayStatus) {
+    case "overdue":
+      return 0;
+    case "due_today":
+      return 1;
+    case "returned":
+      return isUnsettledReturn(r) ? 2 : 4;
+    case "active":
+      return 3;
+    default:
+      return 5;
+  }
+}
+
+function compareRows(a: Row, b: Row): number {
+  const byRank = sortRank(a) - sortRank(b);
+  if (byRank !== 0) return byRank;
+  // Same rank means same status (returned splits by rank, so both are settled or both aren't).
+  switch (a.displayStatus) {
+    case "overdue":
+    case "active":
+      return a.returnDate.localeCompare(b.returnDate);
+    case "due_today":
+      return b.balance - a.balance;
+    case "returned":
+      return (b.actualReturnDate ?? b.returnDate).localeCompare(a.actualReturnDate ?? a.returnDate);
+    default:
+      return 0;
+  }
+}
+
+/** Small pill showing a rental's length ("3 days") — inclusive, same as the rent maths. */
+function DaysBadge({ startDate, returnDate }: { startDate: string; returnDate: string }) {
+  const days = calculateRentalDays(startDate, returnDate);
+  if (!Number.isFinite(days) || days < 1) return null;
+  return (
+    <span className="flex-shrink-0 rounded bg-graphite-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-ink dark:bg-graphite-800 dark:text-ink-inverted">
+      {days} {days === 1 ? "day" : "days"}
+    </span>
+  );
+}
 
 type PaymentsState = ReturnType<typeof useAdminRentalPayments>;
 
@@ -268,7 +350,7 @@ function PaymentHistoryList({
 export function RentalsList() {
   const rentals = useAdminRentals();
   const { showToast } = useToast();
-  const [statusFilter, setStatusFilter] = useState<"all" | RentalDisplayStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
 
   const [extending, setExtending] = useState<Row | null>(null);
@@ -298,8 +380,6 @@ export function RentalsList() {
   const [editStartDate, setEditStartDate] = useState("");
   const [editReturnDate, setEditReturnDate] = useState("");
   const [editDailyRate, setEditDailyRate] = useState(0);
-  const [editAdvance, setEditAdvance] = useState(0);
-  const [editAdvanceReason, setEditAdvanceReason] = useState("");
   // Kept as the raw input strings so the fields can be blank; parsed on
   // save. Unlike "Discount given now" in the Mark-returned popup (which is
   // *added* to the existing discount), this is the rental's total discount.
@@ -322,6 +402,8 @@ export function RentalsList() {
   // Same mini-form records either money received or money given back.
   const [payKind, setPayKind] = useState<PaymentKind>("payment");
   const paymentFormRef = useRef<HTMLDivElement>(null);
+  // Set when Edit is opened from the "Record refund" shortcut, so the form is scrolled into view.
+  const scrollToPaymentRef = useRef(false);
   const [payNotes, setPayNotes] = useState("");
   const [payError, setPayError] = useState<string | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
@@ -354,13 +436,21 @@ export function RentalsList() {
   const rows: Row[] = useMemo(() => {
     return data
       .map((r) => ({ ...r, displayStatus: deriveDisplayStatus(r.status, r.returnDate) }))
-      .filter((r) => statusFilter === "all" || r.displayStatus === statusFilter)
+      .filter((r) => {
+        if (statusFilter === "all") return true;
+        if (statusFilter === "to_settle") return isUnsettledReturn(r);
+        return r.displayStatus === statusFilter;
+      })
       .filter((r) => {
         const q = query.trim().toLowerCase();
         if (!q) return true;
-        return r.customerName.toLowerCase().includes(q) || r.customerMobile.includes(q);
+        return (
+          r.customerName.toLowerCase().includes(q) ||
+          r.customerMobile.includes(q) ||
+          matchesRentalReference(r.rentalNumber, q)
+        );
       })
-      .sort((a, b) => STATUS_SORT_PRIORITY[a.displayStatus] - STATUS_SORT_PRIORITY[b.displayStatus]);
+      .sort(compareRows);
   }, [data, statusFilter, query]);
 
   const { pageItems, page, pageCount, setPage, totalCount, pageSize } = usePagination(rows, {
@@ -377,13 +467,20 @@ export function RentalsList() {
     return fresh ? { ...fresh, displayStatus: deriveDisplayStatus(fresh.status, fresh.returnDate) } : viewing;
   }, [viewing, data]);
 
-  // `advance` is a single running total that can also be edited directly
-  // (Edit/Extend forms, as a deliberate manual override — see
-  // 0020_rental_payments.sql). The itemized list below only reflects
-  // amounts logged through "Record a payment", so the two can legitimately
-  // differ (e.g. an advance taken before this feature existed, or a manual
-  // correction). Surface that gap instead of leaving the balance math
-  // silently unexplained against what's listed.
+  // Same idea for the Edit popup: payments are recorded from inside it, so
+  // "received so far" must follow the latest fetched data, not the snapshot
+  // taken when Edit was opened.
+  const editingLive: Row | null = useMemo(() => {
+    if (!editing) return null;
+    const fresh = data.find((r) => r.id === editing.id);
+    return fresh ? { ...fresh, displayStatus: deriveDisplayStatus(fresh.status, fresh.returnDate) } : editing;
+  }, [editing, data]);
+  // Read-only: money only changes by recording a payment or refund.
+  const editAdvance = editingLive?.advance ?? editing?.advance ?? 0;
+
+  // Rentals from before the payment ledger existed can have an advance the
+  // itemized list doesn't fully explain (0029 backfills these, but keep
+  // surfacing any gap rather than leaving the balance math unexplained).
   const unitemizedAdvance = useMemo(
     () => (viewingLive ? unitemizedAmount(viewingLive.advance, payments) : 0),
     [viewingLive, payments],
@@ -512,7 +609,7 @@ export function RentalsList() {
         await recordRentalRefund({
           rentalId: returning.id,
           amount,
-          paymentDate: new Date().toISOString().slice(0, 10),
+          paymentDate: toLocalISODate(new Date()),
           method: returnMethod,
           notes: returnNotes.trim() || "Refunded at return",
         });
@@ -532,7 +629,7 @@ export function RentalsList() {
         await recordRentalPayment({
           rentalId: returning.id,
           amount,
-          paymentDate: new Date().toISOString().slice(0, 10),
+          paymentDate: toLocalISODate(new Date()),
           method: returnMethod,
           notes: returnNotes.trim() || "Collected at return",
         });
@@ -572,18 +669,34 @@ export function RentalsList() {
     }
   };
 
-  const startEdit = (row: Row) => {
+  const startEdit = (row: Row, options?: { refund?: boolean }) => {
     setEditing(row);
     setEditQuantity(row.quantity);
     setEditStartDate(row.startDate);
     setEditReturnDate(row.returnDate);
     setEditDailyRate(row.dailyRate);
-    setEditAdvance(row.advance);
-    setEditAdvanceReason("");
     setEditDiscount(row.discount > 0 ? String(row.discount) : "");
     setEditDiscountReason(row.discountReason ?? "");
     setEditError(null);
+
+    // Fresh "record a payment" form for this rental. `options.refund` (from the
+    // "refund due" banner) opens it in refund mode with the amount owed filled in.
+    const isRefund = !!options?.refund;
+    setPayKind(isRefund ? "refund" : "payment");
+    setPayAmount(isRefund && row.balance < 0 ? String(Math.abs(row.balance)) : "");
+    setPayDate(toLocalISODate(new Date()));
+    setPayMethod("cash");
+    setPayNotes("");
+    setPayError(null);
+    scrollToPaymentRef.current = isRefund;
   };
+
+  useEffect(() => {
+    if (editing && scrollToPaymentRef.current) {
+      scrollToPaymentRef.current = false;
+      paymentFormRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }
+  }, [editing]);
 
   // Live value for the summary box; the strict check (and its message)
   // happens in handleEditSave.
@@ -621,10 +734,6 @@ export function RentalsList() {
       setEditError(describeRentalError(businessErrors[0]));
       return;
     }
-    if (editAdvance < editing.advance && !editAdvanceReason.trim()) {
-      setEditError("Add a reason for lowering the amount received.");
-      return;
-    }
     setSavingEdit(true);
     try {
       await updateRental(editing.id, {
@@ -632,8 +741,6 @@ export function RentalsList() {
         startDate: editStartDate,
         returnDate: editReturnDate,
         dailyRate: editDailyRate,
-        advance: editAdvance,
-        advanceReason: editAdvanceReason,
         discount: discountAmount,
         // A reason only makes sense alongside a discount.
         discountReason: discountAmount > 0 ? editDiscountReason.trim() || null : null,
@@ -663,31 +770,8 @@ export function RentalsList() {
     }
   };
 
-  // Reset the "record payment" mini-form whenever a different rental's
-  // details popup opens (or it closes), so a half-filled form never
-  // leaks onto the next rental.
-  useEffect(() => {
-    setPayAmount("");
-    setPayDate(new Date().toISOString().slice(0, 10));
-    setPayMethod("cash");
-    setPayKind("payment");
-    setPayNotes("");
-    setPayError(null);
-  }, [viewing?.id]);
-
-  // "Refund due" banner shortcut: flip the form below into refund mode with
-  // the amount owed pre-filled, so settling it is confirm-and-save.
-  const startRefundEntry = () => {
-    if (!viewingLive) return;
-    setPayKind("refund");
-    setPayAmount(String(Math.abs(viewingLive.balance)));
-    setPayDate(new Date().toISOString().slice(0, 10));
-    setPayError(null);
-    paymentFormRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-  };
-
   const handleRecordPayment = async () => {
-    if (!viewing || savingPayment) return;
+    if (!editing || savingPayment) return;
     const isRefund = payKind === "refund";
     const amount = Number(payAmount);
     if (!payAmount || Number.isNaN(amount) || amount <= 0) {
@@ -698,8 +782,8 @@ export function RentalsList() {
       setPayError(isRefund ? "Choose the date this refund was given." : "Choose the date this payment was made.");
       return;
     }
-    if (isRefund && viewingLive && amount > viewingLive.advance) {
-      setPayError(`A refund can't be more than the ${formatCurrency(viewingLive.advance)} received so far.`);
+    if (isRefund && amount > editAdvance) {
+      setPayError(`A refund can't be more than the ${formatCurrency(editAdvance)} received so far.`);
       return;
     }
     setPayError(null);
@@ -707,7 +791,7 @@ export function RentalsList() {
     try {
       const record = isRefund ? recordRentalRefund : recordRentalPayment;
       await record({
-        rentalId: viewing.id,
+        rentalId: editing.id,
         amount,
         paymentDate: payDate,
         method: payMethod,
@@ -778,17 +862,17 @@ export function RentalsList() {
         <SearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Search by customer or mobile"
-          aria-label="Search by customer name or mobile"
+          placeholder="Search name, mobile or RNT no."
+          aria-label="Search by customer name, mobile number or rental number"
         />
         <Select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "all" | RentalDisplayStatus)}
-          className="sm:w-44"
+          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          className="sm:w-56"
         >
           <option value="all">All statuses</option>
-          {(Object.keys(STATUS_LABEL) as RentalDisplayStatus[]).map((s) => (
-            <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+          {STATUS_FILTER_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </Select>
       </div>
@@ -883,7 +967,7 @@ export function RentalsList() {
                         onClick={() => setViewing(rental)}
                         className="font-mono text-[11.5px] text-graphite-400 hover:underline"
                       >
-                        {rentalReference(rental.id)}
+                        {rentalReference(rental.rentalNumber)}
                       </button>
                       {rental.checkoutGroupId && (
                         <CheckoutGroupNote
@@ -897,9 +981,12 @@ export function RentalsList() {
                   {/* Full card width now — no longer squeezed by the header
                       row's status/chevron column, which is what was
                       wrapping the date range mid-word on narrow phones. */}
-                  <p className="mt-2 flex items-center gap-1 font-body text-[12px] text-graphite-500">
+                  <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 font-body text-[12px] text-graphite-500">
                     <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                    {rental.startDate} → {rental.returnDate}
+                    <span>
+                      {rental.startDate} → {rental.returnDate}
+                    </span>
+                    <DaysBadge startDate={rental.startDate} returnDate={rental.returnDate} />
                   </p>
 
                   <div className="mt-2 flex items-center justify-between border-t border-graphite-100 pt-2.5 font-mono text-[12.5px] text-ink dark:border-graphite-800 dark:text-ink-inverted">
@@ -1052,7 +1139,7 @@ export function RentalsList() {
                               {rental.productName}
                             </span>
                             <span className="block font-mono text-[11px] text-graphite-400">
-                              {rentalReference(rental.id)}
+                              {rentalReference(rental.rentalNumber)}
                               {rental.variantLabel ? ` · ${rental.variantLabel}` : ""}
                             </span>
                             {rental.checkoutGroupId && (
@@ -1069,7 +1156,10 @@ export function RentalsList() {
                         <span className="block font-mono text-[11.5px] text-graphite-400">{rental.customerMobile}</span>
                       </TableCell>
                       <TableCell className="font-mono text-[12px] text-graphite-500 whitespace-nowrap">
-                        {rental.startDate} → {rental.returnDate}
+                        <span className="mr-1.5">
+                          {rental.startDate} → {rental.returnDate}
+                        </span>
+                        <DaysBadge startDate={rental.startDate} returnDate={rental.returnDate} />
                       </TableCell>
                       <TableCell>
                         <StatusBadge
@@ -1228,20 +1318,6 @@ export function RentalsList() {
                 onChange={setEditReturnDate}
               />
             </div>
-            <Input
-              label="Advance received (₹)"
-              type="number"
-              min={0}
-              value={editAdvance}
-              onChange={(e) => setEditAdvance(Number(e.target.value))}
-              hint="Type the new total received. The difference is logged in payment history. To choose a method (UPI, card…) use “Record a payment” in the rental's details."
-            />
-            <AdvanceChangeNote
-              current={editing.advance}
-              next={editAdvance}
-              reason={editAdvanceReason}
-              onReasonChange={setEditAdvanceReason}
-            />
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Discount (₹)"
@@ -1293,8 +1369,81 @@ export function RentalsList() {
             <div className="space-y-2 border-t border-graphite-200 pt-3 dark:border-graphite-800">
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
               <PaymentHistoryList payments={payments} unitemized={unitemizedAmount(editAdvance, payments)} />
+              <div
+                ref={paymentFormRef}
+                className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-body text-[12px] font-medium text-graphite-500">
+                    {payKind === "refund" ? "Record a refund" : "Record a payment"}
+                  </p>
+                  <div
+                    role="group"
+                    aria-label="Entry type"
+                    className="flex gap-0.5 rounded bg-graphite-100 p-0.5 dark:bg-graphite-800"
+                  >
+                    {(["payment", "refund"] as const).map((kind) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        aria-pressed={payKind === kind}
+                        onClick={() => setPayKind(kind)}
+                        className={[
+                          "rounded px-2.5 py-1 font-body text-[12px] font-medium",
+                          payKind === kind
+                            ? "bg-white text-ink shadow-sm dark:bg-graphite-900 dark:text-ink-inverted"
+                            : "text-graphite-500",
+                        ].join(" ")}
+                      >
+                        {kind === "payment" ? "Payment" : "Refund"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label={payKind === "refund" ? "Amount refunded (₹)" : "Amount (₹)"}
+                    type="number"
+                    min={0}
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                  />
+                  <DatePicker
+                    label={payKind === "refund" ? "Date refunded" : "Date paid"}
+                    value={payDate}
+                    onChange={setPayDate}
+                  />
+                  <div className="col-span-2">
+                    <Select
+                      label="Method"
+                      value={payMethod}
+                      onChange={(e) => setPayMethod(e.target.value as PaymentMethod)}
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="upi">UPI</option>
+                      <option value="card">Card</option>
+                      <option value="bank_transfer">Bank transfer</option>
+                      <option value="other">Other</option>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Input
+                      label="Note (optional)"
+                      value={payNotes}
+                      onChange={(e) => setPayNotes(e.target.value)}
+                      placeholder={payKind === "refund" ? "e.g. Refunded in cash" : "e.g. Paid after return"}
+                    />
+                  </div>
+                </div>
+                {payError && (
+                  <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{payError}</p>
+                )}
+                <Button size="sm" fullWidth onClick={handleRecordPayment} disabled={savingPayment}>
+                  {savingPayment ? "Saving…" : payKind === "refund" ? "Add refund" : "Add payment"}
+                </Button>
+              </div>
               <p className="font-body text-[12px] text-graphite-400">
-                To record a payment or refund, open the rental's details.
+                Payments and refunds are saved as soon as you add them — Cancel won't undo them.
               </p>
             </div>
             {editError && (
@@ -1329,7 +1478,7 @@ export function RentalsList() {
                 <p className="truncate font-display text-[15px] font-bold uppercase tracking-tight text-ink dark:text-ink-inverted">
                   {viewingLive.productName}
                 </p>
-                <p className="font-mono text-[12px] text-graphite-400">{rentalReference(viewingLive.id)}</p>
+                <p className="font-mono text-[12px] text-graphite-400">{rentalReference(viewingLive.rentalNumber)}</p>
                 <StatusBadge
                   label={STATUS_LABEL[viewingLive.displayStatus]}
                   tone={STATUS_TONE[viewingLive.displayStatus]}
@@ -1417,7 +1566,12 @@ export function RentalsList() {
                   <span className="font-semibold">{formatCurrency(Math.abs(viewingLive.balance))}</span> is owed back to
                   the customer. Already handed it over? Record it so this clears.
                 </p>
-                <Button size="sm" variant="secondary" onClick={startRefundEntry} className="flex-shrink-0">
+                <Button size="sm" variant="secondary" onClick={() => {
+                    const row = viewingLive;
+                    setViewing(null);
+                    startEdit(row, { refund: true });
+                  }}
+                  className="flex-shrink-0">
                   Record refund
                 </Button>
               </div>
@@ -1428,79 +1582,9 @@ export function RentalsList() {
 
               <PaymentHistoryList payments={payments} unitemized={unitemizedAdvance} />
 
-              <div
-                ref={paymentFormRef}
-                className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-body text-[12px] font-medium text-graphite-500">
-                    {payKind === "refund" ? "Record a refund" : "Record a payment"}
-                  </p>
-                  <div
-                    role="group"
-                    aria-label="Entry type"
-                    className="flex gap-0.5 rounded bg-graphite-100 p-0.5 dark:bg-graphite-800"
-                  >
-                    {(["payment", "refund"] as const).map((kind) => (
-                      <button
-                        key={kind}
-                        type="button"
-                        aria-pressed={payKind === kind}
-                        onClick={() => setPayKind(kind)}
-                        className={[
-                          "rounded px-2.5 py-1 font-body text-[12px] font-medium",
-                          payKind === kind
-                            ? "bg-white text-ink shadow-sm dark:bg-graphite-900 dark:text-ink-inverted"
-                            : "text-graphite-500",
-                        ].join(" ")}
-                      >
-                        {kind === "payment" ? "Payment" : "Refund"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                  <Input
-                    label={payKind === "refund" ? "Amount refunded (₹)" : "Amount (₹)"}
-                    type="number"
-                    min={0}
-                    value={payAmount}
-                    onChange={(e) => setPayAmount(e.target.value)}
-                  />
-                  <DatePicker
-                    label={payKind === "refund" ? "Date refunded" : "Date paid"}
-                    value={payDate}
-                    onChange={setPayDate}
-                  />
-                  <div className="col-span-2 md:col-span-1">
-                    <Select
-                      label="Method"
-                      value={payMethod}
-                      onChange={(e) => setPayMethod(e.target.value as PaymentMethod)}
-                    >
-                      <option value="cash">Cash</option>
-                      <option value="upi">UPI</option>
-                      <option value="card">Card</option>
-                      <option value="bank_transfer">Bank transfer</option>
-                      <option value="other">Other</option>
-                    </Select>
-                  </div>
-                  <div className="col-span-2 md:col-span-1">
-                    <Input
-                      label="Note (optional)"
-                      value={payNotes}
-                      onChange={(e) => setPayNotes(e.target.value)}
-                      placeholder={payKind === "refund" ? "e.g. Refunded in cash" : "e.g. Paid after return"}
-                    />
-                  </div>
-                </div>
-                {payError && (
-                  <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{payError}</p>
-                )}
-                <Button size="sm" fullWidth onClick={handleRecordPayment} disabled={savingPayment}>
-                  {savingPayment ? "Saving…" : payKind === "refund" ? "Add refund" : "Add payment"}
-                </Button>
-              </div>
+              <p className="font-body text-[12px] text-graphite-400">
+                To record a payment or refund, tap Edit.
+              </p>
             </div>
 
             <div className="flex gap-2 pt-1">
