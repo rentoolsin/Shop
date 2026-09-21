@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { baseFieldClass } from "./form-field";
+import { FloatingPopup } from "./FloatingPopup";
 
 interface SelectProps {
   label?: string;
@@ -86,6 +87,7 @@ export function Select({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   const selectedIndex = options.findIndex((o) => o.value === String(value ?? ""));
   const selected = selectedIndex >= 0 ? options[selectedIndex] : options[0];
@@ -93,7 +95,10 @@ export function Select({
   useEffect(() => {
     if (!open) return;
     function handlePointerDown(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // The list is portalled to <body>, so it is outside rootRef in the DOM.
+      if (rootRef.current?.contains(target) || popupRef.current?.contains(target)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
@@ -120,7 +125,9 @@ export function Select({
       return;
     }
     if (e.key === "Escape") {
+      // Close only the list — not a dialog it may be sitting in.
       e.preventDefault();
+      e.stopPropagation();
       setOpen(false);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -169,11 +176,18 @@ export function Select({
         </button>
 
         {open && (
+          <FloatingPopup
+            anchorRef={rootRef}
+            popupRef={popupRef}
+            matchAnchorWidth
+            maxHeight={240}
+            className="rounded border border-graphite-200 bg-white p-1 shadow-raised dark:border-graphite-800 dark:bg-graphite-900"
+          >
           <ul
             role="listbox"
             tabIndex={-1}
             aria-activedescendant={fieldId && options[activeIndex] ? `${fieldId}-opt-${activeIndex}` : undefined}
-            className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded border border-graphite-200 bg-white p-1 shadow-raised outline-none dark:border-graphite-800 dark:bg-graphite-900"
+            className="outline-none"
           >
             {options.map((option, index) => {
               const isSelected = index === selectedIndex;
@@ -200,6 +214,7 @@ export function Select({
               );
             })}
           </ul>
+          </FloatingPopup>
         )}
       </div>
       {error && (

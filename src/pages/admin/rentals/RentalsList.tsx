@@ -13,7 +13,6 @@ import {
   syncOpenRentalStatuses,
   recordRentalPayment,
   recordRentalRefund,
-  deleteRentalPayment,
   paymentMethodLabel,
   type AdminRentalListItem,
 } from "../../../services/admin-rentals.service";
@@ -159,27 +158,60 @@ function unitemizedAmount(advance: number, payments: PaymentsState): number {
 }
 
 /**
- * A rental's payment ledger. Shared by the details popup (which passes
- * `onRemove` so each row gets a Remove button) and the Edit popup (which
- * doesn't, so it's a read-only reference while adjusting advance/discount).
+ * Shown under an "advance received" field when its value differs from what's
+ * stored. Money only changes through the payment ledger, so a changed total is
+ * logged as a dated payment (higher) or refund (lower) — this makes that
+ * visible before saving, and asks for a reason when lowering.
+ */
+function AdvanceChangeNote({
+  current,
+  next,
+  reason,
+  onReasonChange,
+}: {
+  current: number;
+  next: number;
+  reason: string;
+  onReasonChange: (value: string) => void;
+}) {
+  const delta = Math.round((next - current) * 100) / 100;
+  if (!Number.isFinite(delta) || delta === 0) return null;
+  const isRefund = delta < 0;
+  return (
+    <div className="space-y-2">
+      <p className="rounded border border-graphite-200 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-graphite-800 dark:bg-graphite-800/60 dark:text-graphite-400">
+        Will be logged in payment history as a {formatCurrency(Math.abs(delta))}{" "}
+        {isRefund ? "refund" : "payment"} dated today.
+      </p>
+      <Input
+        label={isRefund ? "Reason for lowering (required)" : "Note (optional)"}
+        value={reason}
+        onChange={(e) => onReasonChange(e.target.value)}
+        placeholder={isRefund ? "e.g. Entered wrong amount" : "e.g. Paid after return"}
+      />
+    </div>
+  );
+}
+
+/**
+ * A rental's payment ledger, shared by the details and Edit popups. It is
+ * append-only: entries are never edited or removed (0030), so it is always a
+ * true record of what happened. A mistake is corrected by recording a refund
+ * or another payment.
  */
 function PaymentHistoryList({
   payments,
   unitemized,
-  onRemove,
-  removingId,
 }: {
   payments: PaymentsState;
   unitemized: number;
-  onRemove?: (paymentId: string) => void;
-  removingId?: string | null;
 }) {
   return (
     <>
       {unitemized > 0 && (
         <p className="rounded border border-graphite-200 bg-graphite-50 px-3 py-2 font-body text-[12px] text-graphite-500 dark:border-graphite-800 dark:bg-graphite-800/60 dark:text-graphite-400">
-          {formatCurrency(unitemized)} of the advance isn't itemized below — likely entered directly
-          via Edit/Extend rather than "Record a payment".
+          {formatCurrency(unitemized)} of the advance isn't itemized below — recorded before the payment
+          history existed.
         </p>
       )}
 
@@ -219,19 +251,15 @@ function PaymentHistoryList({
                   {p.notes ? ` · ${p.notes}` : ""}
                 </p>
               </div>
-              {onRemove && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(p.id)}
-                  disabled={removingId === p.id}
-                  className="flex-shrink-0 font-body text-[12px] font-medium text-state-danger-text hover:underline disabled:opacity-60 dark:text-state-danger-text-dark"
-                >
-                  {removingId === p.id ? "Removing…" : "Remove"}
-                </button>
-              )}
             </div>
           ))}
         </div>
+      )}
+
+      {payments.status === "success" && payments.data.length > 0 && (
+        <p className="font-body text-[12px] text-graphite-400">
+          Entries can't be edited or removed. To correct a mistake, record a refund or another payment.
+        </p>
       )}
     </>
   );
@@ -246,6 +274,7 @@ export function RentalsList() {
   const [extending, setExtending] = useState<Row | null>(null);
   const [extendReturnDate, setExtendReturnDate] = useState("");
   const [extendAdvance, setExtendAdvance] = useState(0);
+  const [extendAdvanceReason, setExtendAdvanceReason] = useState("");
   const [extendError, setExtendError] = useState<string | null>(null);
   const [savingExtend, setSavingExtend] = useState(false);
 
@@ -270,6 +299,7 @@ export function RentalsList() {
   const [editReturnDate, setEditReturnDate] = useState("");
   const [editDailyRate, setEditDailyRate] = useState(0);
   const [editAdvance, setEditAdvance] = useState(0);
+  const [editAdvanceReason, setEditAdvanceReason] = useState("");
   // Kept as the raw input strings so the fields can be blank; parsed on
   // save. Unlike "Discount given now" in the Mark-returned popup (which is
   // *added* to the existing discount), this is the rental's total discount.
@@ -295,7 +325,6 @@ export function RentalsList() {
   const [payNotes, setPayNotes] = useState("");
   const [payError, setPayError] = useState<string | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
-  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
 
   const [syncing, setSyncing] = useState(false);
 
@@ -364,6 +393,7 @@ export function RentalsList() {
     setExtending(row);
     setExtendReturnDate(row.returnDate);
     setExtendAdvance(row.advance);
+    setExtendAdvanceReason("");
     setExtendError(null);
   };
 
@@ -414,9 +444,13 @@ export function RentalsList() {
       setExtendError(describeRentalError(businessErrors[0]));
       return;
     }
+    if (extendAdvance < extending.advance && !extendAdvanceReason.trim()) {
+      setExtendError("Add a reason for lowering the amount received.");
+      return;
+    }
     setSavingExtend(true);
     try {
-      await extendRental(extending.id, extendReturnDate, extendAdvance);
+      await extendRental(extending.id, extendReturnDate, extendAdvance, extendAdvanceReason);
       showToast("Rental extended.", "success");
       setExtending(null);
       rentals.refetch();
@@ -545,6 +579,7 @@ export function RentalsList() {
     setEditReturnDate(row.returnDate);
     setEditDailyRate(row.dailyRate);
     setEditAdvance(row.advance);
+    setEditAdvanceReason("");
     setEditDiscount(row.discount > 0 ? String(row.discount) : "");
     setEditDiscountReason(row.discountReason ?? "");
     setEditError(null);
@@ -586,6 +621,10 @@ export function RentalsList() {
       setEditError(describeRentalError(businessErrors[0]));
       return;
     }
+    if (editAdvance < editing.advance && !editAdvanceReason.trim()) {
+      setEditError("Add a reason for lowering the amount received.");
+      return;
+    }
     setSavingEdit(true);
     try {
       await updateRental(editing.id, {
@@ -594,6 +633,7 @@ export function RentalsList() {
         returnDate: editReturnDate,
         dailyRate: editDailyRate,
         advance: editAdvance,
+        advanceReason: editAdvanceReason,
         discount: discountAmount,
         // A reason only makes sense alongside a discount.
         discountReason: discountAmount > 0 ? editDiscountReason.trim() || null : null,
@@ -683,21 +723,6 @@ export function RentalsList() {
       setPayError(isRefund ? "Couldn't record this refund. Try again." : "Couldn't record this payment. Try again.");
     } finally {
       setSavingPayment(false);
-    }
-  };
-
-  const handleDeletePayment = async (paymentId: string) => {
-    if (deletingPaymentId) return;
-    setDeletingPaymentId(paymentId);
-    try {
-      await deleteRentalPayment(paymentId);
-      showToast("Payment removed.", "success");
-      payments.refetch();
-      rentals.refetch();
-    } catch {
-      showToast("Couldn't remove this payment. Try again.", "danger");
-    } finally {
-      setDeletingPaymentId(null);
     }
   };
 
@@ -1125,7 +1150,13 @@ export function RentalsList() {
               min={0}
               value={extendAdvance}
               onChange={(e) => setExtendAdvance(Number(e.target.value))}
-              hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
+              hint="Type the new total received. The difference is logged in payment history. To choose a method (UPI, card…) use “Record a payment” in the rental's details."
+            />
+            <AdvanceChangeNote
+              current={extending.advance}
+              next={extendAdvance}
+              reason={extendAdvanceReason}
+              onReasonChange={setExtendAdvanceReason}
             />
             {extendTotals && (
               <div className="rounded border border-graphite-300 bg-graphite-100 p-3 font-mono text-[13px] text-ink dark:border-graphite-700 dark:bg-graphite-800 dark:text-ink-inverted">
@@ -1203,7 +1234,13 @@ export function RentalsList() {
               min={0}
               value={editAdvance}
               onChange={(e) => setEditAdvance(Number(e.target.value))}
-              hint="Manual override of the running total — for a dated, itemized entry (with method/notes) use “Record a payment” from the rental's details view instead."
+              hint="Type the new total received. The difference is logged in payment history. To choose a method (UPI, card…) use “Record a payment” in the rental's details."
+            />
+            <AdvanceChangeNote
+              current={editing.advance}
+              next={editAdvance}
+              reason={editAdvanceReason}
+              onReasonChange={setEditAdvanceReason}
             />
             <div className="grid grid-cols-2 gap-3">
               <Input
@@ -1257,7 +1294,7 @@ export function RentalsList() {
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
               <PaymentHistoryList payments={payments} unitemized={unitemizedAmount(editAdvance, payments)} />
               <p className="font-body text-[12px] text-graphite-400">
-                To add or remove a payment, open the rental's details.
+                To record a payment or refund, open the rental's details.
               </p>
             </div>
             {editError && (
@@ -1389,12 +1426,7 @@ export function RentalsList() {
             <div className="space-y-2 border-t border-graphite-200 pt-4 dark:border-graphite-800">
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
 
-              <PaymentHistoryList
-                payments={payments}
-                unitemized={unitemizedAdvance}
-                onRemove={handleDeletePayment}
-                removingId={deletingPaymentId}
-              />
+              <PaymentHistoryList payments={payments} unitemized={unitemizedAdvance} />
 
               <div
                 ref={paymentFormRef}

@@ -231,17 +231,39 @@ export async function createRentalCheckout(
   return { rentalIds: (data ?? []).map((row) => row.id as string), checkoutGroupId };
 }
 
-/** Extension: push out the return date and/or record additional advance. */
+/**
+ * Sets the rental's total amount received by logging the difference as a
+ * dated payment or refund (`set_rental_advance`, 0029). Money on a rental
+ * only ever changes through the payment ledger — never by writing `advance`
+ * directly. No-op when `newTotal` equals the current advance. Lowering the
+ * total requires a `reason`.
+ */
+export async function setRentalAdvance(
+  rentalId: string,
+  newTotal: number,
+  reason?: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_rental_advance", {
+    p_rental_id: rentalId,
+    p_new_total: newTotal,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) throw error;
+}
+
+/** Extension: push out the return date and/or record additional advance (logged in payment history). */
 export async function extendRental(
   id: string,
   returnDate: string,
   advance: number,
+  advanceReason?: string,
 ): Promise<void> {
   const { error } = await supabase
     .from("rentals")
-    .update({ return_date: returnDate, advance })
+    .update({ return_date: returnDate })
     .eq("id", id);
   if (error) throw error;
+  await setRentalAdvance(id, advance, advanceReason);
 }
 
 export async function returnRental(id: string): Promise<void> {
@@ -288,6 +310,8 @@ export interface RentalUpdateValues {
   returnDate: string;
   dailyRate: number;
   advance: number;
+  /** Required by the DB when `advance` is being lowered. */
+  advanceReason?: string;
   /** Optional — omit to leave the stored discount unchanged. */
   discount?: number;
   discountReason?: string | null;
@@ -308,12 +332,14 @@ export async function updateRental(id: string, values: RentalUpdateValues): Prom
       start_date: values.startDate,
       return_date: values.returnDate,
       daily_rate: values.dailyRate,
-      advance: values.advance,
       ...(values.discount !== undefined ? { discount: values.discount } : {}),
       ...(values.discountReason !== undefined ? { discount_reason: values.discountReason } : {}),
     })
     .eq("id", id);
   if (error) throw error;
+  // `advance` is never written directly (guarded in the DB by 0029) — any
+  // change is logged as a payment or refund.
+  await setRentalAdvance(id, values.advance, values.advanceReason);
 }
 
 /** Permanently removes a rental record (distinct from `cancelRental`, which just changes status). */
@@ -443,8 +469,3 @@ export async function recordRentalRefund(values: RecordPaymentValues): Promise<s
   return data as string;
 }
 
-/** Removes a logged payment or refund and reverses it out of the rental's `advance` total. */
-export async function deleteRentalPayment(paymentId: string): Promise<void> {
-  const { error } = await supabase.rpc("delete_rental_payment", { p_payment_id: paymentId });
-  if (error) throw error;
-}

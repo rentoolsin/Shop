@@ -31,10 +31,17 @@
   (`rental_payments`, `kind` = `payment` | `refund`, amount always positive —
   see `0020_rental_payments.sql` and `0028_rental_refunds.sql`).
 - A refund cannot be more than the amount received so far.
-- Removing a payment entry lowers the advance; removing a refund entry puts
-  the refunded amount back.
-- Typing a new value into **Advance received** on Edit rental is still a
-  manual override and is not logged in the history.
+- Ledger entries are permanent: they can't be edited or removed from the app
+  (`0030_ledger_append_only.sql`). To correct a mistake, record a refund (for
+  a payment entered by mistake) or another payment (for a refund entered by
+  mistake), so the history always shows what actually happened.
+- The payment ledger is the only way money on a rental changes. The DB
+  rejects any direct change to `advance` (`0029_single_source_payments.sql`).
+  Typing a new value into **Advance received** (Edit / Extend) is turned into
+  a dated payment (higher) or refund (lower) via `set_rental_advance`;
+  lowering requires a reason.
+- An advance entered when a rental is created is logged automatically as
+  "Advance at booking".
 
 ## Inventory
 

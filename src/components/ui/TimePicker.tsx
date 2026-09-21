@@ -1,6 +1,7 @@
 import { Check, Clock } from "@phosphor-icons/react";
 import { forwardRef, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { baseFieldClass } from "./form-field";
+import { FloatingPopup } from "./FloatingPopup";
 
 type Period = "AM" | "PM";
 
@@ -79,11 +80,15 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(functio
   const parsed = useMemo(() => parseTime(value), [value]);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function handlePointerDown(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      // The popup is portalled to <body>, so it is outside rootRef in the DOM.
+      if (rootRef.current?.contains(target) || popupRef.current?.contains(target)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
@@ -112,7 +117,9 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(functio
       e.preventDefault();
       setOpen(true);
     } else if (open && e.key === "Escape") {
+      // Close only the picker — not the dialog it may be sitting in.
       e.preventDefault();
+      e.stopPropagation();
       setOpen(false);
     }
   };
@@ -159,10 +166,19 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(functio
         </button>
 
         {open && (
-          <div
+          <FloatingPopup
+            anchorRef={rootRef}
+            popupRef={popupRef}
             role="dialog"
             aria-label={label ?? "Choose time"}
-            className="absolute z-20 mt-1 flex w-48 gap-1 rounded border border-graphite-200 bg-white p-2 shadow-raised dark:border-graphite-800 dark:bg-graphite-900"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(false);
+              }
+            }}
+            className="flex w-48 gap-1 rounded border border-graphite-200 bg-white p-2 shadow-raised dark:border-graphite-800 dark:bg-graphite-900"
           >
             <ul role="listbox" aria-label="Hour" className="max-h-48 flex-1 overflow-auto">
               {hours.map((h) => {
@@ -217,7 +233,7 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(functio
                 </li>
               ))}
             </ul>
-          </div>
+          </FloatingPopup>
         )}
       </div>
       {hint && !error && <span className="mt-1 block font-body text-[12px] text-graphite-500">{hint}</span>}
