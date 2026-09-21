@@ -24,6 +24,8 @@ export type PurchaseRequestStatus =
   | "declined";
 
 export type PaymentMethod = "cash" | "upi" | "card" | "bank_transfer" | "other";
+/** A ledger entry is money received ("payment") or money given back ("refund") — see 0028_rental_refunds.sql. */
+export type PaymentKind = "payment" | "refund";
 
 export interface Database {
   public: {
@@ -159,6 +161,7 @@ export interface Database {
           payment_date: string;
           method: PaymentMethod;
           notes: string | null;
+          kind: PaymentKind;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["rental_payments"]["Row"]> & {
@@ -369,6 +372,16 @@ export interface Database {
         Returns: string;
       };
       record_rental_payment: {
+        Args: {
+          p_rental_id: string;
+          p_amount: number;
+          p_payment_date: string;
+          p_method: PaymentMethod;
+          p_notes: string | null;
+        };
+        Returns: string;
+      };
+      record_rental_refund: {
         Args: {
           p_rental_id: string;
           p_amount: number;

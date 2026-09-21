@@ -23,6 +23,19 @@
 - Advance cannot exceed total (unless explicitly overridden — not yet
   exposed in any UI).
 
+## Payments and refunds
+
+- `advance` is the net amount actually received. A payment adds to it; a
+  refund (money given back to the customer) subtracts from it.
+- Both are logged as dated entries in the rental's payment history
+  (`rental_payments`, `kind` = `payment` | `refund`, amount always positive —
+  see `0020_rental_payments.sql` and `0028_rental_refunds.sql`).
+- A refund cannot be more than the amount received so far.
+- Removing a payment entry lowers the advance; removing a refund entry puts
+  the refunded amount back.
+- Typing a new value into **Advance received** on Edit rental is still a
+  manual override and is not logged in the history.
+
 ## Inventory
 
 - Quantity-based per product variant: `quantity_total − quantity_reserved

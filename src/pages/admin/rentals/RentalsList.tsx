@@ -1,5 +1,5 @@
 import { Calendar, Plus, ArrowsClockwise, Phone, PencilSimple, DotsThreeVertical, CheckCircle } from "@phosphor-icons/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminRentals, useAdminRentalPayments } from "../../../hooks/useAdminData";
 import { usePagination } from "../../../hooks/usePagination";
@@ -12,11 +12,12 @@ import {
   deleteRental,
   syncOpenRentalStatuses,
   recordRentalPayment,
+  recordRentalRefund,
   deleteRentalPayment,
   paymentMethodLabel,
   type AdminRentalListItem,
 } from "../../../services/admin-rentals.service";
-import type { PaymentMethod } from "../../../types/database";
+import type { PaymentKind, PaymentMethod } from "../../../types/database";
 import {
   calculateRentalTotals,
   validateRentalInput,
@@ -145,14 +146,14 @@ type Row = AdminRentalListItem & { displayStatus: RentalDisplayStatus };
 type PaymentsState = ReturnType<typeof useAdminRentalPayments>;
 
 /**
- * How much of `advance` isn't backed by an itemized ledger entry. `advance`
- * is one running total that can also be typed in directly (Edit/Extend, or
- * lowered by a refund at return — see 0020_rental_payments.sql), so it can
- * legitimately be higher than the sum of the logged payments.
+ * How much of `advance` isn't backed by an itemized ledger entry (payments
+ * received minus refunds given). `advance` is one running total that can
+ * also be typed in directly (Edit/Extend — see 0020_rental_payments.sql), so
+ * it can legitimately be higher than what the ledger explains.
  */
 function unitemizedAmount(advance: number, payments: PaymentsState): number {
   if (payments.status !== "success") return 0;
-  const itemized = payments.data.reduce((sum, p) => sum + p.amount, 0);
+  const itemized = payments.data.reduce((sum, p) => sum + (p.kind === "refund" ? -p.amount : p.amount), 0);
   const gap = Math.round((advance - itemized) * 100) / 100;
   return gap > 0 ? gap : 0;
 }
@@ -204,7 +205,15 @@ function PaymentHistoryList({
           {payments.data.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 font-body text-[12.5px] text-ink dark:text-ink-inverted">
               <div className="min-w-0">
-                <p className="font-mono font-semibold">{formatCurrency(p.amount)}</p>
+                <p className="font-mono font-semibold">
+                  {p.kind === "refund" ? "−" : ""}
+                  {formatCurrency(p.amount)}
+                  {p.kind === "refund" && (
+                    <span className="ml-2 rounded bg-graphite-100 px-1.5 py-0.5 font-body text-[11px] font-medium text-graphite-600 dark:bg-graphite-800 dark:text-graphite-300">
+                      Refund
+                    </span>
+                  )}
+                </p>
                 <p className="truncate text-graphite-400">
                   {p.paymentDate} · {paymentMethodLabel(p.method)}
                   {p.notes ? ` · ${p.notes}` : ""}
@@ -280,6 +289,9 @@ export function RentalsList() {
   const [payAmount, setPayAmount] = useState("");
   const [payDate, setPayDate] = useState("");
   const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
+  // Same mini-form records either money received or money given back.
+  const [payKind, setPayKind] = useState<PaymentKind>("payment");
+  const paymentFormRef = useRef<HTMLDivElement>(null);
   const [payNotes, setPayNotes] = useState("");
   const [payError, setPayError] = useState<string | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
@@ -434,9 +446,9 @@ export function RentalsList() {
     // than the net rental amount — the customer overpaid, so this is
     // money going back to them rather than money being collected. There's
     // no "negative payment" in the payment ledger (rental_payments.amount
-    // is checked > 0 — see 0020_rental_payments.sql), so a refund is
-    // recorded by lowering the running `advance` total directly instead,
-    // the same way a manual correction via Edit already works.
+    // is checked > 0 — see 0020_rental_payments.sql), so it's logged as a
+    // "refund" entry instead (0028_rental_refunds.sql), which also takes it
+    // back out of the running `advance` total.
     const isRefund = returnAdjustedBalance < 0;
     setReturnError(null);
     setSavingReturn(true);
@@ -463,22 +475,21 @@ export function RentalsList() {
     }
     if (amount > 0 && isRefund) {
       try {
-        const newAdvance = Math.max(0, returning.advance - amount);
-        await updateRental(returning.id, {
-          quantity: returning.quantity,
-          startDate: returning.startDate,
-          returnDate: returning.returnDate,
-          dailyRate: returning.dailyRate,
-          advance: newAdvance,
+        await recordRentalRefund({
+          rentalId: returning.id,
+          amount,
+          paymentDate: new Date().toISOString().slice(0, 10),
+          method: returnMethod,
+          notes: returnNotes.trim() || "Refunded at return",
         });
         showToast(`Rental marked returned — ${formatCurrency(amount)} refunded.`, "success");
       } catch {
         // Status update already succeeded — don't tell the admin the whole
         // action failed, or they may retry "Mark returned" on an already-
         // returned rental. Surface the refund failure on its own so they
-        // know to adjust the advance manually instead.
+        // know to add it from the rental's details instead.
         showToast(
-          "Rental marked as returned, but the refund couldn't be recorded — adjust the advance from Edit.",
+          "Rental marked as returned, but the refund couldn't be recorded — add it from the rental's details.",
           "danger",
         );
       }
@@ -619,38 +630,57 @@ export function RentalsList() {
     setPayAmount("");
     setPayDate(new Date().toISOString().slice(0, 10));
     setPayMethod("cash");
+    setPayKind("payment");
     setPayNotes("");
     setPayError(null);
   }, [viewing?.id]);
 
+  // "Refund due" banner shortcut: flip the form below into refund mode with
+  // the amount owed pre-filled, so settling it is confirm-and-save.
+  const startRefundEntry = () => {
+    if (!viewingLive) return;
+    setPayKind("refund");
+    setPayAmount(String(Math.abs(viewingLive.balance)));
+    setPayDate(new Date().toISOString().slice(0, 10));
+    setPayError(null);
+    paymentFormRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  };
+
   const handleRecordPayment = async () => {
     if (!viewing || savingPayment) return;
+    const isRefund = payKind === "refund";
     const amount = Number(payAmount);
     if (!payAmount || Number.isNaN(amount) || amount <= 0) {
-      setPayError("Enter a payment amount greater than zero.");
+      setPayError(isRefund ? "Enter a refund amount greater than zero." : "Enter a payment amount greater than zero.");
       return;
     }
     if (!payDate) {
-      setPayError("Choose the date this payment was made.");
+      setPayError(isRefund ? "Choose the date this refund was given." : "Choose the date this payment was made.");
+      return;
+    }
+    if (isRefund && viewingLive && amount > viewingLive.advance) {
+      setPayError(`A refund can't be more than the ${formatCurrency(viewingLive.advance)} received so far.`);
       return;
     }
     setPayError(null);
     setSavingPayment(true);
     try {
-      await recordRentalPayment({
+      const record = isRefund ? recordRentalRefund : recordRentalPayment;
+      await record({
         rentalId: viewing.id,
         amount,
         paymentDate: payDate,
         method: payMethod,
         notes: payNotes.trim() || undefined,
       });
-      showToast("Payment recorded.", "success");
+      showToast(isRefund ? "Refund recorded." : "Payment recorded.", "success");
       setPayAmount("");
       setPayNotes("");
+      setPayKind("payment");
       payments.refetch();
       rentals.refetch();
     } catch {
-      setPayError("Couldn't record this payment. Try again.");
+      setPayError(isRefund ? "Couldn't record this refund. Try again." : "Couldn't record this payment. Try again.");
     } finally {
       setSavingPayment(false);
     }
@@ -1344,6 +1374,18 @@ export function RentalsList() {
               </div>
             </div>
 
+            {viewingLive.balance < 0 && (
+              <div className="flex items-center justify-between gap-3 rounded border border-graphite-300 bg-graphite-50 p-3 dark:border-graphite-700 dark:bg-graphite-800/60">
+                <p className="font-body text-[12.5px] text-ink dark:text-ink-inverted">
+                  <span className="font-semibold">{formatCurrency(Math.abs(viewingLive.balance))}</span> is owed back to
+                  the customer. Already handed it over? Record it so this clears.
+                </p>
+                <Button size="sm" variant="secondary" onClick={startRefundEntry} className="flex-shrink-0">
+                  Record refund
+                </Button>
+              </div>
+            )}
+
             <div className="space-y-2 border-t border-graphite-200 pt-4 dark:border-graphite-800">
               <p className="font-body text-[12px] font-medium text-graphite-500">Payment history</p>
 
@@ -1354,18 +1396,47 @@ export function RentalsList() {
                 removingId={deletingPaymentId}
               />
 
-              <div className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800">
-                <p className="font-body text-[12px] font-medium text-graphite-500">Record a payment</p>
+              <div
+                ref={paymentFormRef}
+                className="space-y-2 rounded border border-graphite-200 p-3 dark:border-graphite-800"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-body text-[12px] font-medium text-graphite-500">
+                    {payKind === "refund" ? "Record a refund" : "Record a payment"}
+                  </p>
+                  <div
+                    role="group"
+                    aria-label="Entry type"
+                    className="flex gap-0.5 rounded bg-graphite-100 p-0.5 dark:bg-graphite-800"
+                  >
+                    {(["payment", "refund"] as const).map((kind) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        aria-pressed={payKind === kind}
+                        onClick={() => setPayKind(kind)}
+                        className={[
+                          "rounded px-2.5 py-1 font-body text-[12px] font-medium",
+                          payKind === kind
+                            ? "bg-white text-ink shadow-sm dark:bg-graphite-900 dark:text-ink-inverted"
+                            : "text-graphite-500",
+                        ].join(" ")}
+                      >
+                        {kind === "payment" ? "Payment" : "Refund"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <Input
-                    label="Amount (₹)"
+                    label={payKind === "refund" ? "Amount refunded (₹)" : "Amount (₹)"}
                     type="number"
                     min={0}
                     value={payAmount}
                     onChange={(e) => setPayAmount(e.target.value)}
                   />
                   <DatePicker
-                    label="Date paid"
+                    label={payKind === "refund" ? "Date refunded" : "Date paid"}
                     value={payDate}
                     onChange={setPayDate}
                   />
@@ -1387,7 +1458,7 @@ export function RentalsList() {
                       label="Note (optional)"
                       value={payNotes}
                       onChange={(e) => setPayNotes(e.target.value)}
-                      placeholder="e.g. Paid after return"
+                      placeholder={payKind === "refund" ? "e.g. Refunded in cash" : "e.g. Paid after return"}
                     />
                   </div>
                 </div>
@@ -1395,7 +1466,7 @@ export function RentalsList() {
                   <p className="font-body text-[12px] text-state-danger-text dark:text-state-danger-text-dark">{payError}</p>
                 )}
                 <Button size="sm" fullWidth onClick={handleRecordPayment} disabled={savingPayment}>
-                  {savingPayment ? "Saving…" : "Add payment"}
+                  {savingPayment ? "Saving…" : payKind === "refund" ? "Add refund" : "Add payment"}
                 </Button>
               </div>
             </div>

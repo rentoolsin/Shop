@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { PaymentMethod, RentalStatus } from "../types/database";
+import type { PaymentKind, PaymentMethod, RentalStatus } from "../types/database";
 import { calculateRentalTotals } from "../utils/rental-calculations";
 
 export interface AdminRentalListItem {
@@ -344,6 +344,8 @@ export interface RentalPayment {
   paymentDate: string;
   method: PaymentMethod;
   notes: string | null;
+  /** "payment" = received from the customer, "refund" = given back. `amount` is always positive. */
+  kind: PaymentKind;
   createdAt: string;
 }
 
@@ -366,6 +368,8 @@ interface RawRentalPaymentRow {
   payment_date: string;
   method: PaymentMethod;
   notes: string | null;
+  /** Absent until 0028_rental_refunds.sql has been applied — treated as a payment. */
+  kind?: PaymentKind | null;
   created_at: string;
 }
 
@@ -377,6 +381,7 @@ function toPayment(row: RawRentalPaymentRow): RentalPayment {
     paymentDate: row.payment_date,
     method: row.method,
     notes: row.notes,
+    kind: row.kind ?? "payment",
     createdAt: row.created_at,
   };
 }
@@ -385,7 +390,9 @@ function toPayment(row: RawRentalPaymentRow): RentalPayment {
 export async function fetchRentalPayments(rentalId: string): Promise<RentalPayment[]> {
   const { data, error } = await supabase
     .from("rental_payments")
-    .select("id, rental_id, amount, payment_date, method, notes, created_at")
+    // "*" rather than a column list so the history still loads if the app is
+    // deployed before 0028_rental_refunds.sql (which adds `kind`) has been run.
+    .select("*")
     .eq("rental_id", rentalId)
     .order("payment_date", { ascending: false })
     .order("created_at", { ascending: false });
@@ -419,7 +426,24 @@ export async function recordRentalPayment(values: RecordPaymentValues): Promise<
   return data as string;
 }
 
-/** Removes a logged payment and reverses it out of the rental's `advance` total. */
+/**
+ * Logs money given back to the customer and subtracts it from the rental's
+ * `advance` total via the `record_rental_refund` RPC
+ * (0028_rental_refunds.sql), atomically. Can't exceed what's been received.
+ */
+export async function recordRentalRefund(values: RecordPaymentValues): Promise<string> {
+  const { data, error } = await supabase.rpc("record_rental_refund", {
+    p_rental_id: values.rentalId,
+    p_amount: values.amount,
+    p_payment_date: values.paymentDate,
+    p_method: values.method,
+    p_notes: values.notes ?? null,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+/** Removes a logged payment or refund and reverses it out of the rental's `advance` total. */
 export async function deleteRentalPayment(paymentId: string): Promise<void> {
   const { error } = await supabase.rpc("delete_rental_payment", { p_payment_id: paymentId });
   if (error) throw error;
