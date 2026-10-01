@@ -105,13 +105,10 @@ export function Select({
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
-<<<<<<< HEAD
-=======
   const inputRef = useRef<HTMLInputElement>(null);
   // Only scroll the highlighted row into view for keyboard navigation / on
   // open — scrolling on mouse-hover would fight the user's own scrolling.
   const scrollActiveIntoView = useRef(false);
->>>>>>> 8780321 (Bug)
 
   const selectedValue = String(value ?? "");
   const selectedIndex = options.findIndex((o) => o.value === selectedValue);
@@ -132,10 +129,7 @@ export function Select({
       // The list is portalled to <body>, so it is outside rootRef in the DOM.
       if (rootRef.current?.contains(target) || popupRef.current?.contains(target)) return;
       setOpen(false);
-<<<<<<< HEAD
-=======
       setQuery("");
->>>>>>> 8780321 (Bug)
     }
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
@@ -190,11 +184,7 @@ export function Select({
       // Close only the list — not a dialog it may be sitting in.
       e.preventDefault();
       e.stopPropagation();
-<<<<<<< HEAD
-      setOpen(false);
-=======
       closeList();
->>>>>>> 8780321 (Bug)
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       scrollActiveIntoView.current = true;
@@ -291,15 +281,11 @@ export function Select({
             role="listbox"
             id={fieldId ? `${fieldId}-listbox` : undefined}
             tabIndex={-1}
-<<<<<<< HEAD
-            aria-activedescendant={fieldId && options[activeIndex] ? `${fieldId}-opt-${activeIndex}` : undefined}
-=======
             aria-activedescendant={fieldId && visible[activeIndex] ? `${fieldId}-opt-${activeIndex}` : undefined}
             // Keep focus in the typeable field while tapping/clicking the
             // list, so the keyboard doesn't collapse mid-tap and shift the
             // layout out from under the finger.
             onMouseDown={searchable ? (e) => e.preventDefault() : undefined}
->>>>>>> 8780321 (Bug)
             className="outline-none"
           >
             {visible.length === 0 && (
