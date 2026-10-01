@@ -218,7 +218,95 @@ export function Reports() {
               description="No rentals started and no payments received in this range. Try widening the date range above."
             />
           ) : (
-            <Card className="overflow-x-auto p-0">
+            <>
+            {/* Mobile: one card per product (no sideways scrolling). */}
+            <ul className="space-y-3 md:hidden">
+              {byProduct.map((row) => {
+                const inv = inventory.status === "success" ? inventory.data.get(row.productName) : undefined;
+                const hasDue = row.outstanding > 0;
+                const stockPct =
+                  inv && inv.totalQuantity > 0
+                    ? Math.max(0, Math.min(100, (inv.availableQuantity / inv.totalQuantity) * 100))
+                    : 0;
+                return (
+                  <li key={row.productName}>
+                    <Card className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="min-w-0 flex-1 font-display text-[14px] font-semibold leading-snug text-ink dark:text-ink-inverted">
+                          {row.productName}
+                        </h3>
+                        <div className="shrink-0 text-right">
+                          <p className="font-mono text-[18px] font-semibold leading-none text-ink dark:text-ink-inverted">
+                            {formatCurrency(row.revenue)}
+                          </p>
+                          <p className="mt-1 font-body text-[11px] text-graphite-500">Revenue</p>
+                        </div>
+                      </div>
+
+                      <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-graphite-100 pt-3 dark:border-graphite-800">
+                        <div>
+                          <dd className="font-mono text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                            {row.rentalCount}
+                          </dd>
+                          <dt className="font-body text-[11px] text-graphite-500">Rentals</dt>
+                        </div>
+                        <div>
+                          <dd className="font-mono text-[15px] font-semibold text-ink dark:text-ink-inverted">
+                            {row.rentalDays}
+                          </dd>
+                          <dt className="font-body text-[11px] text-graphite-500">Days</dt>
+                        </div>
+                        <div>
+                          <dd
+                            className={[
+                              "font-mono text-[15px] font-semibold",
+                              hasDue
+                                ? "text-state-danger-text dark:text-state-danger-text-dark"
+                                : "text-ink dark:text-ink-inverted",
+                            ].join(" ")}
+                          >
+                            {formatCurrency(row.outstanding)}
+                          </dd>
+                          <dt className="font-body text-[11px] text-graphite-500">Outstanding</dt>
+                        </div>
+                      </dl>
+
+                      <div className="mt-3 flex items-center justify-between gap-3 border-t border-graphite-100 pt-3 dark:border-graphite-800">
+                        <div className="min-w-0">
+                          <p className="font-body text-[11px] text-graphite-500">Last rented</p>
+                          <p className="font-mono text-[12px] text-ink dark:text-ink-inverted">
+                            {row.lastRentedDate ?? "—"}
+                          </p>
+                        </div>
+                        <div className="w-28 shrink-0">
+                          <p className="text-right font-body text-[11px] text-graphite-500">
+                            Available now{" "}
+                            <span className="font-mono text-[12px] font-semibold text-ink dark:text-ink-inverted">
+                              {inv ? `${inv.availableQuantity}/${inv.totalQuantity}` : "—"}
+                            </span>
+                          </p>
+                          {inv && (
+                            <div
+                              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-graphite-100 dark:bg-graphite-800"
+                              role="img"
+                              aria-label={`${inv.availableQuantity} of ${inv.totalQuantity} available`}
+                            >
+                              <div
+                                className="h-full rounded-full bg-state-success-text dark:bg-state-success-text-dark"
+                                style={{ width: `${stockPct}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Tablet/desktop: full table. */}
+            <Card className="hidden overflow-x-auto p-0 md:block">
               <table className="w-full min-w-[720px] text-left">
                 <thead>
                   <tr className="border-b border-graphite-200 bg-graphite-50 dark:border-graphite-800 dark:bg-graphite-900">
@@ -280,6 +368,7 @@ export function Reports() {
                 </tbody>
               </table>
             </Card>
+            </>
           )}
         </>
       )}
