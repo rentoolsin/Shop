@@ -1,5 +1,14 @@
 # Changelog
 
+## Revenue by payment date
+- Dashboard ("Revenue this month", delta vs last month, 14-day trend) and
+  Reports (Revenue stat + By-product revenue) now count money on the date it
+  was entered in the payment ledger (payments minus refunds), instead of
+  billed rent / `advance` bucketed by rental start date.
+- New: `src/utils/revenue.ts`, `fetchAllPayments` (service), `useAdminAllPayments`
+  (hook). By-product table also lists products paid in the range even if the
+  rental started earlier. No DB migration needed.
+
 ## Session 17 — PWA support + install banner
 - Added `vite-plugin-pwa` (generateSW/Workbox, `registerType: "autoUpdate"`):
   auto-injects `<link rel="manifest">` and a SW-registration script into

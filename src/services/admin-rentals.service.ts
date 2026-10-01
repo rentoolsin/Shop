@@ -427,6 +427,31 @@ export async function fetchRentalPayments(rentalId: string): Promise<RentalPayme
   return ((data ?? []) as unknown as RawRentalPaymentRow[]).map(toPayment);
 }
 
+/**
+ * Every payment and refund across all rentals — the source for revenue
+ * reporting. Revenue is counted on the day the money was entered
+ * (`paymentDate`), not on the rental's start/return date, so it is paged
+ * through in chunks to stay clear of Supabase's per-request row cap.
+ */
+export async function fetchAllPayments(): Promise<RentalPayment[]> {
+  const pageSize = 1000;
+  const all: RawRentalPaymentRow[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("rental_payments")
+      .select("*")
+      .order("payment_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data ?? []) as unknown as RawRentalPaymentRow[];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all.map(toPayment);
+}
+
 export interface RecordPaymentValues {
   rentalId: string;
   amount: number;

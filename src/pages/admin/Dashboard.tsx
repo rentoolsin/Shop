@@ -17,6 +17,7 @@ import {
   useAdminCategories,
   useAdminCustomers,
   useAdminRentals,
+  useAdminAllPayments,
   useAdminEnquiries,
   useAdminPurchaseRequests,
 } from "../../hooks/useAdminData";
@@ -29,6 +30,7 @@ import {
   toLocalISODate,
 } from "../../utils/date-range";
 import { formatCurrency } from "../../utils/currency";
+import { collectedBetween, signedAmount } from "../../utils/revenue";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { KpiCard } from "../../components/admin/KpiCard";
@@ -97,6 +99,7 @@ export function Dashboard() {
   const categories = useAdminCategories();
   const customers = useAdminCustomers();
   const rentals = useAdminRentals();
+  const payments = useAdminAllPayments();
   const enquiries = useAdminEnquiries();
   const purchaseRequests = useAdminPurchaseRequests();
 
@@ -135,24 +138,33 @@ export function Dashboard() {
     const inMonth = rentals.data.filter((r) => r.startDate >= monthStart && r.startDate <= today);
     return {
       count: inMonth.length,
-      revenue: inMonth.reduce((sum, r) => sum + r.totalRental, 0),
       rentals: inMonth,
     };
   }, [rentals, monthStart, today]);
+
+  // Revenue = money actually received, counted on the date each payment was
+  // entered (minus refunds) — not on the rental's start date.
+  const monthlyRevenue = useMemo(
+    () => (payments.status === "success" ? collectedBetween(payments.data, monthStart, today) : null),
+    [payments, monthStart, today],
+  );
+  const lastMonthRevenue = useMemo(
+    () => (payments.status === "success" ? collectedBetween(payments.data, lastMonthStart, lastMonthEnd) : null),
+    [payments, lastMonthStart, lastMonthEnd],
+  );
 
   const lastMonth = useMemo(() => {
     if (rentals.status !== "success") return null;
     const inRange = rentals.data.filter((r) => r.startDate >= lastMonthStart && r.startDate <= lastMonthEnd);
     return {
       count: inRange.length,
-      revenue: inRange.reduce((sum, r) => sum + r.totalRental, 0),
     };
   }, [rentals, lastMonthStart, lastMonthEnd]);
 
-  // Daily revenue bucketed by rental start date, for the last 14 days —
-  // gives an at-a-glance trend without needing a dedicated reporting query.
+  // Daily revenue (money received, net of refunds) bucketed by payment date,
+  // for the last 14 days.
   const revenueTrend = useMemo(() => {
-    if (rentals.status !== "success") return null;
+    if (payments.status !== "success") return null;
     const days: { iso: string; label: string }[] = [];
     const cursor = new Date();
     for (let i = 13; i >= 0; i--) {
@@ -161,11 +173,11 @@ export function Dashboard() {
       days.push({ iso: toLocalISODate(d), label: d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) });
     }
     const byDay = new Map<string, number>();
-    for (const r of rentals.data) {
-      byDay.set(r.startDate, (byDay.get(r.startDate) ?? 0) + r.totalRental);
+    for (const p of payments.data) {
+      byDay.set(p.paymentDate, (byDay.get(p.paymentDate) ?? 0) + signedAmount(p));
     }
     return days.map((d) => ({ label: d.label, value: byDay.get(d.iso) ?? 0 }));
-  }, [rentals]);
+  }, [payments]);
 
   const statusBreakdown = useMemo(() => {
     if (!annotatedRentals) return null;
@@ -208,7 +220,8 @@ export function Dashboard() {
 
   const recentRentals = rentals.status === "success" ? rentals.data.slice(0, 5) : null;
 
-  const revenueDelta = monthly && lastMonth ? pctDelta(monthly.revenue, lastMonth.revenue) : null;
+  const revenueDelta =
+    monthlyRevenue !== null && lastMonthRevenue !== null ? pctDelta(monthlyRevenue, lastMonthRevenue) : null;
   const rentalsDelta = monthly && lastMonth ? pctDelta(monthly.count, lastMonth.count) : null;
 
   const heroChips = [
@@ -219,7 +232,7 @@ export function Dashboard() {
     },
     {
       label: "Revenue this month",
-      value: monthly ? formatCurrency(monthly.revenue) : "—",
+      value: monthlyRevenue !== null ? formatCurrency(monthlyRevenue) : "—",
       icon: <HandCoins className="h-4 w-4" weight="bold" />,
     },
     {
@@ -318,10 +331,10 @@ export function Dashboard() {
         ) : (
           <Skeleton className="h-[128px] w-full rounded" />
         )}
-        {monthly !== null && revenueDelta !== null ? (
+        {monthlyRevenue !== null && revenueDelta !== null ? (
           <KpiCard
             label="Revenue this month"
-            value={formatCurrency(monthly.revenue)}
+            value={formatCurrency(monthlyRevenue)}
             to="/admin/reports"
             tone="success"
             icon={<HandCoins className="h-5 w-5" weight="bold" />}
@@ -340,7 +353,7 @@ export function Dashboard() {
               <p className="font-body text-[13px] font-semibold text-ink dark:text-ink-inverted">
                 Revenue — last 14 days
               </p>
-              <p className="mt-0.5 font-body text-[11.5px] text-graphite-400">Grouped by rental start date</p>
+              <p className="mt-0.5 font-body text-[11.5px] text-graphite-400">Money received, by payment date</p>
             </div>
             <p className="font-mono text-[16px] font-semibold text-ink dark:text-ink-inverted">
               {revenueTrend ? formatCurrency(revenueTrend.reduce((s, d) => s + d.value, 0)) : ""}
@@ -353,7 +366,7 @@ export function Dashboard() {
               data={revenueTrend}
               formatValue={formatCurrency}
               tone="accent"
-              emptyLabel="No rentals in the last 14 days."
+              emptyLabel="No payments received in the last 14 days."
             />
           )}
         </PremiumCard>

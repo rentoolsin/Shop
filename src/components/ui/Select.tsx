@@ -25,6 +25,12 @@ interface SelectProps {
   disabled?: boolean;
   "aria-label"?: string;
   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
+  /**
+   * Turns the field into a typeable combobox: click it and start typing to
+   * filter the list. Everything else (value / onChange / <option> children)
+   * works the same as the plain dropdown.
+   */
+  searchable?: boolean;
   /** Plain <option value=".."> elements, same as a native select. */
   children?: ReactNode;
 }
@@ -33,6 +39,15 @@ interface OptionData {
   value: string;
   label: ReactNode;
   disabled?: boolean;
+}
+
+/** Plain text of an <option>'s children (for filtering and the typeable field's value). */
+function nodeText(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(nodeText).join("");
+  if (isValidElement<{ children?: ReactNode }>(node)) return nodeText(node.props.children);
+  return "";
 }
 
 function extractOptions(children: ReactNode): OptionData[] {
@@ -79,18 +94,36 @@ export function Select({
   value,
   disabled,
   onChange,
+  searchable,
   children,
   "aria-label": ariaLabel,
 }: SelectProps) {
   const fieldId = id ?? name;
   const options = useMemo(() => extractOptions(children), [children]);
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+<<<<<<< HEAD
+=======
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Only scroll the highlighted row into view for keyboard navigation / on
+  // open — scrolling on mouse-hover would fight the user's own scrolling.
+  const scrollActiveIntoView = useRef(false);
+>>>>>>> 8780321 (Bug)
 
-  const selectedIndex = options.findIndex((o) => o.value === String(value ?? ""));
+  const selectedValue = String(value ?? "");
+  const selectedIndex = options.findIndex((o) => o.value === selectedValue);
   const selected = selectedIndex >= 0 ? options[selectedIndex] : options[0];
+
+  // Options currently listed — all of them, or only the ones matching what
+  // was typed in a searchable field.
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!searchable || !q) return options;
+    return options.filter((o) => nodeText(o.label).toLowerCase().includes(q));
+  }, [options, query, searchable]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,28 +132,57 @@ export function Select({
       // The list is portalled to <body>, so it is outside rootRef in the DOM.
       if (rootRef.current?.contains(target) || popupRef.current?.contains(target)) return;
       setOpen(false);
+<<<<<<< HEAD
+=======
+      setQuery("");
+>>>>>>> 8780321 (Bug)
     }
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [open]);
 
   useEffect(() => {
-    if (open) setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
-  }, [open, selectedIndex]);
+    if (!open) return;
+    const idx = options.findIndex((o) => o.value === selectedValue);
+    scrollActiveIntoView.current = true;
+    setActiveIndex(idx >= 0 ? idx : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, selectedValue]);
+
+  useEffect(() => {
+    if (!open || !scrollActiveIntoView.current || !fieldId) return;
+    scrollActiveIntoView.current = false;
+    document.getElementById(`${fieldId}-opt-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
+  });
+
+  const openList = () => {
+    if (disabled) return;
+    setOpen((wasOpen) => {
+      if (!wasOpen) setQuery("");
+      return true;
+    });
+  };
+
+  const closeList = () => {
+    setOpen(false);
+    setQuery("");
+  };
 
   const commit = (option: OptionData) => {
     if (option.disabled) return;
-    setOpen(false);
+    closeList();
+    // Drop the on-screen keyboard once a choice is made.
+    if (searchable) inputRef.current?.blur();
     if (!onChange) return;
     onChange({ target: { value: option.value, name } } as unknown as ChangeEvent<HTMLSelectElement>);
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     if (disabled) return;
     if (!open) {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || (!searchable && e.key === " ")) {
         e.preventDefault();
-        setOpen(true);
+        openList();
       }
       return;
     }
@@ -128,19 +190,25 @@ export function Select({
       // Close only the list — not a dialog it may be sitting in.
       e.preventDefault();
       e.stopPropagation();
+<<<<<<< HEAD
       setOpen(false);
+=======
+      closeList();
+>>>>>>> 8780321 (Bug)
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(options.length - 1, i + 1));
+      scrollActiveIntoView.current = true;
+      setActiveIndex((i) => Math.min(visible.length - 1, i + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
+      scrollActiveIntoView.current = true;
       setActiveIndex((i) => Math.max(0, i - 1));
-    } else if (e.key === "Enter" || e.key === " ") {
+    } else if (e.key === "Enter" || (!searchable && e.key === " ")) {
       e.preventDefault();
-      const opt = options[activeIndex];
+      const opt = visible[activeIndex];
       if (opt) commit(opt);
     } else if (e.key === "Tab") {
-      setOpen(false);
+      closeList();
     }
   };
 
@@ -159,21 +227,57 @@ export function Select({
         </span>
       )}
       <div className="relative" ref={rootRef}>
-        <button
-          type="button"
-          id={fieldId}
-          disabled={disabled}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          aria-invalid={!!error}
-          aria-label={ariaLabel ?? label}
-          onClick={() => setOpen((o) => !o)}
-          onKeyDown={handleKeyDown}
-          className={[base, "flex cursor-pointer items-center justify-between gap-2 text-left", className].join(" ")}
-        >
-          <span className="truncate">{selected?.label}</span>
-          <ChevronIcon open={open} />
-        </button>
+        {searchable ? (
+          <>
+            <input
+              ref={inputRef}
+              type="text"
+              id={fieldId}
+              role="combobox"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={disabled}
+              aria-expanded={open}
+              aria-autocomplete="list"
+              aria-controls={fieldId ? `${fieldId}-listbox` : undefined}
+              aria-invalid={!!error}
+              aria-label={ariaLabel ?? label}
+              value={open ? query : selectedValue !== "" ? nodeText(selected?.label) : ""}
+              placeholder={
+                open && selectedValue !== "" ? nodeText(selected?.label) : nodeText(options[0]?.label)
+              }
+              onFocus={openList}
+              onClick={openList}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActiveIndex(0);
+                setOpen(true);
+              }}
+              onKeyDown={handleKeyDown}
+              className={[base, "truncate pr-9 placeholder:text-ink dark:placeholder:text-ink-inverted", className].join(" ")}
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+              <ChevronIcon open={open} />
+            </span>
+          </>
+        ) : (
+          <button
+            type="button"
+            id={fieldId}
+            disabled={disabled}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-invalid={!!error}
+            aria-label={ariaLabel ?? label}
+            onClick={() => (open ? closeList() : openList())}
+            onKeyDown={handleKeyDown}
+            className={[base, "flex cursor-pointer items-center justify-between gap-2 text-left", className].join(" ")}
+          >
+            <span className="truncate">{selected?.label}</span>
+            <ChevronIcon open={open} />
+          </button>
+        )}
 
         {open && (
           <FloatingPopup
@@ -185,12 +289,24 @@ export function Select({
           >
           <ul
             role="listbox"
+            id={fieldId ? `${fieldId}-listbox` : undefined}
             tabIndex={-1}
+<<<<<<< HEAD
             aria-activedescendant={fieldId && options[activeIndex] ? `${fieldId}-opt-${activeIndex}` : undefined}
+=======
+            aria-activedescendant={fieldId && visible[activeIndex] ? `${fieldId}-opt-${activeIndex}` : undefined}
+            // Keep focus in the typeable field while tapping/clicking the
+            // list, so the keyboard doesn't collapse mid-tap and shift the
+            // layout out from under the finger.
+            onMouseDown={searchable ? (e) => e.preventDefault() : undefined}
+>>>>>>> 8780321 (Bug)
             className="outline-none"
           >
-            {options.map((option, index) => {
-              const isSelected = index === selectedIndex;
+            {visible.length === 0 && (
+              <li className="px-3 py-2 font-body text-[14px] text-graphite-500">No matches</li>
+            )}
+            {visible.map((option, index) => {
+              const isSelected = option.value === selectedValue;
               const isActive = index === activeIndex;
               return (
                 <li

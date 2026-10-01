@@ -57,7 +57,21 @@ export function FloatingPopup({
 
     const rect = anchor.getBoundingClientRect();
     const vw = window.innerWidth;
+<<<<<<< HEAD
     const vh = window.innerHeight;
+=======
+    // On phones the on-screen keyboard shrinks the *visual* viewport (and on
+    // iOS doesn't resize the layout viewport at all), so measure against it
+    // — otherwise a list opened from a typeable field hides behind the keys.
+    const vv = window.visualViewport;
+    const vTop = vv ? vv.offsetTop : 0;
+    const vBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+
+    // Re-measuring resets maxHeight, which would clamp the list's scroll
+    // position back to the top while the user is scrolling it. Remember it
+    // and put it back afterwards.
+    const prevScrollTop = pop.scrollTop;
+>>>>>>> 8780321 (Bug)
 
     // Measure the popup at its natural size before constraining it.
     pop.style.maxHeight = "";
@@ -65,8 +79,13 @@ export function FloatingPopup({
     const naturalHeight = pop.offsetHeight;
     const width = pop.offsetWidth;
 
+<<<<<<< HEAD
     const spaceBelow = vh - rect.bottom - GAP - MARGIN;
     const spaceAbove = rect.top - GAP - MARGIN;
+=======
+    const spaceBelow = vBottom - rect.bottom - GAP - MARGIN;
+    const spaceAbove = rect.top - vTop - GAP - MARGIN;
+>>>>>>> 8780321 (Bug)
     const openUp = naturalHeight > spaceBelow && spaceAbove > spaceBelow;
 
     let available = Math.max(MIN_HEIGHT, openUp ? spaceAbove : spaceBelow);
@@ -79,6 +98,13 @@ export function FloatingPopup({
 
     pop.style.maxHeight = `${Math.round(available)}px`;
     pop.style.overflowY = "auto";
+<<<<<<< HEAD
+=======
+    // Don't hand leftover touch-scroll to the page behind (it made the list
+    // fight the page on phones).
+    pop.style.overscrollBehavior = "contain";
+    pop.scrollTop = prevScrollTop;
+>>>>>>> 8780321 (Bug)
     pop.style.top = `${Math.round(top)}px`;
     pop.style.left = `${Math.round(left)}px`;
     pop.style.visibility = "visible";
@@ -91,6 +117,7 @@ export function FloatingPopup({
   });
 
   useEffect(() => {
+<<<<<<< HEAD
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
     return () => {
@@ -98,6 +125,28 @@ export function FloatingPopup({
       window.removeEventListener("scroll", place, true);
     };
   }, [place]);
+=======
+    // Scroll events from *inside* the popup (the user scrolling the list)
+    // must not trigger a re-placement — only the page / a modal body
+    // scrolling underneath it should.
+    const handleScroll = (e: Event) => {
+      const pop = popupRef.current;
+      if (pop && e.target instanceof Node && pop.contains(e.target)) return;
+      place();
+    };
+    const vv = window.visualViewport;
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", handleScroll, true);
+    vv?.addEventListener("resize", place);
+    vv?.addEventListener("scroll", place);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", handleScroll, true);
+      vv?.removeEventListener("resize", place);
+      vv?.removeEventListener("scroll", place);
+    };
+  }, [place, popupRef]);
+>>>>>>> 8780321 (Bug)
 
   return createPortal(
     <div

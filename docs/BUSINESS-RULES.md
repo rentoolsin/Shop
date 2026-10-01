@@ -44,6 +44,16 @@
   `set_rental_advance`; lowering requires a reason.
 - An advance entered when a rental is created is logged automatically as
   "Advance at booking".
+<<<<<<< HEAD
+=======
+- **Revenue is cash-basis, by payment date.** Dashboard and Reports revenue is
+  the sum of ledger entries (payments minus refunds) whose `payment_date` falls
+  in the period — not the rental's start or return date. A rental that started
+  in July but was paid and returned in September counts toward September.
+  Helpers: `src/utils/revenue.ts`; data: `fetchAllPayments` /
+  `useAdminAllPayments`. Rentals / rental days / discounts / outstanding in
+  Reports are still scoped to rentals that *started* in the range.
+>>>>>>> 8780321 (Bug)
 
 ## Rental reference
 

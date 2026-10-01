@@ -1,7 +1,8 @@
 import { ChartBar } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
-import { useAdminRentals, useAdminProductInventory } from "../../hooks/useAdminData";
+import { useAdminRentals, useAdminProductInventory, useAdminAllPayments } from "../../hooks/useAdminData";
 import { formatCurrency } from "../../utils/currency";
+import { entriesBetween, signedAmount } from "../../utils/revenue";
 import { calculateRentalDays, deriveDisplayStatus } from "../../utils/rental-calculations";
 import {
   resolvePresetRange,
@@ -33,6 +34,7 @@ interface ProductBreakdownRow {
 export function Reports() {
   const rentals = useAdminRentals();
   const inventory = useAdminProductInventory();
+  const payments = useAdminAllPayments();
 
   const [preset, setPreset] = useState<DateRangePresetKey>("this_month");
   const [range, setRange] = useState<DateRange>(() => resolvePresetRange("this_month"));
@@ -44,32 +46,56 @@ export function Reports() {
 
   const rangeValid = isValidRange(range);
 
-  // Bookings that STARTED within the selected range — the range summary and
-  // per-product breakdown below are both scoped to this set.
+  // Rental ids that received (or refunded) money inside the range.
+  const paidRentalIds = useMemo(() => {
+    if (payments.status !== "success" || !rangeValid) return new Set<string>();
+    return new Set(entriesBetween(payments.data, range.from, range.to).map((p) => p.rentalId));
+  }, [payments, range, rangeValid]);
+
+  // Rentals in scope for the range: those that STARTED in it, plus any rental
+  // that was paid in it (e.g. started in July, paid and returned in
+  // September). The summary and per-product breakdown are both built from this.
   const filtered = useMemo(() => {
     if (rentals.status !== "success" || !rangeValid) return [];
-    return rentals.data.filter((r) => r.startDate >= range.from && r.startDate <= range.to);
-  }, [rentals, range, rangeValid]);
+    return rentals.data.filter(
+      (r) => (r.startDate >= range.from && r.startDate <= range.to) || paidRentalIds.has(r.id),
+    );
+  }, [rentals, range, rangeValid, paidRentalIds]);
+
+  // Revenue = money actually received in the selected range, counted on the
+  // date each payment was entered (minus refunds) — NOT on the rental's start
+  // or return date. A rental returned in September but paid in September
+  // therefore lands in September, whatever month it started in. Grouped per
+  // product here so the By-product table adds up to the headline number.
+  const revenueByProduct = useMemo(() => {
+    const map = new Map<string, number>();
+    if (rentals.status !== "success" || payments.status !== "success" || !rangeValid) return map;
+    const productByRental = new Map(rentals.data.map((r) => [r.id, r.productName]));
+    for (const p of entriesBetween(payments.data, range.from, range.to)) {
+      const name = productByRental.get(p.rentalId) ?? "Unknown product";
+      map.set(name, (map.get(name) ?? 0) + signedAmount(p));
+    }
+    return map;
+  }, [rentals, payments, range, rangeValid]);
 
   const summary = useMemo(() => {
-    return filtered.reduce(
+    const base = filtered.reduce(
       (acc, r) => {
         acc.rentalCount += 1;
         acc.rentalDays += calculateRentalDays(r.startDate, r.returnDate) * r.quantity;
-        // Revenue is measured net of any discount given — a discount is
-        // money deliberately not collected, not still-outstanding balance.
-        acc.revenue += r.netRental;
         acc.discountsGiven += r.discount;
-        acc.advance += r.advance;
         acc.outstanding += r.balance;
         if (r.status === "returned" && r.actualReturnDate && r.actualReturnDate >= range.from && r.actualReturnDate <= range.to) {
           acc.returns += 1;
         }
         return acc;
       },
-      { rentalCount: 0, rentalDays: 0, revenue: 0, discountsGiven: 0, advance: 0, outstanding: 0, returns: 0 },
+      { rentalCount: 0, rentalDays: 0, discountsGiven: 0, outstanding: 0, returns: 0 },
     );
-  }, [filtered, range]);
+    let revenue = 0;
+    for (const v of revenueByProduct.values()) revenue += v;
+    return { ...base, revenue };
+  }, [filtered, range, revenueByProduct]);
 
   // Live snapshot, independent of the selected range — "how things stand
   // right now", same derivation the Rentals list and Dashboard use.
@@ -85,33 +111,40 @@ export function Reports() {
     };
   }, [rentals]);
 
+  // Rows = products with rentals in scope for the range (started or paid in it).
   const byProduct = useMemo(() => {
     const map = new Map<string, ProductBreakdownRow>();
+    const blank = (productName: string): ProductBreakdownRow => ({
+      productName,
+      rentalCount: 0,
+      rentalDays: 0,
+      revenue: 0,
+      advance: 0,
+      outstanding: 0,
+      lastRentedDate: null,
+    });
     for (const r of filtered) {
-      const existing = map.get(r.productName) ?? {
-        productName: r.productName,
-        rentalCount: 0,
-        rentalDays: 0,
-        revenue: 0,
-        advance: 0,
-        outstanding: 0,
-        lastRentedDate: null,
-      };
+      const existing = map.get(r.productName) ?? blank(r.productName);
       existing.rentalCount += 1;
       existing.rentalDays += calculateRentalDays(r.startDate, r.returnDate) * r.quantity;
-      existing.revenue += r.netRental;
-      existing.advance += r.advance;
       existing.outstanding += r.balance;
       if (!existing.lastRentedDate || r.startDate > existing.lastRentedDate) {
         existing.lastRentedDate = r.startDate;
       }
       map.set(r.productName, existing);
     }
+    for (const [productName, revenue] of revenueByProduct) {
+      const existing = map.get(productName) ?? blank(productName);
+      existing.revenue = revenue;
+      existing.advance = revenue;
+      map.set(productName, existing);
+    }
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
-  }, [filtered]);
+  }, [filtered, revenueByProduct]);
 
-  const isLoading = rentals.status === "loading" || inventory.status === "loading";
-  const hasError = rentals.status === "error" || inventory.status === "error";
+  const isLoading =
+    rentals.status === "loading" || inventory.status === "loading" || payments.status === "loading";
+  const hasError = rentals.status === "error" || inventory.status === "error" || payments.status === "error";
 
   return (
     <div>
@@ -143,18 +176,22 @@ export function Reports() {
           onRetry={() => {
             rentals.refetch();
             inventory.refetch();
+            payments.refetch();
           }}
         />
       )}
 
       {rangeValid && !isLoading && !hasError && (
         <>
+          <p className="mb-3 font-body text-[12px] text-graphite-400">
+            Revenue is the money received (minus refunds) on dates inside this range. Rentals, days, discounts and
+            outstanding cover rentals that started or were paid in this range.
+          </p>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             <StatCard label="Rentals" value={summary.rentalCount} />
             <StatCard label="Rental days" value={summary.rentalDays} />
-            <StatCard label="Revenue" value={formatCurrency(summary.revenue)} />
+            <StatCard label="Revenue (received)" value={formatCurrency(summary.revenue)} />
             <StatCard label="Discounts given" value={formatCurrency(summary.discountsGiven)} />
-            <StatCard label="Advance collected" value={formatCurrency(summary.advance)} />
             <StatCard label="Outstanding balance" value={formatCurrency(summary.outstanding)} />
             <StatCard label="Returns" value={summary.returns} />
           </div>
@@ -177,8 +214,8 @@ export function Reports() {
           {byProduct.length === 0 ? (
             <EmptyState
               icon={<ChartIcon />}
-              title="No rentals in range"
-              description="Try widening the date range above."
+              title="No activity in range"
+              description="No rentals started and no payments received in this range. Try widening the date range above."
             />
           ) : (
             <Card className="overflow-x-auto p-0">

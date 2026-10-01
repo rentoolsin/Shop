@@ -200,6 +200,7 @@ function RentalLineFields({ line, index, categories, errors, onChange, onRemove 
 
       <Select
         label="Product"
+        searchable
         value={line.productId}
         onChange={(e) => onChange({ productId: e.target.value })}
         disabled={products.status !== "success"}
